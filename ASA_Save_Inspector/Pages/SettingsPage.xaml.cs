@@ -13,8 +13,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -455,9 +453,17 @@ namespace ASA_Save_Inspector.Pages
             try
             {
                 var filePicker = new FileOpenPicker();
+
+                // Configure the FileOpenPicker
+                filePicker.ViewMode = PickerViewMode.List;
+                filePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                filePicker.FileTypeFilter.Add(".exe");
+
+                // HWND initialization (needed for WinUI3)
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App._window);
                 WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
-                filePicker.FileTypeFilter.Add(".exe");
+
+                // Open FileOpenPicker window
                 pythonFile = await filePicker.PickSingleFileAsync();
             }
             catch (Exception ex)
@@ -490,9 +496,17 @@ namespace ASA_Save_Inspector.Pages
             try
             {
                 var folderPicker = new FolderPicker();
+
+                // Configure the FolderPicker
+                folderPicker.ViewMode = PickerViewMode.List;
+                folderPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                folderPicker.FileTypeFilter.Add("*");
+
+                // HWND initialization (needed for WinUI3)
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App._window);
                 WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
-                folderPicker.FileTypeFilter.Add("*");
+
+                // Open FolderPicker window
                 jsonDataFolder = await folderPicker.PickSingleFolderAsync();
             }
             catch (Exception ex)
@@ -502,6 +516,7 @@ namespace ASA_Save_Inspector.Pages
             }
             if (jsonDataFolder != null && !string.IsNullOrWhiteSpace(jsonDataFolder.Path) && Directory.Exists(jsonDataFolder.Path))
             {
+                Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", jsonDataFolder);
                 Dictionary<string, bool> foundFiles = new Dictionary<string, bool>();
                 foreach (string validFile in _validJsonFileNames)
                     foundFiles.Add(validFile, false);
@@ -666,9 +681,17 @@ namespace ASA_Save_Inspector.Pages
             try
             {
                 var filePicker = new FileOpenPicker();
+
+                // Configure the FileOpenPicker
+                filePicker.ViewMode = PickerViewMode.List;
+                filePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                filePicker.FileTypeFilter.Add(".ark");
+
+                // HWND initialization (needed for WinUI3)
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App._window);
                 WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
-                filePicker.FileTypeFilter.Add(".ark");
+
+                // Open FileOpenPicker window
                 saveFile = await filePicker.PickSingleFileAsync();
             }
             catch (Exception ex)
