@@ -161,7 +161,7 @@
                            Sorting="dg_Items_Sorting"
                            PointerReleased="dg_Items_PointerReleased"
                            Background="{StaticResource MyAcrylicBrush}"
-                           ColumnHeaderStyle="{StaticResource local:ASICustomDataGridHeaderStyle}">
+                           ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
             <controls:DataGrid.Resources>
                 <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
                     <Setter Property="UseSystemFocusVisuals" Value="False" />
