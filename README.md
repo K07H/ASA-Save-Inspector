@@ -10,6 +10,9 @@ This application is still under development, more features will be added in the 
 - Visualize game objects on a map (double clicking on a map marker will select the associated game object in the app's main window).
 - Quickly export some game objects to JSON (using right click on the game object lines).
 
+## Demonstration video
+https://www.youtube.com/watch?v=LOZbUW5rd0A
+
 ## Installation
 Download the latest release archive here: https://github.com/K07H/ASA-Save-Inspector/releases
 
