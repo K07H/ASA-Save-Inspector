@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="ASA_Save_Inspector.Pages.DinosPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ASA_Save_Inspector.Pages"
+    xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:controlsb="using:Microsoft.UI.Xaml.Controls"
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
+    mc:Ignorable="d"
+    FontSize="16"
+    SizeChanged="page_SizeChanged"
+    x:Name="page_Dinos">
+    
+    <Grid x:Name="gr_Main">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Text="Dinos" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0"/>
+        <Grid x:Name="sp_SortAndFilters" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel x:Name="sp_EditFilters" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                    <TextBlock FontSize="14" VerticalAlignment="Center">Filters:</TextBlock>
+                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add filter" Width="90" Height="30" Click="btn_AddFilter_Click"/>
+                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit filters" Width="90" Height="30" Click="btn_EditFilters_Click"/>
+                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="90" Height="30" Click="btn_FiltersPresets_Click"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="sp_EditColumns" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                    <TextBlock FontSize="14" VerticalAlignment="Center">Columns:</TextBlock>
+                    <Button x:Name="btn_ChangeColumns" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Modify" Width="90" Height="30" Click="btn_ChangeColumns_Click"/>
+                    <Button x:Name="btn_ColumnsPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="90" Height="30" Click="btn_ColumnsPresets_Click"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="sp_CurrentSort" Grid.Column="2" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
+                <TextBlock x:Name="tb_PrimarySort" FontSize="14" Visibility="Collapsed">Primary sort: None</TextBlock>
+                <TextBlock x:Name="tb_SecondarySort" FontSize="14" Visibility="Collapsed">Secondary sort: None</TextBlock>
+            </StackPanel>
+        </Grid>
+        <controls:DataGrid x:Name="dg_Dinos"
+                           Grid.Row="2"
+                           FontSize="16"
+                           AutoGenerateColumns="True"
+                           AutoGeneratingColumn="dg_Dinos_AutoGeneratingColumn"
+                           CanUserSortColumns="True"
+                           CanUserResizeColumns="True"
+                           CanUserReorderColumns="True"
+                           IsReadOnly="True"
+                           VerticalAlignment="Top"
+                           HorizontalAlignment="Left"
+                           HorizontalScrollBarVisibility="Visible"
+                           VerticalScrollBarVisibility="Visible"
+                           styling:CustomScrollBar.KeepHorizontalExpanded="True"
+                           styling:CustomScrollBar.KeepVerticalExpanded="True"
+                           styling:CustomScrollBar.LargeHorizontalScrollBar="True"
+                           styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                           Sorting="dg_Dinos_Sorting"
+                           PointerReleased="dg_Dinos_PointerReleased"
+                           Background="{StaticResource MyAcrylicBrush}"
+                           ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
+            <controls:DataGrid.Resources>
+                <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
+                    <Setter Property="UseSystemFocusVisuals" Value="False" />
+                    <Setter Property="FocusVisualMargin" Value="0" />
+                    <Setter Property="MinWidth" Value="20" />
+                    <Setter Property="Width" Value="20" />
+                </Style>
+                <MenuFlyout x:Key="RowMenu">
+                    <MenuFlyout.Items>
+                        <MenuFlyoutItem Text="Copy current dino ID to clipboard" Click="mfi_contextMenuGetID_Click" />
+                        <MenuFlyoutItem Text="Copy current dino JSON to clipboard" Click="mfi_contextMenuGetJson_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetCoords" Text="Copy current dino UE coords to clipboard" Click="mfi_contextMenuGetCoords_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToCryopod" Text="Go to cryopod item" Click="mfi_contextMenuGoToCryopod_Click" Visibility="Collapsed" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetCryopodCoords" Text="Copy current cryopod UE coords to clipboard" Click="mfi_contextMenuGetCryopodCoords_Click" Visibility="Collapsed" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetCryopodMapCoords" Text="Copy current cryopod GPS coords to clipboard" Click="mfi_contextMenuGetCryopodMapCoords_Click" Visibility="Collapsed" />
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetAllJson" Text="Copy selected dinos JSON to clipboard" Click="mfi_contextMenuGetAllJson_Click" Visibility="Collapsed" />
+                    </MenuFlyout.Items>
+                </MenuFlyout>
+            </controls:DataGrid.Resources>
+            <controls:DataGrid.RowStyle>
+                <Style TargetType="controls:DataGridRow" >
+                    <Setter Property="ContextFlyout" Value="{StaticResource RowMenu}" />
+                </Style>
+            </controls:DataGrid.RowStyle>
+        </controls:DataGrid>
+        
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddDinoFilterPopup">
+            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20" 
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="Include variables with more than 1000 values (not recommended)." IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter by:</TextBlock>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock x:Name="tb_DinoFilterName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_DinoFilterName" Placement="BottomEdgeAlignedLeft">
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter type:</TextBlock>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock x:Name="tb_DinoFilterType" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_DinoFilterType" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_FilterByExactMatch" Text="Exact match" Click="mfi_FilterByExactMatch_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByStartingWith" Text="Starting with" Click="mfi_FilterByStartingWith_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByEndingWith" Text="Ending with" Click="mfi_FilterByEndingWith_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByContaining" Text="Containing" Click="mfi_FilterByContaining_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByLowerThan" Text="Lower than" Click="mfi_FilterByLowerThan_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByGreaterThan" Text="Greater than" Click="mfi_FilterByGreaterThan_Click"></MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel x:Name="sp_FilterByExactMatch" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter value:</TextBlock>
+                            <DropDownButton MinWidth="120"  HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_DinoFilterValue" Placement="BottomEdgeAlignedLeft">
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel x:Name="sp_FilterByExactMatchSelection" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,10,0,0" Visibility="Collapsed">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Selected values:" TextWrapping="Wrap"/>
+                            <Border x:Name="b_dinoFilterValues" Visibility="Collapsed" BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" BorderThickness="1" Margin="0,5,0,0">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Width="480" MaxHeight="85">
+                                    <TextBlock x:Name="tb_dinoFilterValues" FontSize="14" VerticalAlignment="Center" Text="" MaxWidth="480" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel x:Name="sp_FilterByOther" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter value:</TextBlock>
+                            <TextBox x:Name="tb_FilterByOther" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,5,0,0" Text="" TextChanged="tb_FilterByOther_TextChanged"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button x:Name="btn_AddToDinoFilters" Content="Add" Width="90" Click="btn_AddToDinoFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="Cancel" Width="90" Click="btn_CloseDinoFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditDinoFiltersPopup">
+            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" MaxHeight="400">
+                            <StackPanel x:Name="sp_ExistingDinoFilters" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Remove all filters" Width="170" Click="btn_RemoveAllDinoFilters_Click" FontSize="18" />
+                            <Button Content="Close" Width="80" Click="btn_CloseEditDinoFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+        
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ModifyColumnsPopup">
+            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" MaxHeight="400">
+                            <StackPanel x:Name="sp_ExistingColumns" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Close" Width="80" Click="btn_CloseModifyColumnsPopup_Click" FontSize="18" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="FiltersPresetsPopup">
+            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current filters into preset:" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
+                            <Button x:Name="btn_SaveCurrentFilters" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock x:Name="tb_FiltersPresetNameAlreadyExists" FontSize="14" FontStyle="Italic" Text="This preset name already exists." Foreground="Red" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                            <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <DropDownButton.Flyout>
+                                <MenuFlyout x:Name="mf_ExistingFiltersPresets" Placement="BottomEdgeAlignedLeft">
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset" Text="Default preset" Click="mfi_DefaultFiltersPreset_Click"/>
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
+                            <Button x:Name="btn_LoadFiltersPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveFiltersPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock x:Name="tb_FiltersPresetHasBeenLoaded" FontSize="14" FontStyle="Italic" Text="Filters preset has been loaded." Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Close" Width="80" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+        
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ColumnsPresetsPopup">
+            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current columns into preset:" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBox x:Name="tb_ColumnsPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_ColumnsPresetName_TextChanged"/>
+                            <Button x:Name="btn_SaveCurrentColumns" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock x:Name="tb_ColumnsPresetNameAlreadyExists" FontSize="14" FontStyle="Italic" Text="This preset name already exists." Foreground="Red" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                            <TextBlock x:Name="tb_ExistingColumnsPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <DropDownButton.Flyout>
+                                <MenuFlyout x:Name="mf_ExistingColumnsPresets" Placement="BottomEdgeAlignedLeft">
+                                    <MenuFlyoutItem x:Name="mfi_DefaultColumnsPreset" Text="Default preset" Click="mfi_DefaultColumnsPreset_Click"/>
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
+                            <Button x:Name="btn_LoadColumnsPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveColumnsPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock x:Name="tb_ColumnsPresetHasBeenLoaded" FontSize="14" FontStyle="Italic" Text="Columns preset has been loaded." Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Close" Width="80" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+    </Grid>
+</Page>

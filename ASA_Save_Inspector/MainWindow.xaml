@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="ASA_Save_Inspector.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ASA_Save_Inspector"
+    xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winuiex="using:WinUIEx"
+    mc:Ignorable="d"
+    Title="ASA Save Inspector"
+    x:Name="w_MainWindow"
+    SizeChanged="w_MainWindow_SizeChanged"
+    Closed="w_MainWindow_Closed">
+
+    <Window.SystemBackdrop>
+        <local:BlurredBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid x:Name="gr_MainWindow" Background="{StaticResource MyAcrylicBrushDarker}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Popup VerticalOffset="48" HorizontalOffset="0" x:Name="PopupNotification">
+            <Popup.Resources>
+                <Storyboard x:Name="FadeInStoryboard">
+                    <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="b_popupNotification">
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="0" />
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="1" />
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+                <Storyboard x:Name="FadeOutStoryboard">
+                    <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="b_popupNotification">
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="1" />
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="0" />
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+            </Popup.Resources>
+            <Border x:Name="b_popupNotification" Opacity="0" Width="{Binding ElementName=w_MainWindow, Path=WindowWidth, Mode=TwoWay}">
+                <Border x:Name="b_innerPopupNotification" Background="DarkGreen"
+                        MinWidth="100"
+                        Height="Auto"
+                        Padding="10"
+                        Margin="10"
+                        BorderBrush="Transparent"
+                        BorderThickness="2"
+                        CornerRadius="4"
+                        HorizontalAlignment="Right">
+                    <TextBlock x:Name="tb_popupNotificationMsg" Text="Message" TextWrapping="WrapWholeWords" FontSize="16" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="52" HorizontalOffset="0" x:Name="MainWindowPopup">
+            <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Width="{Binding ElementName=w_MainWindow, Path=WindowWidth, Mode=TwoWay}"
+                        Height="{Binding ElementName=w_MainWindow, Path=WindowHeight, Mode=TwoWay}"
+                        BorderThickness="2"
+                        CornerRadius="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="tb_popupTitle" Grid.Row="0" Text="Popup" TextWrapping="WrapWholeWords" FontSize="24" Margin="10,10,0,0"/>
+                    <Border Grid.Row="1"
+                                BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                                Background="{StaticResource MyAcrylicBrush}"
+                                BorderThickness="1"
+                                Margin="10">
+                        <ScrollViewer x:Name="sv_popupDetails">
+                            <TextBlock x:Name="tb_popupDetails" TextWrapping="WrapWholeWords" FontSize="16" Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="tb_popupDetails_SizeChanged"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+        </Popup>
+        
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
+                <ColumnDefinition x:Name="IconColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="TitleColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="LeftDragColumn" Width="*"/>
+                <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/>
+            </Grid.ColumnDefinitions>
+            <Image x:Name="TitleBarIcon" Source="ms-appx:///Assets/ASILogo.png" Grid.Column="1" Width="44" Height="44" Margin="8,0,4,0"/>
+            <TextBlock x:Name="TitleBarTextBlock" Text="ASA Save Inspector" Style="{StaticResource CaptionTextBlockStyle}" FontSize="14" Grid.Column="2" VerticalAlignment="Center">
+            </TextBlock>
+        </Grid>
+
+        <NavigationView x:Name="NavView" Grid.Row="1" IsBackButtonVisible="Collapsed" IsSettingsVisible="False" PaneDisplayMode="Auto" OpenPaneLength="160"
+                        Loaded="NavView_Loaded"
+                        ItemInvoked="NavView_ItemInvoked"
+                        IsBackEnabled="False"
+                        ShoulderNavigationEnabled="Never">
+            <NavigationView.MenuItems>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Settings" Tag="ASA_Save_Inspector.Pages.SettingsPage" Content="Settings" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/SettingsIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_PlayerPawns" Tag="ASA_Save_Inspector.Pages.PlayerPawnsPage" Content="Pawns" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/PlayerPawnsIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Dinos" Tag="ASA_Save_Inspector.Pages.DinosPage" Content="Dinos" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/DinoIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Structures" Tag="ASA_Save_Inspector.Pages.StructuresPage" Content="Structures" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/StructureIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Items" Tag="ASA_Save_Inspector.Pages.ItemsPage" Content="Items" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/ItemIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Players" Tag="ASA_Save_Inspector.Pages.PlayersPage" Content="Players" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/PlayersIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Tribes" Tag="ASA_Save_Inspector.Pages.TribesPage" Content="Tribes" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/TribesIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+            </NavigationView.MenuItems>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Other" Tag="ASA_Save_Inspector.Pages.OtherPage" Content="Other" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/OtherIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="nvi_About" Tag="ASA_Save_Inspector.Pages.AboutPage" Content="About" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/AboutIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+            <NavigationView.Content>
+                <Frame x:Name="ContentFrame" IsTabStop="True" NavigationFailed="ContentFrame_NavigationFailed" IsNavigationStackEnabled="False"/>
+            </NavigationView.Content>
+        </NavigationView>
+    </Grid>
+</Window>

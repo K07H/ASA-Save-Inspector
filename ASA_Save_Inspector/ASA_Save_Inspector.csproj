@@ -1,0 +1,183 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>ASA_Save_Inspector</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <PublishProfile>win-$(Platform).pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+	<LangVersion>latest</LangVersion>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <TrimMode>full</TrimMode>
+    <PublishTrimmed>true</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="Assets\Aberration_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Astraeos_Minimap_Margin.jpg" />
+    <Content Remove="Assets\ClubArk_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Extinction_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Ragnarok_Minimap_Margin.jpg" />
+    <Content Remove="Assets\RedCircle.svg" />
+    <Content Remove="Assets\ScorchedEarth_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Svartalfheim_Minimap_Margin.jpg" />
+    <Content Remove="Assets\TheCenter_Minimap_Margin.jpg" />
+    <Content Remove="Assets\TheIsland_Minimap_Margin.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="ExtraWindows\Minimap.xaml" />
+    <None Remove="Pages\AboutPage.xaml" />
+    <None Remove="Pages\DinosPage.xaml" />
+    <None Remove="Pages\HomePage.xaml" />
+    <None Remove="Pages\ItemsPage.xaml" />
+    <None Remove="Pages\OtherPage.xaml" />
+    <None Remove="Pages\PlayersPage.xaml" />
+    <None Remove="Pages\SettingsPage.xaml" />
+    <None Remove="Pages\StructuresPage.xaml" />
+    <None Remove="Pages\TribesPage.xaml" />
+    <None Remove="runtimeconfig.template.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\ASILogo.png" />
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="runtimeconfig.template.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Aberration_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\Astraeos_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\ClubArk_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\Extinction_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\Ragnarok_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\RedCircle.svg" />
+    <EmbeddedResource Include="Assets\ScorchedEarth_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\Svartalfheim_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\TheCenter_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\TheIsland_Minimap_Margin.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	<PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
+    <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.2" />
+    <PackageReference Include="Mapsui.WinUI" Version="5.0.0-beta.20" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4948" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+    <PackageReference Include="System.Text.Json" Version="9.0.8" />
+    <PackageReference Include="WinUIEx" Version="2.6.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="Assets\asi_export_all.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Assets\ASILogo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <Page Update="Pages\TribesPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Pages\PlayersPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Pages\OtherPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\HomePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\AboutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\PlayerPawnsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\ItemsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\StructuresPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\DinosPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Minimap\Minimap.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>False</AppxPackageSigningEnabled>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Never</AppxBundle>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
+    <PackageIcon>ASILogo.png</PackageIcon>
+    <Copyright>Copyright (c) 2025 LC-IT S. - All rights reserved</Copyright>
+  </PropertyGroup>
+</Project>
