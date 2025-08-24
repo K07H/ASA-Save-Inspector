@@ -23,6 +23,9 @@ Double click on the executable to launch ASA Save Inspector.
 3. Load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
+## Feature requests and bug reports
+You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
+
 ## Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
