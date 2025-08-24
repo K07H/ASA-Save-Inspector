@@ -14,14 +14,16 @@ This application is still under development, more features will be added in the 
 https://www.youtube.com/watch?v=LOZbUW5rd0A
 
 ## Installation
-Download the latest release archive here: https://github.com/K07H/ASA-Save-Inspector/releases
-
-You can choose x64, x86 or ARM-x64 (if you don't know which one to download, simply get the x64 one).
-Once the archive is downloaded, extract it. This will give you a folder containing the executable.
-Double click on the executable to launch ASA Save Inspector.
+1. Download and install the following two requirements:<br>
+[.NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)<br>
+[Python 3](https://www.python.org/downloads/)<br>
+2. Download the latest release archive here: https://github.com/K07H/ASA-Save-Inspector/releases<br>
+*You can choose x64, x86 or ARM-x64 (if you don't know which one to download, simply get the x64 one).*
+3. Once the archive is downloaded, extract it. This will give you a folder containing the executable.
+4. Double click on the executable to launch ASA Save Inspector.
 
 ## Quickstart
-1. Launch the application, then click on "Settings" in the left menu.
+1. Launch ASA Save Inspector, then click on "Settings" in the left menu.
 2. Configure "Python Setup".
 3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
