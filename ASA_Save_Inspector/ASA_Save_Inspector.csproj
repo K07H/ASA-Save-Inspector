@@ -179,5 +179,8 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025 LC-IT S. - All rights reserved</Copyright>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 </Project>
