@@ -1,7 +1,7 @@
 # ASA Save Inspector
 ASA Save Inspector (ASI) is an ARK Survival Ascended save file analyzer.
 
-ASI uses [Ark Parser](https://github.com/VincentHenauGithub/ark-save-parser) to extract data from the save file, and provides a modern graphical user interface to analyze the data.
+ASI uses [ArkParse](https://github.com/VincentHenauGithub/ark-save-parser) to extract data from the save file, and provides a modern graphical user interface to analyze the data.
 
 This application is still under development, more features will be added in the future.
 
