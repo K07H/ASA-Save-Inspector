@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ASA_Save_Inspector.Pages"
     xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:primitives="using:CommunityToolkit.WinUI.UI.Controls.Primitives"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
@@ -15,6 +16,93 @@
     SizeChanged="page_SizeChanged"
     x:Name="page_Structures">
 
+    <Page.Resources>
+        <Style x:Key="ASICustomDataGridHeaderStyle" TargetType="primitives:DataGridColumnHeader">
+            <Setter Property="Foreground" Value="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="SeparatorBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,0,4,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="primitives:DataGridColumnHeader">
+                        <Grid x:Name="ColumnHeaderRoot">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemAltHighColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemListLowColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemListMediumColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Unfocused"/>
+                                    <VisualState x:Name="Focused">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusVisual" Storyboard.TargetProperty="Opacity" To="1" Duration="0"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="SortStates">
+                                    <VisualState x:Name="Unsorted"/>
+                                    <VisualState x:Name="SortAscending">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SortIcon" Storyboard.TargetProperty="Opacity" Duration="0" To="1"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="SortDescending">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SortIcon" Storyboard.TargetProperty="Opacity" Duration="0" To="1"/>
+                                        </Storyboard>
+                                        <VisualState.Setters>
+                                            <Setter Target="SortIcon.Glyph" Value="&#xE74B;"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Rectangle x:Name="BackgroundRectangle" Stretch="Fill" Fill="{StaticResource SystemAltHighColor}" Grid.ColumnSpan="2"/>
+
+                            <Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition MinWidth="0" MaxWidth="1" Width="0"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                                <FontIcon Grid.Column="1" x:Name="SortIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE74A;" FontSize="12" Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" Visibility="Collapsed"/>
+                            </Grid>
+                            <Rectangle x:Name="VerticalSeparator" Grid.Column="1" Width="1" VerticalAlignment="Stretch" Fill="{TemplateBinding SeparatorBrush}" Visibility="{TemplateBinding SeparatorVisibility}"/>
+
+                            <Grid x:Name="FocusVisual" IsHitTestVisible="False" Opacity="0">
+                                <Rectangle x:Name="FocusVisualPrimary" Stroke="{StaticResource SystemControlFocusVisualPrimaryBrush}" StrokeThickness="2" Fill="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="FocusVisualSecondary" Stroke="{StaticResource SystemControlFocusVisualSecondaryBrush}" StrokeThickness="1" Fill="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False" Margin="2"/>
+                            </Grid>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
     <Grid x:Name="gr_Main">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -73,7 +161,7 @@
                            Sorting="dg_Structures_Sorting"
                            PointerReleased="dg_Structures_PointerReleased"
                            Background="{StaticResource MyAcrylicBrush}"
-                           ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
+                           ColumnHeaderStyle="{StaticResource local:ASICustomDataGridHeaderStyle}">
             <controls:DataGrid.Resources>
                 <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
                     <Setter Property="UseSystemFocusVisuals" Value="False" />
