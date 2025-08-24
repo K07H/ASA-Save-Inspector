@@ -23,7 +23,7 @@ Double click on the executable to launch ASA Save Inspector.
 ## Quickstart
 1. Launch the application, then click on "Settings" in the left menu.
 2. Configure "Python Setup".
-3. Load the "JSON Data".
+3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
 ## Feature requests and bug reports
