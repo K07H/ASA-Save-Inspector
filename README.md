@@ -1,4 +1,4 @@
-# ASA-Save-Inspector
+# ASA Save Inspector
 ASA Save Inspector (ASI) is an ARK Survival Ascended save file analyzer.
 This application is still under development, more features will be added in the future.
 
@@ -9,6 +9,8 @@ This application is still under development, more features will be added in the 
 
 ## Installation
 Download the latest release archive here: https://github.com/K07H/ASA-Save-Inspector/releases
+
+You can choose x64, x86 or ARM-x64 (if you don't know which one to download, simply get the x64 one).
 Once the archive is downloaded, extract it. This will give you a folder containing the executable.
 Double click on the executable to launch ASA Save Inspector.
 
