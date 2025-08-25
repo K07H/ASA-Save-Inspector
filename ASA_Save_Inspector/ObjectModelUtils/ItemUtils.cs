@@ -111,6 +111,60 @@ namespace ASA_Save_Inspector.ObjectModel
             return _owner;
         }
 
+        public DateTime? CreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(CreationTime); }
+            private set { }
+        }
+
+        public DateTime? LastAutoDurabilityDecreaseTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastAutoDurabilityDecreaseTime); }
+            private set { }
+        }
+
+        public DateTime? LastEnterStasisTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEnterStasisTime); }
+            private set { }
+        }
+
+        public DateTime? LastSpoilingTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastSpoilingTime); }
+            private set { }
+        }
+
+        public DateTime? LastTorchDurabilityLossTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTorchDurabilityLossTime); }
+            private set { }
+        }
+
+        public DateTime? LastUseTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUseTime); }
+            private set { }
+        }
+
+        public DateTime? NextCraftCompletionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextCraftCompletionTime); }
+            private set { }
+        }
+
+        public DateTime? NextSpoilingTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextSpoilingTime); }
+            private set { }
+        }
+
+        public DateTime? OriginalCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(OriginalCreationTime); }
+            private set { }
+        }
+
         public string? ContainerType
         {
             get

@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
@@ -46,6 +47,32 @@ namespace ASA_Save_Inspector.Pages
 #if DEBUG
             MainWindow.TestAddPointsMinimap();
 #endif
+        }
+
+        private void btn_ForceArkParseUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            if (Directory.Exists(Utils.ArkParseFolder()))
+            {
+                try
+                {
+                    Directory.Delete(Utils.ArkParseFolder(), true);
+                    if (MainWindow._mainWindow != null)
+                        MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                        {
+                            if (MainWindow._mainWindow != null)
+                            {
+                                if (MainWindow._mainWindow._navView != null)
+                                    MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnSettings;
+                                MainWindow._mainWindow.NavView_Navigate(typeof(SettingsPage), new EntranceNavigationTransitionInfo());
+                            }
+                        });
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"Failed to delete ArkParse folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    MainWindow.ShowToast("Failed to reinstall ArkParse, please check logs.");
+                }
+            }
         }
     }
 }

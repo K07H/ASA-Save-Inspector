@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -266,7 +267,7 @@ namespace ASA_Save_Inspector
             if (_version == null)
                 _version = typeof(MainWindow).Assembly.GetName().Version;
             if (_version != null)
-                return $"{_version.Major}.{_version.MajorRevision}";
+                return $"{_version.Major.ToString(CultureInfo.InvariantCulture)}.{_version.Build.ToString(CultureInfo.InvariantCulture)}";
             return "1.0";
         }
 
@@ -661,6 +662,16 @@ namespace ASA_Save_Inspector
                 }
             }
             return new Tuple<double, double, double>(0.0d, 0.0d, 0.0d);
+        }
+
+        public static DateTime? GetDateTimeFromGameTime(double? gameTime)
+        {
+            DateTime? ret = null;
+            if (gameTime != null && gameTime.HasValue && SettingsPage._saveFileData != null &&
+                SettingsPage._saveFileData.SaveDateTime != null && SettingsPage._saveFileData.SaveDateTime.HasValue &&
+                SettingsPage._saveFileData.GameTime != null && SettingsPage._saveFileData.GameTime.HasValue)
+                ret = SettingsPage._saveFileData.SaveDateTime.Value.AddSeconds(gameTime.Value - SettingsPage._saveFileData.GameTime.Value);
+            return ret;
         }
     }
 

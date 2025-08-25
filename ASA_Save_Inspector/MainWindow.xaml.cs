@@ -34,6 +34,7 @@ namespace ASA_Save_Inspector
         public AppWindow? _appWindow = null;
         public static MainWindow? _mainWindow = null;
         public NavigationView? _navView = null;
+        public NavigationViewItem? _navBtnSettings = null;
         public NavigationViewItem? _navBtnItems = null;
         public NavigationViewItem? _navBtnPawns = null;
         public NavigationViewItem? _navBtnDinos = null;
@@ -69,6 +70,7 @@ namespace ASA_Save_Inspector
 
             this._appWindow = this.AppWindow;
             this._navView = NavView;
+            this._navBtnSettings = nvi_Settings;
             this._navBtnItems = nvi_Items;
             this._navBtnPawns = nvi_PlayerPawns;
             this._navBtnDinos = nvi_Dinos;

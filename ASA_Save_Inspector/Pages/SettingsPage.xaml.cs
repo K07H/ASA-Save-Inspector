@@ -82,6 +82,13 @@ namespace ASA_Save_Inspector.Pages
         };
     }
 
+    public class SaveFileInfo
+    {
+        public string? MapName { get; set; } = null;
+        public double? GameTime { get; set; } = null;
+        public DateTime? SaveDateTime { get; set; } = null;
+    }
+
     public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     {
         public enum ASILanguage
@@ -110,6 +117,7 @@ namespace ASA_Save_Inspector.Pages
         public static List<Structure>? _structuresData = null;
         public static List<Player>? _playersData = null;
         public static List<Tribe>? _tribesData = null;
+        public static SaveFileInfo? _saveFileData = null;
 
         public static string? _currentlyLoadedMapName = null;
 
@@ -516,7 +524,7 @@ namespace ASA_Save_Inspector.Pages
             }
             if (jsonDataFolder != null && !string.IsNullOrWhiteSpace(jsonDataFolder.Path) && Directory.Exists(jsonDataFolder.Path))
             {
-                Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", jsonDataFolder);
+                //Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", jsonDataFolder);
                 Dictionary<string, bool> foundFiles = new Dictionary<string, bool>();
                 foreach (string validFile in _validJsonFileNames)
                     foundFiles.Add(validFile, false);
@@ -839,6 +847,33 @@ namespace ASA_Save_Inspector.Pages
             _currentlyLoadedMapName = _selectedJsonExportProfile.MapName;
             if (refreshMinimap && MainWindow._minimap != null)
                 MainWindow.OpenMinimap();
+
+            string saveInfoFilePath = Path.Combine(folderPath, "save_info.json");
+            if (!File.Exists(saveInfoFilePath))
+            {
+                Logger.Instance.Log($"Could not load savefile info JSON data (file not found at \"{saveInfoFilePath}\").", Logger.LogLevel.WARNING);
+                hasErrors = true;
+            }
+            else
+            {
+                try
+                {
+                    string json = File.ReadAllText(saveInfoFilePath, Encoding.UTF8);
+                    _saveFileData = JsonSerializer.Deserialize<SaveFileInfo>(json);
+                    if (_saveFileData != null)
+                    {
+                        DateTime dt = DateTime.Now;
+                        if (File.Exists(_selectedJsonExportProfile.SaveFilePath))
+                            dt = new FileInfo(_selectedJsonExportProfile.SaveFilePath).LastWriteTime;
+                        _saveFileData.SaveDateTime = dt;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"Failed to load savefile info JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    hasErrors = true;
+                }
+            }
 
             if (_selectedJsonExportProfile.ExtractedDinos)
             {

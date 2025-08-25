@@ -1,4 +1,5 @@
 ﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -85,6 +86,30 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? MapCoords
         {
             get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            private set { }
+        }
+
+        public DateTime? LastEnterStasisTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEnterStasisTime); }
+            private set { }
+        }
+
+        public DateTime? LastTimeUpdatedCharacterStatusComponentReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeUpdatedCharacterStatusComponent); }
+            private set { }
+        }
+
+        public DateTime? OriginalCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(OriginalCreationTime); }
+            private set { }
+        }
+
+        public DateTime? SavedLastTimeHadControllerReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(SavedLastTimeHadController); }
             private set { }
         }
 

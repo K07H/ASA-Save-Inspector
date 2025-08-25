@@ -238,7 +238,7 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? ShortName { get; set; }
         public string? StatValues { get; set; }
         public double? StoredXP { get; set; }
-        public TypeIntValue? SubmarineStructure { get; set; }
+        public TypeObjectValue? SubmarineStructure { get; set; }
         public bool? SupportsConsumablesAutoTransfer { get; set; }
         public int? TamedAggressionLevel { get; set; }
         public int? TamedAITargetingRange { get; set; }

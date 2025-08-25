@@ -352,6 +352,219 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? BabyNextCuddleTimeReadble
+        {
+            get { return Utils.GetDateTimeFromGameTime(BabyNextCuddleTime); }
+            private set { }
+        }
+
+        public DateTime? BiteCorpseTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(BiteCorpseTime); }
+            private set { }
+        }
+
+        public DateTime? CorpseDestructionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(CorpseDestructionTime); }
+            private set { }
+        }
+
+        public DateTime? CorpseDestructionTimerReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(CorpseDestructionTimer); }
+            private set { }
+        }
+
+        public DateTime? DinoDownloadedAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(DinoDownloadedAtTime); }
+            private set { }
+        }
+
+        public DateTime? FriendModeEndTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(FriendModeEndTime); }
+            private set { }
+        }
+
+        public DateTime? LastEggSpawnChanceTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEggSpawnChanceTime); }
+            private set { }
+        }
+
+        public DateTime? LastEnterStasisTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEnterStasisTime); }
+            private set { }
+        }
+
+        public DateTime? LastFeatherPluckTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastFeatherPluckTime); }
+            private set { }
+        }
+
+        public DateTime? LastMilkProductionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastMilkProductionTime); }
+            private set { }
+        }
+
+        public DateTime? LastReincarnateTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastReincarnateTime); }
+            private set { }
+        }
+
+        public DateTime? LastSkinnedTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastSkinnedTime); }
+            private set { }
+        }
+
+        public DateTime? LastTameConsumedFoodTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTameConsumedFoodTime); }
+            private set { }
+        }
+
+        public DateTime? LastTimeFinishedTrainingReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeFinishedTraining); }
+            private set { }
+        }
+
+        public DateTime? LastTimeHarvestedReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeHarvested); }
+            private set { }
+        }
+
+        public DateTime? LastTimeShearedReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeSheared); }
+            private set { }
+        }
+
+        public DateTime? LastTimeSwimming_AlgaeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeSwimming_Algae); }
+            private set { }
+        }
+
+        public DateTime? LastTimeUpdatedCharacterStatusComponentReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeUpdatedCharacterStatusComponent); }
+            private set { }
+        }
+
+        public DateTime? LastTimeUpdatedCorpseDestructionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeUpdatedCorpseDestructionTime); }
+            private set { }
+        }
+
+        private CustomList<DateTime?>? _lastTimeUsedSkillsArrayReadable = null;
+        public CustomList<DateTime?>? LastTimeUsedSkillsArrayReadable
+        {
+            get
+            {
+                if (_lastTimeUsedSkillsArrayReadable != null)
+                    return _lastTimeUsedSkillsArrayReadable;
+                _lastTimeUsedSkillsArrayReadable = new CustomList<DateTime?>();
+                if (LastTimeUsedSkillsArray != null && LastTimeUsedSkillsArray.Count > 0)
+                    foreach (var lastTimeUsedSkill in LastTimeUsedSkillsArray)
+                    {
+                        if (lastTimeUsedSkill == null)
+                            _lastTimeUsedSkillsArrayReadable.Add(null);
+                        else
+                            _lastTimeUsedSkillsArrayReadable.Add(Utils.GetDateTimeFromGameTime(lastTimeUsedSkill));
+                    }
+                return _lastTimeUsedSkillsArrayReadable;
+            }
+            private set { }
+        }
+
+        public DateTime? LastUnstasisStructureTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUnstasisStructureTime); }
+            private set { }
+        }
+
+        public DateTime? LastUpdatedBabyAgeAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUpdatedBabyAgeAtTime); }
+            private set { }
+        }
+
+        public DateTime? LastUpdatedGestationAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUpdatedGestationAtTime); }
+            private set { }
+        }
+
+        public DateTime? LastUpdatedMatingAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUpdatedMatingAtTime); }
+            private set { }
+        }
+
+        public DateTime? LastUpkeepNetworkTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastUpkeepNetworkTime); }
+            private set { }
+        }
+
+        public DateTime? LastWildNestSpawnTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastWildNestSpawnTime); }
+            private set { }
+        }
+
+        public DateTime? NextAllowedMatingTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextAllowedMatingTime); }
+            private set { }
+        }
+
+        public DateTime? OriginalCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(OriginalCreationTime); }
+            private set { }
+        }
+
+        public DateTime? TamedAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(TamedAtTime); }
+            private set { }
+        }
+
+        public DateTime? TamingLastFoodConsumptionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(TamingLastFoodConsumptionTime); }
+            private set { }
+        }
+
+        public DateTime? TimeOfLastFeedingReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(TimeOfLastFeeding); }
+            private set { }
+        }
+
+        public DateTime? TimeOfLastHarvestReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(TimeOfLastHarvest); }
+            private set { }
+        }
+
+        public DateTime? UntamedPoopTimeCacheReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(UntamedPoopTimeCache); }
+            private set { }
+        }
+
         public string GetDinoID() => $"{(DinoID1 != null && DinoID1.HasValue ? DinoID1.Value.ToString(CultureInfo.InvariantCulture) : "0")}{(DinoID2 != null && DinoID2.HasValue ? DinoID2.Value.ToString(CultureInfo.InvariantCulture) : "0")}";
 
         private KeyValuePair<double, double>? _gpsCoords = null;

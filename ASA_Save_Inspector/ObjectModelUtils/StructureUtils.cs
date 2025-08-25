@@ -126,6 +126,138 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? ActivatedAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(ActivatedAtTime); }
+            private set { }
+        }
+
+        public DateTime? CropRefreshTimeCacheReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(CropRefreshTimeCache); }
+            private set { }
+        }
+
+        public DateTime? CurrentFuelTimeCacheReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(CurrentFuelTimeCache); }
+            private set { }
+        }
+
+        public DateTime? LastActivatedTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastActivatedTime); }
+            private set { }
+        }
+
+        public DateTime? LastAutoDurabilityDecreaseTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastAutoDurabilityDecreaseTime); }
+            private set { }
+        }
+
+        public DateTime? LastCheckedFuelTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastCheckedFuelTime); }
+            private set { }
+        }
+
+        public DateTime? LastCropRefreshTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastCropRefreshTime); }
+            private set { }
+        }
+
+        public DateTime? LastDamagedAtTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastDamagedAtTime); }
+            private set { }
+        }
+
+        public DateTime? LastDeactivatedTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastDeactivatedTime); }
+            private set { }
+        }
+
+        public DateTime? LastEnterStasisTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEnterStasisTime); }
+            private set { }
+        }
+
+        public DateTime? LastFireTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastFireTime); }
+            private set { }
+        }
+
+        public DateTime? LastInAllyRangeTimeSerializedReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastInAllyRangeTimeSerialized); }
+            private set { }
+        }
+
+        public DateTime? LastInventoryRefreshTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastInventoryRefreshTime); }
+            private set { }
+        }
+
+        public DateTime? LastLongReloadStartTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastLongReloadStartTime); }
+            private set { }
+        }
+
+        public DateTime? NetDestructionTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NetDestructionTime); }
+            private set { }
+        }
+
+        public DateTime? NextAllowedUseTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextAllowedUseTime); }
+            private set { }
+        }
+
+        public DateTime? NextBoostActivationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextBoostActivationTime); }
+            private set { }
+        }
+
+        public DateTime? NextBoostDeactivationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NextBoostDeactivationTime); }
+            private set { }
+        }
+
+        public DateTime? OriginalCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(OriginalCreationTime); }
+            private set { }
+        }
+
+        public DateTime? OriginalRespecStartTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(OriginalRespecStartTime); }
+            private set { }
+        }
+
+        public DateTime? PreventCryopodDeploymentTilTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(PreventCryopodDeploymentTilTime); }
+            private set { }
+        }
+
+        public DateTime? timeStateStartedReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(timeStateStarted); }
+            private set { }
+        }
+
         private KeyValuePair<double, double>? _gpsCoords = null;
         public KeyValuePair<double, double> GetGPSCoords()
         {

@@ -1,4 +1,5 @@
 ﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -124,6 +125,18 @@ namespace ASA_Save_Inspector.ObjectModel
                 }
                 return _tribeName;
             }
+            private set { }
+        }
+
+        public DateTime? LastTimeDiedToEnemyTeamReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeDiedToEnemyTeam); }
+            private set { }
+        }
+
+        public DateTime? LoginTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LoginTime); }
             private set { }
         }
 

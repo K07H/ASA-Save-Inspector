@@ -58,6 +58,12 @@ if len(sys.argv) > 8:
     end = time.time()
     print('JSON API initialized (time spent: ' + human_readable_time(end - start) + ').', flush=True)
 
+    print('Exporting savefile info...', flush=True)
+    start = time.time()
+    json_api.export_save_file_info(export_folder_path=export_path)
+    end = time.time()
+    print('Savefile info successfully exported (time spent: ' + human_readable_time(end - start) + ').', flush=True)
+
     if export_dinos:
         print('Exporting dinos...', flush=True)
         start = time.time()
