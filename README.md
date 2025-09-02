@@ -34,5 +34,8 @@ You can report bugs or ask for new features in the issues tab here: https://gith
 ## Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
+## Donating
+Donations are not required, but highly appreciated: https://paypal.me/osubmarin
+
 ## Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
