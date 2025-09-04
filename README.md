@@ -75,7 +75,7 @@ The filters presets order in the group does not matter. The result would be exac
 When you create a filters preset, it's a good practice to make sure all filters inside your preset have the same operator (either "OR", or "AND").<br>
 This will help you later on when using groups, because having different operators inside filters presets can quickly produce ambiguous results when you start combining your filters presets in a group (unless you understand exactly what's happening during filtering and grouping phases).
 
-As you can see in the grouping example I gave above:
+As you can see in the grouping example I gave above (at the beginning of "Groups" paragraph):
 - Filters preset 1 only contains "OR" filters.
 - Filters preset 2 only contains "AND" filters.
 - Filters preset 3 only contains "AND" filters.
