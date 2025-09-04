@@ -68,15 +68,6 @@ class PlayersAndTribesParsing:
     tribes: dict[int, ArkTribe] = {}
     tribe_to_player_map: dict[int, list[ArkPlayer]] = {}
 
-def get_last_none_before(data_size: int, nones: list[int], pos: int = None):
-    if pos is None:
-        pos = data_size - 1
-    for cnt in range(len(nones) - 1, -1, -1):
-        if nones[cnt] < pos:
-            return nones[cnt]
-
-    return None
-
 def find_last_none_before(data: ArkBinaryParser, end_pos: int, pattern: bytes, adjust_offset: int = -1) -> Optional[int]:
     # adjust offset is a temporary fix for off-by-one errors which i still have to figure out
     original_position = data.get_position()
@@ -725,8 +716,8 @@ if __name__ == '__main__':
         print('USAGE: asasaveinspector_api.py [ASA_Save_File_Path] [JSON_Export_Folder_Path] [Export_Dinos] [Export_Pawns] [Export_Items] [Export_Structures] [Export_Players] [Export_Tribes]', flush=True)
         sys.exit(2) # Exit with command line syntax error code
 
-    save_path: Path = Path(sys.argv[1]) # Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\TheIsland\\TheIsland_WP.ark")
-    export_path: Path = Path(sys.argv[2]) # Path.cwd() / "json_exports"
+    save_path: Path = Path(sys.argv[1])
+    export_path: Path = Path(sys.argv[2])
     export_dinos: bool = sys.argv[3] == '1'
     export_pawns: bool = sys.argv[4] == '1'
     export_items: bool = sys.argv[5] == '1'
@@ -735,7 +726,7 @@ if __name__ == '__main__':
     export_tribes: bool = sys.argv[8] == '1'
 
     '''
-    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\TheIsland\\TheIsland_WP.ark")
+    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Astraeos\\Astraeos_WP.ark")
     export_path: Path = Path.cwd() / "json_exports"
     export_dinos: bool = True
     export_pawns: bool = True
