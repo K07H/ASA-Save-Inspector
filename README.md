@@ -65,7 +65,7 @@ Now I can combine these various presets using grouping. For example if I have th
 - AND "Filters preset 2".
 - OR "Filters preset 3".
 
-ASI will display all tamed dinos having a level greater than 216 or a base food stat of 35, OR any dino from the tribe "A Great Tribe" (no matter their level of base food stat).<br>
+ASI will display all tamed dinos having a level greater than 216 or a base food stat of 35, OR any dino from the tribe "A Great Tribe" (no matter their level or base food stat).<br>
 The filters presets order in the group does not matter. The result would be exactly the same if I had the following filters presets in the group:
 - AND "Filters preset 2".
 - OR "Filters preset 3".
