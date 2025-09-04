@@ -726,7 +726,7 @@ if __name__ == '__main__':
     export_tribes: bool = sys.argv[8] == '1'
 
     '''
-    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Astraeos\\Astraeos_WP.ark")
+    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Ragnarok\\Ragnarok_WP.ark")
     export_path: Path = Path.cwd() / "json_exports"
     export_dinos: bool = True
     export_pawns: bool = True
@@ -761,6 +761,7 @@ if __name__ == '__main__':
     arkparse_save.custom_value_GameModeCustomBytes = save_connection.get_custom_value("GameModeCustomBytes")
     arkparse_save.custom_value_SaveHeader = save_connection.get_custom_value("SaveHeader")
     arkparse_save.custom_value_ActorTransforms = save_connection.get_custom_value("ActorTransforms")
+    arkparse_save.save_connection = save_connection
     arkparse_save.initialize()
 
     end = time.time()
@@ -854,7 +855,7 @@ if __name__ == '__main__':
         pawn_objects += processes_results_b[i]["pawns"]
         for pawn_object in processes_results_b[i]["pawns"]:
             if not pawn_object is None:
-                pawns += pawn_to_json(pawn_object)
+                pawns.append(pawn_to_json(pawn_object))
 
     end = time.time()
     print('Parsed game objects (time spent: ' + human_readable_time(end - start) + ').', flush=True)
