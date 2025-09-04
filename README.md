@@ -83,12 +83,12 @@ As you can see in the grouping example I gave above:
 This makes it easy to use grouping, because our grouping syntax will produce an easily predictable result.
 
 For example, if we have the following grouping syntax:<br>
-FiltersPreset(x AND y)  OR  FiltersPreset(c)  AND  FiltersPreset(a OR b)  OR  FiltersPreset(j AND k)<br>
+AND FiltersPreset(x AND y)  OR  FiltersPreset(c)  AND  FiltersPreset(a OR b)  OR  FiltersPreset(j AND k)<br>
 this will produce the following easily predictable result:<br>
 Items = (x AND y AND a AND b) OR (c) OR (j AND k)<br>
 
 Whereas if you start mixing operators inside filters presets, this can lead to confusing results when grouping. For example:<br>
-FiltersPreset(x AND y OR z)  OR  FiltersPreset(i AND j OR k)  AND  FiltersPreset(a OR b AND c)<br>
+AND FiltersPreset(x AND y OR z)  OR  FiltersPreset(i AND j OR k)  AND  FiltersPreset(a OR b AND c)<br>
 will produce the following result:<br>
 Items = (x AND y OR z AND a OR b AND c) OR (i AND j OR k)<br>
 As you can see, this result is harder to read, and harder to make sense of.<br>
@@ -101,7 +101,7 @@ For example, you start by creating your AND filters presets:
 - Filters preset 3: AND x
 
 Then you create a group which will "OR" your various filters presets:<br>
-FiltersPreset1  OR  FiltersPreset2  OR  FiltersPreset3<br>
+OR  FiltersPreset1  OR  FiltersPreset2  OR  FiltersPreset3<br>
 This will produce the following result:<br>
 (a AND b AND c) OR (j AND k) OR (x)<br>
 
