@@ -15,8 +15,8 @@
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <TrimMode>full</TrimMode>
-    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
     <Content Remove="Assets\Aberration_Minimap_Margin.jpg" />
