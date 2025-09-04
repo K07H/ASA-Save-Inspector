@@ -49,8 +49,8 @@ The filters order does not matter. The result would be exactly the same if I had
 Currently set filters can be saved into a preset if you plan to use them later, or if you want to use groups (see below).
 
 ### B) Groups
-Groups are divided into 2 categories: "OR" and "AND".
-A group is composed of 1 or more filters preset.
+Groups are divided into 2 categories: "OR" and "AND".<br>
+A group is composed of 1 or more filters preset.<br>
 When grouping happens, ASI will:
 1. select the items that matches every "AND" group, this give the first subset.
 2. happend to the subset obtained at step 1 all the items that matches each "OR" group.
