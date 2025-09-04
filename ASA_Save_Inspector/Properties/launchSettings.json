@@ -1,10 +1,12 @@
 {
   "profiles": {
     "ASA_Save_Inspector (Package)": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "commandLineArgs": ""
     },
     "ASA_Save_Inspector (Unpackaged)": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": ""
     }
   }
 }

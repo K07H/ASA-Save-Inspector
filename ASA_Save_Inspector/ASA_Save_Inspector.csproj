@@ -96,6 +96,9 @@
     <Content Update="Assets\asi_export_all.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Update="Assets\asi_export_fast.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Update="Assets\ASILogo.png">
@@ -179,8 +182,8 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
-    <FileVersion>1.0.4.0</FileVersion>
-    <Version>1.0.4</Version>
+    <AssemblyVersion>1.0.5.0</AssemblyVersion>
+    <FileVersion>1.0.5.0</FileVersion>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 </Project>

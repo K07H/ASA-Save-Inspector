@@ -10,7 +10,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace ASA_Save_Inspector
@@ -19,6 +21,9 @@ namespace ASA_Save_Inspector
     {
         private static Version? _version = null;
 
+        public static readonly string ASILatestVersionUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest";
+        public static readonly string ASIArchiveUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest/download/ASA_Save_Inspector_vVERSIONSTR_WinX64.zip";
+        public static readonly string ASIVersionFileUrl = "https://raw.githubusercontent.com/K07H/ASA-Save-Inspector/refs/heads/main/Version.txt";
         public static readonly string ArkParseArchiveUrl = "https://github.com/K07H/ark-save-parser/archive/refs/heads/main.zip";
         public static readonly string ArkParseProjectUrl = "https://github.com/K07H/ark-save-parser/raw/refs/heads/main/pyproject.toml";
 
@@ -28,6 +33,7 @@ namespace ASA_Save_Inspector
         public static string PythonVenvFolder() => Path.Combine(GetDataDir(), "python_venv");
         public static string ArkParseFolder() => Path.Combine(GetDataDir(), "ark-save-parser-main");
         public static string JsonExportsFolder() => Path.Combine(GetDataDir(), "json_exports");
+        public static string GetTempDir() => Path.Combine(GetDataDir(), "temp");
 
         public static string PythonFilePathFromVenv() => Path.Combine(PythonVenvFolder(), "Scripts", "python.exe");
         public static string ActivatePythonVenvFilePath() => Path.Combine(PythonVenvFolder(), "Scripts", "activate.bat");
@@ -37,23 +43,32 @@ namespace ASA_Save_Inspector
         public static string MapsInfoFilePath() => Path.Combine(GetDataDir(), "maps_info.json");
         public static string SettingsFilePath() => Path.Combine(GetDataDir(), "settings.json");
         public static string DinoFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "dino_filters.json");
+        public static string DinoGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_groups.json");
         public static string DinoColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_columns.json");
         public static string PlayerPawnFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_filters.json");
+        public static string PlayerPawnGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_groups.json");
         public static string PlayerPawnColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_columns.json");
         public static string StructureFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "structure_filters.json");
+        public static string StructureGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "structure_groups.json");
         public static string StructureColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "structure_columns.json");
         public static string ItemFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "item_filters.json");
+        public static string ItemGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "item_groups.json");
         public static string ItemColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "item_columns.json");
         public static string PlayerFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "player_filters.json");
+        public static string PlayerGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "player_groups.json");
         public static string PlayerColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "player_columns.json");
         public static string TribeFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_filters.json");
+        public static string TribeGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_groups.json");
         public static string TribeColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_columns.json");
         public static string ExportProfilesFilePath() => Path.Combine(GetDataDir(), "export_profiles.json");
         public static string ArkParseProjectFilePath() => Path.Combine(ArkParseFolder(), "pyproject.toml");
         public static string ArkParseJsonApiFilePath() => Path.Combine(ArkParseFolder(), "src", "arkparse", "api", "json_api.py");
         public static string ArkParseArchiveFilePath() => Path.Combine(GetDataDir(), "ark-save-parser-main.zip");
+        public static string ASIArchiveFilePath() => Path.Combine(GetTempDir(), "ASA_Save_Inspector_vVERSIONSTR_WinX64.zip");
         public static string AsiExportAllOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_all.py");
         public static string AsiExportAllFilePath() => Path.Combine(GetDataDir(), "asi_export_all.py");
+        public static string AsiExportFastOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_fast.py");
+        public static string AsiExportFastFilePath() => Path.Combine(GetDataDir(), "asi_export_fast.py");
         public static string PythonVenvSetupFilePath() => Path.Combine(GetDataDir(), "python_venv_setup.bat");
         public static string ArkParseSetupFilePath() => Path.Combine(GetDataDir(), "arkparse_setup.bat");
         public static string ArkParseRunnerFilePath() => Path.Combine(GetDataDir(), "arkparse_runner.bat");
@@ -262,6 +277,36 @@ namespace ASA_Save_Inspector
             },
         };
 
+        private static Regex _unicodeEscapedChars = new Regex(@"\\u(?<Value>[a-zA-Z0-9]{4})", RegexOptions.Compiled);
+
+        public static string DecodeUnicodeEscapedStr(string value)
+        {
+            string ret = string.Empty;
+            try
+            {
+                ret = _unicodeEscapedChars.Replace(value, m => ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString());
+            }
+            catch
+            {
+                ret = value;
+            }
+            return ret;
+        }
+
+        public static void ReplaceUnicodeEscapedStrInObject(object? obj, Type type)
+        {
+            if (obj != null)
+            {
+                var properties = Utils.GetStringPropertiesForType(type);
+                foreach (PropertyInfo property in properties)
+                {
+                    string? current = property.GetValue(obj) as String;
+                    if (!string.IsNullOrEmpty(current) && current.Contains("\\u", StringComparison.InvariantCulture))
+                        property.SetValue(obj, Utils.DecodeUnicodeEscapedStr(current));
+                }
+            }
+        }
+
         public static string GetVersionStr()
         {
             if (_version == null)
@@ -338,6 +383,8 @@ namespace ASA_Save_Inspector
                     }
             return result;
         }
+
+        public static IEnumerable<PropertyInfo> GetStringPropertiesForType(Type t) => t.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite).Where(p => !p.GetIndexParameters().Any()).Where(p => p.PropertyType == typeof(string));
 
         public static string? GetPropertyNameFromCleanName(Dictionary<string, string> cleanNames, string? cleanName)
         {
@@ -568,13 +615,14 @@ namespace ASA_Save_Inspector
             return new KeyValuePair<double, double>(actualY, actualX);
         }
 
-        public static void AddToClipboard(string str)
+        public static void AddToClipboard(string str, bool showToast = true)
         {
             DataPackage dataPackage = new();
             dataPackage.RequestedOperation = DataPackageOperation.Copy;
             dataPackage.SetText(str);
             Clipboard.SetContent(dataPackage);
-            MainWindow.ShowToast("Copied to clipboard", BackgroundColor.SUCCESS);
+            if (showToast)
+                MainWindow.ShowToast("Copied to clipboard", BackgroundColor.SUCCESS);
         }
 
         public static Item? FindItemByUUID(string? uuid)
@@ -644,7 +692,7 @@ namespace ASA_Save_Inspector
                         {
                             PlayerPawn? pp = found.Value as PlayerPawn;
                             if (pp != null)
-                                return new Tuple<double, double, double>((pp.ActorTransformX != null && pp.ActorTransformX.HasValue ? pp.ActorTransformX.Value : 0.0d),(pp.ActorTransformY != null && pp.ActorTransformY.HasValue ? pp.ActorTransformY.Value : 0.0d), (pp.ActorTransformZ != null && pp.ActorTransformZ.HasValue ? pp.ActorTransformZ.Value : 0.0d));
+                                return new Tuple<double, double, double>((pp.ActorTransformX != null && pp.ActorTransformX.HasValue ? pp.ActorTransformX.Value : 0.0d), (pp.ActorTransformY != null && pp.ActorTransformY.HasValue ? pp.ActorTransformY.Value : 0.0d), (pp.ActorTransformZ != null && pp.ActorTransformZ.HasValue ? pp.ActorTransformZ.Value : 0.0d));
                         }
                         if (found.Key == ArkObjectType.DINO)
                         {
@@ -664,6 +712,34 @@ namespace ASA_Save_Inspector
             return new Tuple<double, double, double>(0.0d, 0.0d, 0.0d);
         }
 
+        public static string? GetSaveFileDateTimeStr() => (SettingsPage._saveFileData?.SaveDateTime != null && SettingsPage._saveFileData.SaveDateTime.HasValue ? SettingsPage._saveFileData.SaveDateTime.Value : DateTime.UnixEpoch).ToString("yyyy-MM-dd HH\\hmm\\mss\\s", CultureInfo.InvariantCulture);
+
+        public static string GetInGameTimeStr()
+        {
+            if (SettingsPage._saveFileData?.CurrentTime != null && SettingsPage._saveFileData.CurrentTime.HasValue)
+            {
+                int currTime = Math.Max(0, Convert.ToInt32(Math.Floor(SettingsPage._saveFileData.CurrentTime.Value), CultureInfo.InvariantCulture));
+                int hours = Math.Max(0, Convert.ToInt32(Math.Floor((double)currTime / 3600.0d), CultureInfo.InvariantCulture));
+                int remaining = (currTime % 3600);
+                int minutes = Math.Max(0, Convert.ToInt32(Math.Floor((double)remaining / 60.0d), CultureInfo.InvariantCulture));
+                remaining = (remaining % 60);
+                int seconds = Math.Max(0, remaining);
+                string hoursStr = hours.ToString(CultureInfo.InvariantCulture);
+                if (hoursStr.Length < 2)
+                    hoursStr = $"0{hoursStr}";
+                string minutesStr = minutes.ToString(CultureInfo.InvariantCulture);
+                if (minutesStr.Length < 2)
+                    minutesStr = $"0{minutesStr}";
+                string secondsStr = seconds.ToString(CultureInfo.InvariantCulture);
+                if (secondsStr.Length < 2)
+                    secondsStr = $"0{secondsStr}";
+                return $"{hoursStr}:{minutesStr}:{secondsStr}";
+            }
+            return "00:00:00";
+        }
+
+        public static string GetInGameDateTimeStr() => $"Day {(SettingsPage._saveFileData?.CurrentDay != null && SettingsPage._saveFileData.CurrentDay.HasValue ? SettingsPage._saveFileData.CurrentDay.Value.ToString(CultureInfo.InvariantCulture) : "0")}, {GetInGameTimeStr()}";
+
         public static DateTime? GetDateTimeFromGameTime(double? gameTime)
         {
             DateTime? ret = null;
@@ -672,6 +748,16 @@ namespace ASA_Save_Inspector
                 SettingsPage._saveFileData.GameTime != null && SettingsPage._saveFileData.GameTime.HasValue)
                 ret = SettingsPage._saveFileData.SaveDateTime.Value.AddSeconds(gameTime.Value - SettingsPage._saveFileData.GameTime.Value);
             return ret;
+        }
+
+        public static void ClearAllPagesFiltersAndGroups()
+        {
+            PlayerPawnsPage.ClearPageFiltersAndGroups();
+            DinosPage.ClearPageFiltersAndGroups();
+            StructuresPage.ClearPageFiltersAndGroups();
+            ItemsPage.ClearPageFiltersAndGroups();
+            PlayersPage.ClearPageFiltersAndGroups();
+            TribesPage.ClearPageFiltersAndGroups();
         }
     }
 
@@ -683,6 +769,13 @@ namespace ASA_Save_Inspector
         STRUCTURE = 3
     }
 
+    public enum FilterOperator
+    {
+        NONE = 0,
+        AND = 1,
+        OR = 2
+    }
+
     public enum FilterType
     {
         NONE = 0,
@@ -691,11 +784,13 @@ namespace ASA_Save_Inspector
         ENDING_WITH = 3,
         CONTAINING = 4,
         GREATER_THAN = 5,
-        LOWER_THAN = 6
+        LOWER_THAN = 6,
+        NOT_CONTAINING = 7
     }
 
     public class Filter
     {
+        public FilterOperator FilterOperator { get; set; } = FilterOperator.NONE;
         public FilterType FilterType { get; set; } = FilterType.NONE;
         public string? FilterValue { get; set; } = null;
         public List<string>? FilterValues { get; set; } = null;
@@ -717,5 +812,29 @@ namespace ASA_Save_Inspector
     {
         public string? Name { get; set; } = null;
         public List<string>? Columns { get; set; } = null;
+    }
+
+    public class JsonGroupPreset
+    {
+        public string? Name { get; set; } = null;
+        public List<KeyValuePair<FilterOperator, string>>? FiltersPresets { get; set; } = null;
+    }
+
+    class SwapVisitor : ExpressionVisitor
+    {
+        private readonly Expression from;
+        private readonly Expression to;
+
+        public SwapVisitor(Expression from, Expression to)
+        {
+            this.from = from;
+            this.to = to;
+        }
+
+        [return: NotNullIfNotNull("node")]
+        public override Expression? Visit(Expression? node)
+        {
+            return node == from ? to : base.Visit(node);
+        }
     }
 }

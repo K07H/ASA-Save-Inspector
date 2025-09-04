@@ -1,19 +1,9 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -49,6 +39,7 @@ namespace ASA_Save_Inspector.Pages
 #endif
         }
 
+#pragma warning disable CS1998
         private void btn_ForceArkParseUpdate_Click(object sender, RoutedEventArgs e)
         {
             if (Directory.Exists(Utils.ArkParseFolder()))
@@ -74,5 +65,6 @@ namespace ASA_Save_Inspector.Pages
                 }
             }
         }
+#pragma warning restore CS1998
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace ASA_Save_Inspector.ObjectModel
+﻿namespace ASA_Save_Inspector.ObjectModel
 {
 
     public partial class Config

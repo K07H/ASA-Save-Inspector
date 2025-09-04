@@ -92,6 +92,17 @@
                         <Button Content="Select ASA save file" Width="200" Click="SelectASASaveFileClicked" Margin="0,15,0,0" FontSize="18"/>
                         <StackPanel x:Name="sp_extractJsonPopup" Orientation="Vertical" Margin="0,5,0,0" Visibility="Collapsed">
                             <TextBlock x:Name="tb_ASASaveFilePath" Text="..." TextWrapping="WrapWholeWords" FontSize="18"/>
+                            <TextBlock Text="Extraction type:" TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"/>
+                            <DropDownButton x:Name="ddb_ExtractionType" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                                <TextBlock x:Name="tb_ExtractionType" FontSize="14" Text="Fast extraction" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_ExtractionType" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_ExtractFast" Text="Fast extraction" Click="mfi_ExtractFast_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_ExtractLegacy" Text="Legacy extraction" Click="mfi_ExtractLegacy_Click"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <TextBlock Text="Legacy extraction can be faster if you extract only one type of JSON data, but that's not guaranteed. Prefer using fast extraction." TextWrapping="WrapWholeWords" FontSize="14" FontStyle="Italic" Margin="0,5,0,0"/>
                             <TextBlock Text="JSON Data to extract:" TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"/>
                             <Grid>
                                 <Grid.RowDefinitions>

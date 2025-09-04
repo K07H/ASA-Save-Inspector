@@ -1,6 +1,4 @@
 using ASA_Save_Inspector.Pages;
-using CommunityToolkit.WinUI.UI;
-using Mapsui;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -15,15 +13,11 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Windows.UI;
-using Windows.UI.ApplicationSettings;
 using WinUIEx;
-using static ASA_Save_Inspector.Pages.SettingsPage;
 
 namespace ASA_Save_Inspector
 {
@@ -102,8 +96,11 @@ namespace ASA_Save_Inspector
 
             PythonManager.InitHttpClient();
             PythonManager.GetPythonExePaths();
-            PythonManager.CreateAsiExportAllFile();
+            PythonManager.CreateAsiExportScriptFile(Utils.AsiExportAllOrigFilePath(), Utils.AsiExportAllFilePath());
+            PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
             //PythonManager.InstallArkParse();
+
+            CheckForUpdate();
 
             /*
             AcrylicBrush myBrush = new AcrylicBrush();
@@ -415,6 +412,83 @@ namespace ASA_Save_Inspector
         {
             try { sv_popupDetails.ChangeView(null, sv_popupDetails.ScrollableHeight, null); }
             catch { }
+        }
+
+        private string? _latestVersion = null;
+
+        private async void CheckForUpdate()
+        {
+            string projectFileContent = await PythonManager._client.GetStringAsync(Utils.ASIVersionFileUrl);
+            if (string.IsNullOrWhiteSpace(projectFileContent))
+            {
+                Logger.Instance.Log($"Failed to check for update. Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
+                return;
+            }
+            string latestVersion = projectFileContent.Replace("\r\n", "", StringComparison.InvariantCulture).Replace("\n", "", StringComparison.InvariantCulture);
+            if (latestVersion.Length < 3 || latestVersion.Length > 7 || !latestVersion.Contains('.', StringComparison.InvariantCulture))
+            {
+                Logger.Instance.Log($"Failed to check for update. Response=[{latestVersion}]", Logger.LogLevel.WARNING);
+                return;
+            }
+            string currentVersion = Utils.GetVersionStr();
+            if (string.Compare(latestVersion, currentVersion, StringComparison.InvariantCulture) == 0)
+            {
+                Logger.Instance.Log($"ASI is up to date.", Logger.LogLevel.INFO);
+                return;
+            }
+            _latestVersion = latestVersion;
+            if (!UpdateAvailablePopup.IsOpen)
+            {
+                tb_updateAvailableDescription.Text = $"Version {latestVersion} of ASA Save Inspector is available (you are currently using version {currentVersion}). Would you like to download it (this will open the GitHub page in your web browser)?";
+                UpdateAvailablePopup.IsOpen = true;
+            }
+        }
+
+        /*
+        public async Task<bool> DownloadASI()
+        {
+            if (string.IsNullOrEmpty(_latestVersion))
+                return false;
+            try
+            {
+                Utils.EnsureDataFolderExist();
+                string fileToDownload = Utils.ASIArchiveUrl.Replace("VERSIONSTR", _latestVersion, StringComparison.InvariantCulture);
+                string filePath = Utils.ASIArchiveFilePath().Replace("VERSIONSTR", _latestVersion, StringComparison.InvariantCulture);
+                using var downloadStream = await PythonManager._client.GetStreamAsync(fileToDownload);
+                using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                await downloadStream.CopyToAsync(fileStream);
+                await fileStream.FlushAsync();
+                fileStream.Close();
+                downloadStream.Close();
+                if (File.Exists(filePath))
+                    return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in DownloadArkParse. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            return false;
+        }
+        */
+
+        private async void btn_InstallUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            if (UpdateAvailablePopup.IsOpen)
+                UpdateAvailablePopup.IsOpen = false;
+            try
+            {
+                _ = await Windows.System.Launcher.LaunchUriAsync(new Uri(Utils.ASILatestVersionUrl));
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Failed to open web browser with URL {Utils.ASILatestVersionUrl}. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private void btn_CloseUpdateAvailablePopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (UpdateAvailablePopup.IsOpen)
+                UpdateAvailablePopup.IsOpen = false;
         }
     }
 

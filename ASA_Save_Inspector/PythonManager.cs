@@ -14,7 +14,7 @@ namespace ASA_Save_Inspector
 {
     class PythonManager
     {
-        private static readonly HttpClient _client = new HttpClient();
+        public static readonly HttpClient _client = new HttpClient();
 
         public static void InitHttpClient()
         {
@@ -446,28 +446,41 @@ namespace ASA_Save_Inspector
         }
 #pragma warning restore CS1998, CS4014
 
-        public static bool CreateAsiExportAllFile()
+        public static bool CreateAsiExportScriptFile(string? asiExportFilePathSource, string? asiExportFilePathDest)
         {
-            string asiExportAllOrigPath = Utils.AsiExportAllOrigFilePath();
-            if (!File.Exists(asiExportAllOrigPath))
+            if (string.IsNullOrEmpty(asiExportFilePathSource))
             {
-                Logger.Instance.Log("Could not find file asi_export_all.py in Assets folder.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log("Wrong source file path to ASI export script provided.", Logger.LogLevel.ERROR);
+                return false;
+            }
+            if (!File.Exists(asiExportFilePathSource))
+            {
+                Logger.Instance.Log($"Could not find file \"{Path.GetFileName(asiExportFilePathSource)}\" in Assets folder.", Logger.LogLevel.ERROR);
+                return false;
+            }
+            if (string.IsNullOrEmpty(asiExportFilePathDest))
+            {
+                Logger.Instance.Log("Wrong destination file path for ASI export script provided.", Logger.LogLevel.ERROR);
+                return false;
+            }
+            if (Directory.Exists(asiExportFilePathDest) || (File.Exists(asiExportFilePathDest) && (File.GetAttributes(asiExportFilePathDest) & FileAttributes.Directory) == FileAttributes.Directory))
+            {
+                Logger.Instance.Log($"Destination file path must not be a directory.", Logger.LogLevel.ERROR);
                 return false;
             }
 
-            string asiExportAllPath = Utils.AsiExportAllFilePath();
             try
             {
                 Utils.EnsureDataFolderExist();
-                string asiExportAllContent = File.ReadAllText(asiExportAllOrigPath, Encoding.UTF8);
-                File.WriteAllText(asiExportAllPath, asiExportAllContent, Encoding.UTF8);
+                string asiExportScriptContent = File.ReadAllText(asiExportFilePathSource, Encoding.UTF8);
+                File.WriteAllText(asiExportFilePathDest, asiExportScriptContent, Encoding.UTF8);
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Exception caught in CreateAsiExtractAllFile. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"Exception caught in CreateAsiExportScriptFile. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
 
-            return File.Exists(asiExportAllPath);
+            return File.Exists(asiExportFilePathDest);
         }
 
         public static bool AddPythonVenvSetup()
@@ -534,7 +547,7 @@ namespace ASA_Save_Inspector
                 return false;
             if (jep == null)
                 return false;
-            string asiExportAllPath = Utils.AsiExportAllFilePath();
+            string asiExportAllPath = jep.FastExtract ? Utils.AsiExportFastFilePath() : Utils.AsiExportAllFilePath();
             if (!File.Exists(asiExportAllPath))
                 return false;
 
@@ -704,7 +717,7 @@ namespace ASA_Save_Inspector
             await SetupPythonVenv();
         }
 
-        public static async Task<bool> RunArkParse(bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes)
+        public static async Task<bool> RunArkParse(bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
             if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
             {
@@ -715,7 +728,7 @@ namespace ASA_Save_Inspector
 
             ShowInstallingPopup("Extracting JSON Data, please wait...");
 
-            JsonExportProfile? jep = SettingsPage.AddNewJsonExportProfile(SettingsPage._asaSaveFilePath, SettingsPage._mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes);
+            JsonExportProfile? jep = SettingsPage.AddNewJsonExportProfile(SettingsPage._asaSaveFilePath, SettingsPage._mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
             if (jep == null)
             {
                 Logger.Instance.Log("Failed to create new JSON export profile.", Logger.LogLevel.ERROR);

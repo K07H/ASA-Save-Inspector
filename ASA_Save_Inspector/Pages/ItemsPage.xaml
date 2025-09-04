@@ -109,10 +109,17 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Text="Items" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0"/>
-        <Grid x:Name="sp_SortAndFilters" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="Items" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Items, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
+            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: X</TextBlock>
+            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Y</TextBlock>
+        </StackPanel>
+        <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -120,29 +127,40 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <StackPanel x:Name="sp_EditFilters" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <StackPanel x:Name="sp_EditFilters" Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
                     <TextBlock FontSize="14" VerticalAlignment="Center">Filters:</TextBlock>
-                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add filter" Width="90" Height="30" Click="btn_AddFilter_Click"/>
-                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit filters" Width="90" Height="30" Click="btn_EditFilters_Click"/>
-                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="90" Height="30" Click="btn_FiltersPresets_Click"/>
+                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add filter" Width="85" Height="32" Click="btn_AddFilter_Click"/>
+                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit filters" Width="90" Height="32" Click="btn_EditFilters_Click"/>
+                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_FiltersPresets_Click"/>
                 </StackPanel>
             </StackPanel>
-            <StackPanel x:Name="sp_EditColumns" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
+            <StackPanel x:Name="sp_EditFiltersGroup" Grid.Row="1" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                    <TextBlock FontSize="14" VerticalAlignment="Center">Filters groups:</TextBlock>
+                    <Button x:Name="btn_AddFiltersGroup" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add to group" Width="110" Height="32" Click="btn_AddFiltersGroup_Click"/>
+                    <Button x:Name="btn_EditFiltersGroup" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit group" Width="95" Height="32" Click="btn_EditFiltersGroup_Click"/>
+                    <Button x:Name="btn_FiltersGroupPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_GroupPresets_Click"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="sp_EditColumns" Grid.Row="0" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
                     <TextBlock FontSize="14" VerticalAlignment="Center">Columns:</TextBlock>
-                    <Button x:Name="btn_ChangeColumns" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Modify" Width="90" Height="30" Click="btn_ChangeColumns_Click"/>
-                    <Button x:Name="btn_ColumnsPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="90" Height="30" Click="btn_ColumnsPresets_Click"/>
+                    <Button x:Name="btn_ChangeColumns" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Modify" Width="70" Height="32" Click="btn_ChangeColumns_Click"/>
+                    <Button x:Name="btn_ColumnsPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_ColumnsPresets_Click"/>
                 </StackPanel>
             </StackPanel>
-            <StackPanel x:Name="sp_CurrentSort" Grid.Column="2" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
+            <StackPanel x:Name="sp_CurrentSort" Grid.Row="1" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,5,0,0">
+                <TextBlock x:Name="tb_NbLinesSelected" FontSize="14">Nb lines selected: 0</TextBlock>
                 <TextBlock x:Name="tb_PrimarySort" FontSize="14" Visibility="Collapsed">Primary sort: None</TextBlock>
                 <TextBlock x:Name="tb_SecondarySort" FontSize="14" Visibility="Collapsed">Secondary sort: None</TextBlock>
             </StackPanel>
         </Grid>
         <controls:DataGrid x:Name="dg_Items"
                            Grid.Row="2"
+                           Grid.ColumnSpan="2"
                            FontSize="16"
                            AutoGenerateColumns="True"
                            AutoGeneratingColumn="dg_Items_AutoGeneratingColumn"
@@ -160,6 +178,7 @@
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
                            Sorting="dg_Items_Sorting"
                            PointerReleased="dg_Items_PointerReleased"
+                           SelectionChanged="dg_Items_SelectionChanged"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
             <controls:DataGrid.Resources>
@@ -196,6 +215,18 @@
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
                         <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="Include variables with more than 1000 values (not recommended)." IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Operator:</TextBlock>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock x:Name="tb_ItemFilterOperator" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_ItemFilterOperator" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorAnd" Text="AND" Click="mfi_FilterOperatorAnd_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorOr" Text="OR" Click="mfi_FilterOperatorOr_Click"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
                             <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter by:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_ItemFilterName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
@@ -215,6 +246,7 @@
                                         <MenuFlyoutItem x:Name="mfi_FilterByStartingWith" Text="Starting with" Click="mfi_FilterByStartingWith_Click"></MenuFlyoutItem>
                                         <MenuFlyoutItem x:Name="mfi_FilterByEndingWith" Text="Ending with" Click="mfi_FilterByEndingWith_Click"></MenuFlyoutItem>
                                         <MenuFlyoutItem x:Name="mfi_FilterByContaining" Text="Containing" Click="mfi_FilterByContaining_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByNotContaining" Text="Not containing" Click="mfi_FilterByNotContaining_Click"></MenuFlyoutItem>
                                         <MenuFlyoutItem x:Name="mfi_FilterByLowerThan" Text="Lower than" Click="mfi_FilterByLowerThan_Click"></MenuFlyoutItem>
                                         <MenuFlyoutItem x:Name="mfi_FilterByGreaterThan" Text="Greater than" Click="mfi_FilterByGreaterThan_Click"></MenuFlyoutItem>
                                     </MenuFlyout>
@@ -306,7 +338,6 @@
                             <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
                             <Button x:Name="btn_SaveCurrentFilters" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock x:Name="tb_FiltersPresetNameAlreadyExists" FontSize="14" FontStyle="Italic" Text="This preset name already exists." Foreground="Red" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
                         <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                             <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
@@ -320,7 +351,6 @@
                             <Button x:Name="btn_LoadFiltersPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveFiltersPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock x:Name="tb_FiltersPresetHasBeenLoaded" FontSize="14" FontStyle="Italic" Text="Filters preset has been loaded." Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="Close" Width="80" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
@@ -342,7 +372,6 @@
                             <TextBox x:Name="tb_ColumnsPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_ColumnsPresetName_TextChanged"/>
                             <Button x:Name="btn_SaveCurrentColumns" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock x:Name="tb_ColumnsPresetNameAlreadyExists" FontSize="14" FontStyle="Italic" Text="This preset name already exists." Foreground="Red" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
                         <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                             <TextBlock x:Name="tb_ExistingColumnsPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
@@ -356,9 +385,101 @@
                             <Button x:Name="btn_LoadColumnsPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveColumnsPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock x:Name="tb_ColumnsPresetHasBeenLoaded" FontSize="14" FontStyle="Italic" Text="Columns preset has been loaded." Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="Close" Width="80" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddItemFiltersGroupPopup">
+            <Border Width="{Binding ElementName=page_Items, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Items, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                BorderThickness="2" CornerRadius="4" Margin="20" 
+                VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Operator:</TextBlock>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock x:Name="tb_ItemFiltersGroupOperator" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_ItemFiltersGroupOperator" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorAnd" Text="AND" Click="mfi_FiltersGroupOperatorAnd_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorOr" Text="OR" Click="mfi_FiltersGroupOperatorOr_Click"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filters group:</TextBlock>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
+                                <TextBlock x:Name="tb_ItemFiltersGroupName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_ItemFiltersGroupNames" Placement="BottomEdgeAlignedLeft">
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button x:Name="btn_AddToItemFiltersGroup" Content="Add" Width="90" Click="btn_AddToItemFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="Cancel" Width="90" Click="btn_CloseItemFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditItemFiltersGroupPopup">
+            <Border Width="{Binding ElementName=page_Items, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Items, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                BorderThickness="2" CornerRadius="4" Margin="20"
+                VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" MaxHeight="400">
+                            <StackPanel x:Name="sp_ItemFiltersPresetsInGroup" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Remove all filters presets from group" Width="290" Click="btn_RemoveAllItemFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
+                            <Button Content="Close" Width="80" Click="btn_CloseEditItemFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="GroupPresetsPopup">
+            <Border Width="{Binding ElementName=page_Items, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Items, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4" Margin="20"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current group into preset:" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBox x:Name="tb_GroupPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_GroupPresetName_TextChanged"/>
+                            <Button x:Name="btn_SaveCurrentGroup" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                            <TextBlock x:Name="tb_ExistingGroupPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <DropDownButton.Flyout>
+                                <MenuFlyout x:Name="mf_ExistingGroupPresets" Placement="BottomEdgeAlignedLeft">
+
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
+                            <Button x:Name="btn_LoadGroupPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadGroupPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveGroupPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Button Content="Close" Width="80" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

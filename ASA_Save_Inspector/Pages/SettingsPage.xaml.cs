@@ -10,9 +10,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -31,6 +36,7 @@ namespace ASA_Save_Inspector.Pages
         public bool ExtractedStructures { get; set; } = false;
         public bool ExtractedPlayers { get; set; } = false;
         public bool ExtractedTribes { get; set; } = false;
+        public bool FastExtract { get; set; } = false;
 
         public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
         public string GetExportFolderName() => (Directory.Exists(SaveFilePath) ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
@@ -86,6 +92,8 @@ namespace ASA_Save_Inspector.Pages
     {
         public string? MapName { get; set; } = null;
         public double? GameTime { get; set; } = null;
+        public int? CurrentDay { get; set; } = null;
+        public double? CurrentTime { get; set; } = null;
         public DateTime? SaveDateTime { get; set; } = null;
     }
 
@@ -110,7 +118,7 @@ namespace ASA_Save_Inspector.Pages
 
         public static List<JsonExportProfile> _jsonExportProfiles = new List<JsonExportProfile>();
         public static JsonExportProfile? _selectedJsonExportProfile = null;
-
+        
         public static List<Dino>? _dinosData = null;
         public static List<PlayerPawn>? _playerPawnsData = null;
         public static List<Item>? _itemsData = null;
@@ -395,7 +403,7 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes)
+        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
             if (string.IsNullOrWhiteSpace(saveFilePath) || string.IsNullOrWhiteSpace(mapName))
                 return null;
@@ -418,6 +426,7 @@ namespace ASA_Save_Inspector.Pages
                 ExtractedStructures = extractStructures,
                 ExtractedPlayers = extractPlayers,
                 ExtractedTribes = extractTribes,
+                FastExtract = fastExtract,
             };
 
             if (_jsonExportProfiles == null)
@@ -632,7 +641,7 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            JsonExportProfile? jep = AddNewJsonExportProfile(_jsonDataFolderPath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes);
+            JsonExportProfile? jep = AddNewJsonExportProfile(_jsonDataFolderPath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
             if (jep == null)
             {
                 Logger.Instance.Log("Failed to create new JSON export profile.", Logger.LogLevel.ERROR);
@@ -760,12 +769,14 @@ namespace ASA_Save_Inspector.Pages
             if (!_isExtracting)
             {
                 _isExtracting = true;
+                bool fastExtract = string.Compare(tb_ExtractionType.Text, "Legacy extraction", StringComparison.InvariantCulture) != 0;
                 ret = await PythonManager.RunArkParse(extractDinos,
                     extractPlayerPawns,
                     extractItems,
                     extractStructures,
                     extractPlayers,
-                    extractTribes);
+                    extractTribes,
+                    fastExtract);
                 _isExtracting = false;
             }
             if (!ret)
@@ -842,6 +853,8 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
+            Utils.ClearAllPagesFiltersAndGroups();
+
             bool hasErrors = false;
             bool refreshMinimap = (string.Compare(_currentlyLoadedMapName, _selectedJsonExportProfile.MapName, StringComparison.InvariantCulture) != 0);
             _currentlyLoadedMapName = _selectedJsonExportProfile.MapName;
@@ -887,8 +900,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(dinosFilePath, Encoding.UTF8);
-                        _dinosData = JsonSerializer.Deserialize<List<Dino>>(json);
+                        _dinosData = JsonSerializer.Deserialize<List<Dino>>(File.ReadAllText(dinosFilePath, Encoding.UTF8));
+                        //if (_dinosData != null && _dinosData.Count > 0)
+                        //    foreach (Dino d in _dinosData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(d, typeof(Dino));
                     }
                     catch (Exception ex)
                     {
@@ -910,8 +925,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(playerPawnsFilePath, Encoding.UTF8);
-                        _playerPawnsData = JsonSerializer.Deserialize<List<PlayerPawn>>(json);
+                        _playerPawnsData = JsonSerializer.Deserialize<List<PlayerPawn>>(File.ReadAllText(playerPawnsFilePath, Encoding.UTF8));
+                        //if (_playerPawnsData != null && _playerPawnsData.Count > 0)
+                        //    foreach (PlayerPawn pp in _playerPawnsData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(pp, typeof(PlayerPawn));
                     }
                     catch (Exception ex)
                     {
@@ -933,8 +950,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(itemsFilePath, Encoding.UTF8);
-                        _itemsData = JsonSerializer.Deserialize<List<Item>>(json);
+                        _itemsData = JsonSerializer.Deserialize<List<Item>>(File.ReadAllText(itemsFilePath, Encoding.UTF8));
+                        //if (_itemsData != null && _itemsData.Count > 0)
+                        //    foreach (Item i in _itemsData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(i, typeof(Item));
                     }
                     catch (Exception ex)
                     {
@@ -956,8 +975,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(structuresFilePath, Encoding.UTF8);
-                        _structuresData = JsonSerializer.Deserialize<List<Structure>>(json);
+                        _structuresData = JsonSerializer.Deserialize<List<Structure>>(File.ReadAllText(structuresFilePath, Encoding.UTF8));
+                        //if (_structuresData != null && _structuresData.Count > 0)
+                        //    foreach (Structure s in _structuresData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(s, typeof(Structure));
                     }
                     catch (Exception ex)
                     {
@@ -979,8 +1000,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(playersFilePath, Encoding.UTF8);
-                        _playersData = JsonSerializer.Deserialize<List<Player>>(json);
+                        _playersData = JsonSerializer.Deserialize<List<Player>>(File.ReadAllText(playersFilePath, Encoding.UTF8));
+                        //if (_playersData != null && _playersData.Count > 0)
+                        //    foreach (Player p in _playersData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(p, typeof(Player));
                     }
                     catch (Exception ex)
                     {
@@ -1002,8 +1025,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     try
                     {
-                        string json = File.ReadAllText(tribesFilePath, Encoding.UTF8);
-                        _tribesData = JsonSerializer.Deserialize<List<Tribe>>(json);
+                        _tribesData = JsonSerializer.Deserialize<List<Tribe>>(File.ReadAllText(tribesFilePath, Encoding.UTF8));
+                        //if (_tribesData != null && _tribesData.Count > 0)
+                        //    foreach (Tribe t in _tribesData)
+                        //        Utils.ReplaceUnicodeEscapedStrInObject(t, typeof(Tribe));
                     }
                     catch (Exception ex)
                     {
@@ -1124,5 +1149,9 @@ namespace ASA_Save_Inspector.Pages
             if (ConfirmJsonExportRemovalPopup.IsOpen)
                 ConfirmJsonExportRemovalPopup.IsOpen = false;
         }
+
+        private void mfi_ExtractFast_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Fast extraction";
+
+        private void mfi_ExtractLegacy_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Legacy extraction";
     }
 }

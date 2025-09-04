@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ASA_Save_Inspector
 {

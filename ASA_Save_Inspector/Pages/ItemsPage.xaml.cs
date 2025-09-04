@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,13 +16,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -48,10 +46,12 @@ namespace ASA_Save_Inspector.Pages
         private static bool _secondaryAscendingSort = true;
 
         private static bool _addedDefaultFilters = false;
-        private static Dictionary<PropertyInfo, Filter> _filters = new Dictionary<PropertyInfo, Filter>();
+        private static List<KeyValuePair<PropertyInfo, Filter>> _filters = new List<KeyValuePair<PropertyInfo, Filter>>();
 
         private static bool _setDefaultSelectedColumns = false;
         private static List<string> _selectedColumns = new List<string>();
+
+        private static List<KeyValuePair<FilterOperator, JsonFiltersPreset>> _group = new List<KeyValuePair<FilterOperator, JsonFiltersPreset>>();
 
         private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset()
         {
@@ -79,6 +79,9 @@ namespace ASA_Save_Inspector.Pages
 
         private List<JsonColumnsPreset> _columnsPresets = new List<JsonColumnsPreset>();
         private JsonColumnsPreset? _selectedColumnsPreset = null;
+
+        private List<JsonGroupPreset> _groupPresets = new List<JsonGroupPreset>();
+        private JsonGroupPreset? _selectedGroupPreset = null;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -153,28 +156,7 @@ namespace ASA_Save_Inspector.Pages
             AdjustToSizeChange();
 
             // Add default filters.
-            if (!_addedDefaultFilters)
-            {
-                if (_filters != null)
-                {
-                    /*
-                    // Add "IsTamed => True".
-                    PropertyInfo? isTamedProp = typeof(Item).GetProperty("IsTamed", BindingFlags.Instance | BindingFlags.Public);
-                    if (isTamedProp != null && !_filters.ContainsKey(isTamedProp))
-                    {
-                        Filter defaultFilter = new Filter() { FilterType = FilterType.EXACT_MATCH, FilterValues = new List<string>() { "True" } };
-                        _filters[isTamedProp] = defaultFilter;
-                        if (_defaultFiltersPreset?.Filters != null)
-                            _defaultFiltersPreset.Filters.Add(new JsonFilter()
-                            {
-                                PropertyName = isTamedProp.Name,
-                                Filter = defaultFilter
-                            });
-                    }
-                    */
-                }
-                _addedDefaultFilters = true;
-            }
+            AddDefaultFilters();
 
             // Set default selected columns.
             if (!_setDefaultSelectedColumns)
@@ -198,6 +180,10 @@ namespace ASA_Save_Inspector.Pages
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
             });
+
+            // Set save file datetime et in-game datetime.
+            tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
+            tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
 
         private void DestroyPage()
@@ -305,7 +291,8 @@ namespace ASA_Save_Inspector.Pages
                 ReorderColumns();
             });
             if (items != null && MainWindow._minimap != null)
-                MainWindow.UpdateMinimap(items.Select(d => {
+                MainWindow.UpdateMinimap(items.Select(d =>
+                {
                     if (d != null && d.UECoords != null && d.UECoords.Item1 != null && d.UECoords.Item1.HasValue && d.UECoords.Item2 != null && d.UECoords.Item2.HasValue && d.UECoords.Item3 != null && d.UECoords.Item3.HasValue)
                     {
                         string? itemIDStr = d.GetItemID();
@@ -368,13 +355,18 @@ namespace ASA_Save_Inspector.Pages
 
         private void ApplyFiltersAndSort()
         {
-            IEnumerable<Item>? filtered = ApplyFiltering();
+            IEnumerable<Item>? filtered = null;
+            if (_group != null && _group.Count > 0)
+                filtered = ApplyGroupFiltering();
+            else
+                filtered = ApplyFiltering(SettingsPage._itemsData, _filters);
             if (filtered != null)
                 ApplySorting(ref filtered);
             Init(ref filtered, false);
         }
 
-        private readonly Thickness _defaultMarginSortAndFilter = new Thickness(50.0d, 0.0d, 0.0d, 0.0d);
+        private readonly Thickness _defaultMarginLeftSortAndFilter = new Thickness(50.0d, 0.0d, 0.0d, 0.0d);
+        private readonly Thickness _defaultMarginRightSortAndFilter = new Thickness(50.0d, 5.0d, 0.0d, 0.0d);
         private readonly Thickness _compactMarginSortAndFilter = new Thickness(0.0d, 5.0d, 0.0d, 0.0d);
 
         private void AdjustToSizeChange()
@@ -390,23 +382,33 @@ namespace ASA_Save_Inspector.Pages
                 {
                     sp_EditColumns.Margin = _compactMarginSortAndFilter;
                     sp_CurrentSort.Margin = _compactMarginSortAndFilter;
-                    Grid.SetRow(sp_EditFilters, 0);
-                    Grid.SetRow(sp_EditColumns, 1);
-                    Grid.SetRow(sp_CurrentSort, 2);
+
                     Grid.SetColumn(sp_EditFilters, 0);
+                    Grid.SetColumn(sp_EditFiltersGroup, 0);
                     Grid.SetColumn(sp_EditColumns, 0);
                     Grid.SetColumn(sp_CurrentSort, 0);
+
+                    Grid.SetRow(sp_EditFilters, 0);
+                    Grid.SetRow(sp_EditFiltersGroup, 1);
+                    Grid.SetRow(sp_EditColumns, 2);
+                    Grid.SetRow(sp_CurrentSort, 3);
                 }
                 else
                 {
-                    sp_EditColumns.Margin = _defaultMarginSortAndFilter;
-                    sp_CurrentSort.Margin = _defaultMarginSortAndFilter;
+                    sp_EditColumns.Margin = _defaultMarginLeftSortAndFilter;
+                    sp_CurrentSort.Margin = _defaultMarginRightSortAndFilter;
+
                     Grid.SetColumn(sp_EditFilters, 0);
-                    Grid.SetColumn(sp_EditColumns, 1);
-                    Grid.SetColumn(sp_CurrentSort, 2);
                     Grid.SetRow(sp_EditFilters, 0);
+
+                    Grid.SetColumn(sp_EditFiltersGroup, 0);
+                    Grid.SetRow(sp_EditFiltersGroup, 1);
+
+                    Grid.SetColumn(sp_EditColumns, 1);
                     Grid.SetRow(sp_EditColumns, 0);
-                    Grid.SetRow(sp_CurrentSort, 0);
+
+                    Grid.SetColumn(sp_CurrentSort, 1);
+                    Grid.SetRow(sp_CurrentSort, 1);
                 }
             }
         }
@@ -421,6 +423,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void dg_Items_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
+            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Items.SelectedItems != null ? dg_Items.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
             mfi_contextMenuGetAllJson.Visibility = (dg_Items.SelectedItems != null && dg_Items.SelectedItems.Count > 1 ? Visibility.Visible : Visibility.Collapsed);
             mfi_contextMenuGetCoords.Visibility = Visibility.Visible;
             Visibility goToContainerVisibility = Visibility.Collapsed;
@@ -437,6 +440,11 @@ namespace ASA_Save_Inspector.Pages
                 }
             }
             mfi_contextMenuGoToContainer.Visibility = goToContainerVisibility;
+        }
+
+        private void dg_Items_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Items.SelectedItems != null ? dg_Items.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
         }
 
         private void dg_Items_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
@@ -556,6 +564,32 @@ namespace ASA_Save_Inspector.Pages
 
         #region Filtering
 
+        private static void AddDefaultFilters()
+        {
+            if (!_addedDefaultFilters)
+            {
+                _addedDefaultFilters = true;
+                /*
+                if (_filters != null)
+                {
+                    // Add "IsTamed => True".
+                    PropertyInfo? isTamedProp = typeof(Item).GetProperty("IsTamed", BindingFlags.Instance | BindingFlags.Public);
+                    if (isTamedProp != null)
+                    {
+                        Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.EXACT_MATCH, FilterValues = new List<string>() { "True" } };
+                        _filters.Add(new KeyValuePair<PropertyInfo, Filter>(isTamedProp, defaultFilter));
+                        if (_defaultFiltersPreset?.Filters != null)
+                            _defaultFiltersPreset.Filters.Add(new JsonFilter()
+                            {
+                                PropertyName = isTamedProp.Name,
+                                Filter = defaultFilter
+                            });
+                    }
+                }
+                */
+            }
+        }
+
         private void RefreshSelectedItemFilterValues()
         {
             tb_itemFilterValues.Text = (_selectedItemFilter_Values != null ? string.Join(", ", _selectedItemFilter_Values) : string.Empty);
@@ -589,11 +623,7 @@ namespace ASA_Save_Inspector.Pages
                 sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
                 sp_FilterByOther.Visibility = Visibility.Collapsed;
 
-                tb_FilterByOther.Text = "";
-                btn_AddToItemFilters.IsEnabled = false;
-                if (_selectedItemFilter_Values != null)
-                    _selectedItemFilter_Values.Clear();
-                RefreshSelectedItemFilterValues();
+                ResetFiltersValues();
 
                 PropertyInfo? foundProperty = Utils.GetProperty(typeof(Item), propName);
                 if (foundProperty != null)
@@ -605,6 +635,7 @@ namespace ASA_Save_Inspector.Pages
                         mfi_FilterByStartingWith.Visibility = Visibility.Collapsed;
                         mfi_FilterByEndingWith.Visibility = Visibility.Collapsed;
                         mfi_FilterByContaining.Visibility = Visibility.Collapsed;
+                        mfi_FilterByNotContaining.Visibility = Visibility.Collapsed;
                         mfi_FilterByLowerThan.Visibility = Visibility.Collapsed;
                         mfi_FilterByGreaterThan.Visibility = Visibility.Collapsed;
                     }
@@ -614,6 +645,7 @@ namespace ASA_Save_Inspector.Pages
                         mfi_FilterByStartingWith.Visibility = Visibility.Visible;
                         mfi_FilterByEndingWith.Visibility = Visibility.Visible;
                         mfi_FilterByContaining.Visibility = Visibility.Visible;
+                        mfi_FilterByNotContaining.Visibility = Visibility.Visible;
                         mfi_FilterByLowerThan.Visibility = Visibility.Visible;
                         mfi_FilterByGreaterThan.Visibility = Visibility.Visible;
                     }
@@ -623,11 +655,34 @@ namespace ASA_Save_Inspector.Pages
                         mfi_FilterByStartingWith.Visibility = Visibility.Visible;
                         mfi_FilterByEndingWith.Visibility = Visibility.Visible;
                         mfi_FilterByContaining.Visibility = Visibility.Visible;
+                        mfi_FilterByNotContaining.Visibility = Visibility.Visible;
                         mfi_FilterByLowerThan.Visibility = Visibility.Collapsed;
                         mfi_FilterByGreaterThan.Visibility = Visibility.Collapsed;
                     }
                 }
             }
+        }
+
+        private void ResetFiltersValues()
+        {
+            btn_AddToItemFilters.IsEnabled = false;
+
+            tb_FilterByOther.Text = "";
+
+            if (_selectedItemFilter_Values != null)
+                _selectedItemFilter_Values.Clear();
+            RefreshSelectedItemFilterValues();
+        }
+
+        private void ResetFilters()
+        {
+            mf_ItemFilterName.Items.Clear();
+            _selectedItemFilter_Name = null;
+            tb_ItemFilterOperator.Text = "Click here...";
+            tb_ItemFilterName.Text = "Click here...";
+            tb_ItemFilterType.Text = "Click here...";
+
+            ResetFiltersValues();
         }
 
         private void FillPropertiesDropDown()
@@ -682,13 +737,13 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private bool CheckMatchFilter(Item d)
+        private bool CheckMatchFilter(Item d, List<KeyValuePair<PropertyInfo, Filter>> filters)
         {
-            if (_filters == null || _filters.Count <= 0)
+            if (filters == null || filters.Count <= 0)
                 return true;
 
-            foreach (var filter in _filters)
-                if (filter.Key != null && filter.Value != null)
+            foreach (var filter in filters)
+                if (filter.Key != null && filter.Value != null && filter.Value.FilterOperator == FilterOperator.AND)
                 {
                     if (filter.Value.FilterType == FilterType.EXACT_MATCH)
                     {
@@ -726,6 +781,15 @@ namespace ASA_Save_Inspector.Pages
                                 return false;
                         }
                     }
+                    else if (filter.Value.FilterType == FilterType.NOT_CONTAINING)
+                    {
+                        if (filter.Value.FilterValue != null)
+                        {
+                            string? propValue = Utils.GetPropertyValueForObject(filter.Key, d);
+                            if (propValue != null && propValue.Contains(filter.Value.FilterValue))
+                                return false;
+                        }
+                    }
                     else if (filter.Value.FilterType == FilterType.LOWER_THAN)
                     {
                         if (filter.Value.FilterValue != null && double.TryParse(filter.Value.FilterValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double filterVal))
@@ -758,11 +822,166 @@ namespace ASA_Save_Inspector.Pages
             return true;
         }
 
-        private IEnumerable<Item>? ApplyFiltering()
+        private bool IsValidDouble(string? str) => !string.IsNullOrEmpty(str) && double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double d);
+
+        private void AddOrFilters(ref List<Expression<Func<Item, bool>>> orFilters, List<KeyValuePair<PropertyInfo, Filter>> filters)
         {
-            if (SettingsPage._itemsData == null)
+            if (filters == null || filters.Count <= 0)
+                return;
+
+            foreach (var filter in filters)
+                if (filter.Key != null && filter.Value != null && filter.Value.FilterOperator == FilterOperator.OR)
+                {
+                    try
+                    {
+#pragma warning disable CS8604, CS8602
+                        if (filter.Value.FilterType == FilterType.EXACT_MATCH)
+                        {
+                            if (filter.Value.FilterValues != null && filter.Value.FilterValues.Count > 0)
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && filter.Value.FilterValues.Contains(Utils.GetPropertyValueForObject(filter.Key, d))));
+                        }
+                        else if (filter.Value.FilterType == FilterType.STARTING_WITH)
+                        {
+                            if (filter.Value.FilterValue != null)
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && Utils.GetPropertyValueForObject(filter.Key, d).StartsWith(filter.Value.FilterValue)));
+                        }
+                        else if (filter.Value.FilterType == FilterType.ENDING_WITH)
+                        {
+                            if (filter.Value.FilterValue != null)
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && Utils.GetPropertyValueForObject(filter.Key, d).EndsWith(filter.Value.FilterValue)));
+                        }
+                        else if (filter.Value.FilterType == FilterType.CONTAINING)
+                        {
+                            if (filter.Value.FilterValue != null)
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && Utils.GetPropertyValueForObject(filter.Key, d).Contains(filter.Value.FilterValue)));
+                        }
+                        else if (filter.Value.FilterType == FilterType.NOT_CONTAINING)
+                        {
+                            if (filter.Value.FilterValue != null)
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) == null || !Utils.GetPropertyValueForObject(filter.Key, d).Contains(filter.Value.FilterValue)));
+                        }
+                        else if (filter.Value.FilterType == FilterType.LOWER_THAN)
+                        {
+                            if (filter.Value.FilterValue != null && double.TryParse(filter.Value.FilterValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double filterVal))
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && IsValidDouble(Utils.GetPropertyValueForObject(filter.Key, d)) && double.Parse(Utils.GetPropertyValueForObject(filter.Key, d), NumberStyles.Any, CultureInfo.InvariantCulture) < filterVal));
+                        }
+                        else if (filter.Value.FilterType == FilterType.GREATER_THAN)
+                        {
+                            if (filter.Value.FilterValue != null && double.TryParse(filter.Value.FilterValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double filterVal))
+                                orFilters.Add(d => (Utils.GetPropertyValueForObject(filter.Key, d) != null && IsValidDouble(Utils.GetPropertyValueForObject(filter.Key, d)) && double.Parse(Utils.GetPropertyValueForObject(filter.Key, d), NumberStyles.Any, CultureInfo.InvariantCulture) > filterVal));
+                        }
+#pragma warning restore CS8604, CS8602
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Log($"Exception caught in AddOrFilters. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    }
+                }
+        }
+
+        static Expression<Func<T, bool>> AnyOf<T>(params Expression<Func<T, bool>>[] expressions)
+        {
+            // Always include result if there is no "OR" filter
+            if (expressions == null || expressions.Length == 0) return x => true;
+            if (expressions.Length == 1) return expressions[0];
+
+            var body = expressions[0].Body;
+            var param = expressions[0].Parameters.Single();
+            for (int i = 1; i < expressions.Length; i++)
+            {
+                var expr = expressions[i];
+                var swappedParam = new SwapVisitor(expr.Parameters.Single(), param).Visit(expr.Body);
+                body = Expression.OrElse(body, swappedParam);
+            }
+            return Expression.Lambda<Func<T, bool>>(body, param);
+        }
+
+        private IEnumerable<Item>? DoApplyGroupFiltering(IEnumerable<Item>? filtered, JsonFiltersPreset preset)
+        {
+            if (filtered == null)
                 return null;
-            return SettingsPage._itemsData.Where(a => CheckMatchFilter(a));
+
+            IEnumerable<Item>? ret = null;
+            if (preset.Filters != null && preset.Filters.Count > 0)
+            {
+                List<KeyValuePair<PropertyInfo, Filter>> currentFilters = new List<KeyValuePair<PropertyInfo, Filter>>();
+                Type type = typeof(Item);
+                foreach (var f in preset.Filters)
+                    if (f != null && f.Filter != null)
+                    {
+                        PropertyInfo? prop = Utils.GetProperty(type, f.PropertyName);
+                        if (prop != null)
+                            currentFilters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, f.Filter));
+                    }
+                ret = ApplyFiltering(filtered, currentFilters);
+            }
+            return ret;
+        }
+
+        private IEnumerable<Item>? ApplyGroupFiltering()
+        {
+            IEnumerable<Item>? andFiltered = null;
+            for (int i = 0; i < _group.Count; i++)
+                if (_group[i].Key == FilterOperator.AND && _group[i].Value != null)
+                {
+                    if (andFiltered == null)
+                        andFiltered = DoApplyGroupFiltering(SettingsPage._itemsData, _group[i].Value);
+                    else
+                        andFiltered = DoApplyGroupFiltering(andFiltered, _group[i].Value);
+                }
+
+            IEnumerable<Item>? orFiltered = null;
+            List<IEnumerable<Item>?> orFiltereds = new List<IEnumerable<Item>?>();
+            for (int j = 0; j < _group.Count; j++)
+                if (_group[j].Key == FilterOperator.OR && _group[j].Value != null)
+                    orFiltereds.Add(DoApplyGroupFiltering(SettingsPage._itemsData, _group[j].Value));
+
+            if (orFiltereds.Count > 0)
+                foreach (var curr in orFiltereds)
+                    if (curr != null)
+                    {
+                        if (orFiltered == null)
+                            orFiltered = curr;
+                        else
+                            orFiltered = orFiltered.Concat(curr).Distinct();
+                    }
+
+            if (andFiltered != null && orFiltered != null)
+                return andFiltered.Concat(orFiltered).Distinct();
+            else if (andFiltered != null)
+                return andFiltered;
+            else if (orFiltered != null)
+                return orFiltered;
+            else
+                return null;
+        }
+
+        private IEnumerable<Item>? ApplyFiltering(IEnumerable<Item>? items, List<KeyValuePair<PropertyInfo, Filter>> filters)
+        {
+            if (items == null)
+                return null;
+
+            var orFilters = new List<Expression<Func<Item, bool>>>();
+            AddOrFilters(ref orFilters, filters);
+            var lambda = AnyOf(orFilters.ToArray());
+
+            return items.Where(lambda.Compile()).Where(a => CheckMatchFilter(a, filters));
+        }
+
+        public static void ClearPageFiltersAndGroups()
+        {
+#pragma warning disable CS1998
+            if (_page != null)
+                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                {
+                    _page.sp_ItemFiltersPresetsInGroup.Children.Clear();
+                    _page.sp_ExistingItemFilters.Children.Clear();
+                });
+#pragma warning restore CS1998
+            _group.Clear();
+            _filters.Clear();
+            _addedDefaultFilters = false;
+            AddDefaultFilters();
         }
 
         private void FillEditItemFiltersPopup()
@@ -839,6 +1058,8 @@ namespace ASA_Save_Inspector.Pages
                             tbFilterTypeStr = "ending with";
                         else if (filter.Value.FilterType == FilterType.CONTAINING)
                             tbFilterTypeStr = "containing";
+                        else if (filter.Value.FilterType == FilterType.NOT_CONTAINING)
+                            tbFilterTypeStr = "not containing";
                         else if (filter.Value.FilterType == FilterType.LOWER_THAN)
                             tbFilterTypeStr = "lower than";
                         else if (filter.Value.FilterType == FilterType.GREATER_THAN)
@@ -889,12 +1110,17 @@ namespace ASA_Save_Inspector.Pages
                 }
         }
 
-        private void cb_IncludePropertiesWithManyValues_CheckedUnchecked(object sender, RoutedEventArgs e) => FillPropertiesDropDown();
+        private void cb_IncludePropertiesWithManyValues_CheckedUnchecked(object sender, RoutedEventArgs e)
+        {
+            ResetFilters();
+            FillPropertiesDropDown();
+        }
 
         private void btn_AddFilter_Click(object sender, RoutedEventArgs e)
         {
             if (!AddItemFilterPopup.IsOpen)
             {
+                ResetFilters();
                 FillPropertiesDropDown();
                 AddItemFilterPopup.IsOpen = true;
             }
@@ -908,6 +1134,17 @@ namespace ASA_Save_Inspector.Pages
 
         private void btn_AddToItemFilters_Click(object sender, RoutedEventArgs e)
         {
+            FilterOperator filterOperator = FilterOperator.NONE;
+            if (string.Compare("AND", tb_ItemFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+                filterOperator = FilterOperator.AND;
+            else if (string.Compare("OR", tb_ItemFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+                filterOperator = FilterOperator.OR;
+            if (filterOperator == FilterOperator.NONE)
+            {
+                MainWindow.ShowToast("Missing operator, cannot add filter.", BackgroundColor.WARNING);
+                return;
+            }
+
             if (AddItemFilterPopup.IsOpen)
             {
                 AddItemFilterPopup.IsOpen = false;
@@ -920,11 +1157,12 @@ namespace ASA_Save_Inspector.Pages
                             _selectedItemFilter_Values != null &&
                             _selectedItemFilter_Values.Count > 0)
                         {
-                            _filters[prop] = new Filter()
+                            _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, new Filter()
                             {
+                                FilterOperator = filterOperator,
                                 FilterType = FilterType.EXACT_MATCH,
                                 FilterValues = new List<string>(_selectedItemFilter_Values)
-                            };
+                            }));
                         }
                         else if (tb_FilterByOther.Text != null)
                         {
@@ -935,17 +1173,20 @@ namespace ASA_Save_Inspector.Pages
                                 ft = FilterType.ENDING_WITH;
                             else if (tb_ItemFilterType.Text == "Containing")
                                 ft = FilterType.CONTAINING;
+                            else if (tb_ItemFilterType.Text == "Not containing")
+                                ft = FilterType.NOT_CONTAINING;
                             else if (tb_ItemFilterType.Text == "Lower than")
                                 ft = FilterType.LOWER_THAN;
                             else if (tb_ItemFilterType.Text == "Greater than")
                                 ft = FilterType.GREATER_THAN;
                             if (ft != FilterType.NONE)
                             {
-                                _filters[prop] = new Filter()
+                                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, new Filter()
                                 {
+                                    FilterOperator = filterOperator,
                                     FilterType = ft,
                                     FilterValue = tb_FilterByOther.Text
-                                };
+                                }));
                             }
                         }
                         ApplyFiltersAndSort();
@@ -961,6 +1202,21 @@ namespace ASA_Save_Inspector.Pages
 
             FillEditItemFiltersPopup();
             EditItemFiltersPopup.IsOpen = true;
+        }
+
+        private void RemoveFilter(PropertyInfo prop, Filter filter)
+        {
+            if (_filters != null && _filters.Count > 0)
+            {
+                int toDel = -1;
+                for (int i = 0; i < _filters.Count; i++)
+                    if (_filters[i].Key != null && string.Compare(_filters[i].Key.Name, prop.Name, StringComparison.InvariantCulture) == 0 && _filters[i].Value == filter)
+                    {
+                        toDel = i;
+                        break;
+                    }
+                _filters.RemoveAt(toDel);
+            }
         }
 
         private void btn_RemoveFilter_Click(object sender, RoutedEventArgs e)
@@ -987,19 +1243,21 @@ namespace ASA_Save_Inspector.Pages
 
             if (_filters != null && _filters.Count > 0)
             {
-                PropertyInfo? toDel = null;
+                PropertyInfo? toDelProp = null;
+                Filter? toDelFilter = null;
                 for (int i = 0; i < _filters.Count; i++)
                 {
                     var filter = _filters.ElementAt(i);
                     if (filter.Key != null && string.Compare(filter.Key.Name, filterName, StringComparison.InvariantCulture) == 0)
                     {
-                        toDel = filter.Key;
+                        toDelProp = filter.Key;
+                        toDelFilter = filter.Value;
                         break;
                     }
                 }
-                if (toDel != null)
+                if (toDelProp != null && toDelFilter != null)
                 {
-                    _filters.Remove(toDel);
+                    RemoveFilter(toDelProp, toDelFilter);
                     FillEditItemFiltersPopup();
                     ApplyFiltersAndSort();
                 }
@@ -1023,11 +1281,7 @@ namespace ASA_Save_Inspector.Pages
         {
             tb_ItemFilterType.Text = "Exact match";
 
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
+            ResetFiltersValues();
 
             if (!string.IsNullOrWhiteSpace(_selectedItemFilter_Name))
             {
@@ -1055,84 +1309,234 @@ namespace ASA_Save_Inspector.Pages
             sp_FilterByOther.Visibility = Visibility.Collapsed;
         }
 
-        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e)
+        private void SetItemFilterType(string itemFilterType)
         {
-            tb_ItemFilterType.Text = "Starting with";
+            tb_ItemFilterType.Text = itemFilterType;
 
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
+            ResetFiltersValues();
 
             sp_FilterByOther.Visibility = Visibility.Visible;
             sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
             sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
         }
 
-        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e)
-        {
-            tb_ItemFilterType.Text = "Ending with";
+        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Starting with");
 
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
+        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Ending with");
 
-            sp_FilterByOther.Visibility = Visibility.Visible;
-            sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
-            sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
-        }
+        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Containing");
 
-        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e)
-        {
-            tb_ItemFilterType.Text = "Containing";
+        private void mfi_FilterByNotContaining_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Not containing");
 
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
+        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Lower than");
 
-            sp_FilterByOther.Visibility = Visibility.Visible;
-            sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
-            sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
-        }
-
-        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e)
-        {
-            tb_ItemFilterType.Text = "Lower than";
-
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
-
-            sp_FilterByOther.Visibility = Visibility.Visible;
-            sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
-            sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
-        }
-
-        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e)
-        {
-            tb_ItemFilterType.Text = "Greater than";
-
-            tb_FilterByOther.Text = "";
-            btn_AddToItemFilters.IsEnabled = false;
-            if (_selectedItemFilter_Values != null)
-                _selectedItemFilter_Values.Clear();
-            RefreshSelectedItemFilterValues();
-
-            sp_FilterByOther.Visibility = Visibility.Visible;
-            sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
-            sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
-        }
+        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e) => SetItemFilterType("Greater than");
 
         private void tb_FilterByOther_TextChanged(object sender, TextChangedEventArgs e)
         {
             btn_AddToItemFilters.IsEnabled = (tb_FilterByOther.Text.Length > 0);
+        }
+
+        private void mfi_FilterOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_ItemFilterOperator.Text = "AND";
+
+        private void mfi_FilterOperatorOr_Click(object sender, RoutedEventArgs e) => tb_ItemFilterOperator.Text = "OR";
+
+        [RelayCommand]
+        private void FiltersPresetGroupSelect(JsonFiltersPreset? preset)
+        {
+            tb_ItemFiltersGroupName.Text = "Click here...";
+            btn_AddToItemFiltersGroup.IsEnabled = false;
+            if (preset == null || string.IsNullOrEmpty(preset.Name))
+            {
+                MainWindow.ShowToast("Incorrect filters preset selected (preset is empty or has bad name).", BackgroundColor.WARNING);
+                return;
+            }
+
+            tb_ItemFiltersGroupName.Text = preset.Name;
+            btn_AddToItemFiltersGroup.IsEnabled = true;
+        }
+
+        private void FillFiltersGroupNames()
+        {
+            mf_ItemFiltersGroupNames.Items.Clear();
+            if (_filtersPresets != null && _filtersPresets.Count > 0)
+                foreach (var preset in _filtersPresets)
+                    if (preset != null && !string.IsNullOrEmpty(preset.Name) && preset.Filters != null && preset.Filters.Count > 0)
+                    {
+                        mf_ItemFiltersGroupNames.Items.Add(new MenuFlyoutItem
+                        {
+                            Text = preset.Name,
+                            Command = FiltersPresetGroupSelectCommand,
+                            CommandParameter = preset
+                        });
+                    }
+        }
+
+        private void btn_AddFiltersGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (AddItemFiltersGroupPopup.IsOpen)
+                return;
+
+            FillFiltersGroupNames();
+            AddItemFiltersGroupPopup.IsOpen = true;
+        }
+
+        private void btn_RemoveFiltersPresetFromGroup_Click(object sender, RoutedEventArgs e)
+        {
+            Button? btn = sender as Button;
+            if (btn == null)
+                return;
+
+            Grid? grd = btn.Parent as Grid;
+            if (grd == null)
+                return;
+
+            TextBlock? tb = grd.Children[1] as TextBlock;
+            if (tb == null)
+                return;
+
+            string? filtersPresetName = tb.Text;
+            if (string.IsNullOrEmpty(filtersPresetName))
+                return;
+
+            if (_group != null && _group.Count > 0)
+            {
+                int toDel = -1;
+                for (int i = 0; i < _group.Count; i++)
+                    if (_group[i].Value != null && string.Compare(filtersPresetName, _group[i].Value.Name, StringComparison.InvariantCulture) == 0)
+                    {
+                        toDel = i;
+                        break;
+                    }
+
+                if (toDel >= 0)
+                {
+                    _group.RemoveAt(toDel);
+                    FillEditFiltersGroup();
+                    ApplyFiltersAndSort();
+                }
+            }
+        }
+
+        private void FillEditFiltersGroup()
+        {
+            sp_ItemFiltersPresetsInGroup.Children.Clear();
+            if (_group != null && _group.Count > 0)
+            {
+                Brush? brush = this.TryFindResource("AcrylicInAppFillColorDefaultBrush") as Brush;
+                if (brush == null)
+                    brush = new SolidColorBrush(Colors.Gray);
+                foreach (var filter in _group)
+                    if (filter.Key != FilterOperator.NONE && filter.Value != null && !string.IsNullOrEmpty(filter.Value.Name))
+                    {
+                        Grid grd = new Grid()
+                        {
+                            VerticalAlignment = VerticalAlignment.Top,
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            Margin = new Thickness(0.0d, 5.0d, 0.0d, 0.0d)
+                        };
+                        grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                        grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
+                        grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                        TextBlock tb1 = new TextBlock()
+                        {
+                            FontSize = 16.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = $"{(filter.Key == FilterOperator.OR ? "OR" : "AND")} filters preset",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
+                        };
+                        TextBlock tb2 = new TextBlock()
+                        {
+                            FontSize = 16.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = $"{filter.Value.Name}",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
+                        };
+                        Button btn = new Button()
+                        {
+                            Width = 90.0d,
+                            Content = "Remove",
+                            FontSize = 18.0d,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Right
+                        };
+                        btn.Click += btn_RemoveFiltersPresetFromGroup_Click;
+
+                        grd.Children.Add(tb1);
+                        Grid.SetColumn(tb1, 0);
+                        grd.Children.Add(tb2);
+                        Grid.SetColumn(tb2, 1);
+                        grd.Children.Add(btn);
+                        Grid.SetColumn(btn, 2);
+                        sp_ItemFiltersPresetsInGroup.Children.Add(grd);
+                    }
+            }
+        }
+
+        private void btn_EditFiltersGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (EditItemFiltersGroupPopup.IsOpen)
+                return;
+
+            FillEditFiltersGroup();
+            EditItemFiltersGroupPopup.IsOpen = true;
+        }
+
+        private void mfi_FiltersGroupOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_ItemFiltersGroupOperator.Text = "AND";
+
+        private void mfi_FiltersGroupOperatorOr_Click(object sender, RoutedEventArgs e) => tb_ItemFiltersGroupOperator.Text = "OR";
+
+        private void btn_AddToItemFiltersGroup_Click(object sender, RoutedEventArgs e)
+        {
+            FilterOperator groupOperator = FilterOperator.NONE;
+            if (string.Compare(tb_ItemFiltersGroupOperator.Text, "AND", StringComparison.InvariantCulture) == 0)
+                groupOperator = FilterOperator.AND;
+            else if (string.Compare(tb_ItemFiltersGroupOperator.Text, "OR", StringComparison.InvariantCulture) == 0)
+                groupOperator = FilterOperator.OR;
+            if (groupOperator == FilterOperator.NONE)
+            {
+                MainWindow.ShowToast("Missing operator, cannot add group.", BackgroundColor.WARNING);
+                AddItemFiltersGroupPopup.IsOpen = false;
+                return;
+            }
+
+            if (_filtersPresets != null && _filtersPresets.Count > 0)
+                foreach (var preset in _filtersPresets)
+                    if (preset != null && !string.IsNullOrEmpty(preset.Name) &&
+                        preset.Filters != null && preset.Filters.Count > 0 &&
+                        string.Compare(preset.Name, tb_ItemFiltersGroupName.Text, StringComparison.InvariantCulture) == 0)
+                    {
+                        _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(groupOperator, preset));
+                        MainWindow.ShowToast($"Filters preset \"{tb_ItemFiltersGroupName.Text}\" added to group.", BackgroundColor.SUCCESS);
+                        ApplyFiltersAndSort();
+                        AddItemFiltersGroupPopup.IsOpen = false;
+                        return;
+                    }
+
+            MainWindow.ShowToast($"Failed to find filters preset \"{tb_ItemFiltersGroupName.Text}\".", BackgroundColor.WARNING);
+            AddItemFiltersGroupPopup.IsOpen = false;
+        }
+
+        private void btn_CloseItemFiltersGroupPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (AddItemFiltersGroupPopup.IsOpen)
+                AddItemFiltersGroupPopup.IsOpen = false;
+        }
+
+        private void btn_RemoveAllItemFiltersPresetsFromGroup_Click(object sender, RoutedEventArgs e)
+        {
+            sp_ItemFiltersPresetsInGroup.Children.Clear();
+            _group.Clear();
+        }
+
+        private void btn_CloseEditItemFiltersGroupPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (EditItemFiltersGroupPopup.IsOpen)
+                EditItemFiltersGroupPopup.IsOpen = false;
         }
 
         #endregion
@@ -1261,10 +1665,21 @@ namespace ASA_Save_Inspector.Pages
             {
                 List<JsonFiltersPreset>? jsonFiltersPresets = JsonSerializer.Deserialize<List<JsonFiltersPreset>>(filtersPresetsJson);
                 if (jsonFiltersPresets != null && jsonFiltersPresets.Count > 0)
+                {
+                    // Set filter operator to "AND" if not set, to ensure backward compatibility. This can be removed once everybody have their filters updated, in 1 or 2 months.
+                    foreach (var jfp in jsonFiltersPresets)
+                        if (jfp != null && jfp.Filters != null && jfp.Filters.Count > 0)
+                            foreach (var jf in jfp.Filters)
+                                if (jf != null && jf.Filter != null)
+                                    if (jf.Filter.FilterOperator == FilterOperator.NONE)
+                                        jf.Filter.FilterOperator = FilterOperator.AND;
+
                     _filtersPresets = jsonFiltersPresets;
+                }
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1283,6 +1698,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1294,8 +1710,6 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingFiltersPreset.Text = "Click here...";
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
-            tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
             if (preset == null)
                 return;
@@ -1337,8 +1751,6 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingFiltersPreset.Text = "Click here...";
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
-            tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
             LoadFiltersPresets();
             FillFiltersPresetsDropDown();
@@ -1354,21 +1766,21 @@ namespace ASA_Save_Inspector.Pages
 
         private void btn_SaveCurrentFilters_Click(object sender, RoutedEventArgs e)
         {
-            tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
             if (string.IsNullOrWhiteSpace(tb_FiltersPresetName.Text))
+            {
+                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
                 return;
+            }
             if (string.Compare(tb_FiltersPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Visible;
-                Logger.Instance.Log("This preset name already exists.", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _filtersPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_FiltersPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Visible;
-                    Logger.Instance.Log("This preset name already exists.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
                     return;
                 }
 
@@ -1388,8 +1800,6 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingFiltersPreset.Text = "Click here...";
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
-                    tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-                    tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
                     JsonFiltersPreset newPreset = new JsonFiltersPreset()
                     {
@@ -1405,9 +1815,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveFiltersPresets();
+                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentFilters_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1415,7 +1827,10 @@ namespace ASA_Save_Inspector.Pages
         private void btn_LoadFiltersPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedFiltersPreset == null || _selectedFiltersPreset.Filters == null || _selectedFiltersPreset.Filters.Count <= 0)
+            {
+                MainWindow.ShowToast("Filters preset is empty.", BackgroundColor.WARNING);
                 return;
+            }
 
             Type type = typeof(Item);
             _filters.Clear();
@@ -1424,16 +1839,19 @@ namespace ASA_Save_Inspector.Pages
                 {
                     PropertyInfo? prop = Utils.GetProperty(type, filter.PropertyName);
                     if (prop != null)
-                        _filters.Add(prop, filter.Filter);
+                        _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, filter.Filter));
                 }
-            tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Visible;
             ApplyFiltersAndSort();
+            MainWindow.ShowToast("Filters preset has been loaded.", BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveFiltersPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedFiltersPreset == null || string.IsNullOrEmpty(_selectedFiltersPreset.Name))
+            {
+                MainWindow.ShowToast("No filters preset is currently selected.", BackgroundColor.WARNING);
                 return;
+            }
 
             if (_filtersPresets != null && _filtersPresets.Count > 0)
             {
@@ -1451,22 +1869,19 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingFiltersPreset.Text = "Click here...";
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
-                    tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-                    tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
                     _filtersPresets.RemoveAt(toDel);
                     SaveFiltersPresets();
                     FillFiltersPresetsDropDown();
                 }
                 else
-                    Logger.Instance.Log($"Preset \"{_selectedFiltersPreset.Name}\" not found.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast($"Preset \"{_selectedFiltersPreset.Name}\" not found.", BackgroundColor.WARNING);
             }
         }
 
         private void tb_FiltersPresetName_TextChanged(object sender, TextChangedEventArgs e)
         {
             btn_SaveCurrentFilters.IsEnabled = (tb_FiltersPresetName.Text.Length > 0);
-            tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
         }
 
         private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e)
@@ -1474,8 +1889,6 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingFiltersPreset.Text = "Default preset";
             btn_LoadFiltersPreset.IsEnabled = true;
             btn_RemoveFiltersPreset.IsEnabled = false;
-            tb_FiltersPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_FiltersPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
             _selectedFiltersPreset = _defaultFiltersPreset;
         }
 
@@ -1503,6 +1916,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1521,6 +1935,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1532,8 +1947,6 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = "Click here...";
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
-            tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
             if (preset == null)
                 return;
@@ -1575,8 +1988,6 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = "Click here...";
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
-            tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
             LoadColumnsPresets();
             FillColumnsPresetsDropDown();
@@ -1595,21 +2006,21 @@ namespace ASA_Save_Inspector.Pages
 
         private void btn_SaveCurrentColumns_Click(object sender, RoutedEventArgs e)
         {
-            tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
             if (string.IsNullOrWhiteSpace(tb_ColumnsPresetName.Text))
+            {
+                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
                 return;
+            }
             if (string.Compare(tb_ColumnsPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Visible;
-                Logger.Instance.Log($"This preset name already exists.", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _columnsPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_ColumnsPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Visible;
-                    Logger.Instance.Log($"This preset name already exists.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
                     return;
                 }
 
@@ -1625,8 +2036,6 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingColumnsPreset.Text = "Click here...";
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
-                    tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-                    tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
                     JsonColumnsPreset newPreset = new JsonColumnsPreset()
                     {
@@ -1642,9 +2051,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveColumnsPresets();
+                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentColumns_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1652,19 +2063,25 @@ namespace ASA_Save_Inspector.Pages
         private void btn_LoadColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedColumnsPreset == null || _selectedColumnsPreset.Columns == null || _selectedColumnsPreset.Columns.Count <= 0)
+            {
+                MainWindow.ShowToast("Columns preset is empty.", BackgroundColor.WARNING);
                 return;
+            }
 
             _selectedColumns.Clear();
             foreach (var column in _selectedColumnsPreset.Columns)
                 if (column != null)
                     _selectedColumns.Add(column);
-            tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Visible;
+            MainWindow.ShowToast("Preset has been loaded.", BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedColumnsPreset == null || string.IsNullOrEmpty(_selectedColumnsPreset.Name))
+            {
+                MainWindow.ShowToast("No columns preset is currently selected.", BackgroundColor.WARNING);
                 return;
+            }
 
             if (_columnsPresets != null && _columnsPresets.Count > 0)
             {
@@ -1682,22 +2099,19 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingColumnsPreset.Text = "Click here...";
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
-                    tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-                    tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
 
                     _columnsPresets.RemoveAt(toDel);
                     SaveColumnsPresets();
                     FillColumnsPresetsDropDown();
                 }
                 else
-                    Logger.Instance.Log($"Preset \"{_selectedColumnsPreset.Name}\" not found.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast($"Preset \"{_selectedColumnsPreset.Name}\" not found.", BackgroundColor.WARNING);
             }
         }
 
         private void tb_ColumnsPresetName_TextChanged(object sender, TextChangedEventArgs e)
         {
             btn_SaveCurrentColumns.IsEnabled = (tb_ColumnsPresetName.Text.Length > 0);
-            tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
         }
 
         private void mfi_DefaultColumnsPreset_Click(object sender, RoutedEventArgs e)
@@ -1705,9 +2119,219 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = "Default preset";
             btn_LoadColumnsPreset.IsEnabled = true;
             btn_RemoveColumnsPreset.IsEnabled = false;
-            tb_ColumnsPresetNameAlreadyExists.Visibility = Visibility.Collapsed;
-            tb_ColumnsPresetHasBeenLoaded.Visibility = Visibility.Collapsed;
             _selectedColumnsPreset = _defaultColumnsPreset;
+        }
+
+        #endregion
+
+        #region Group presets
+
+        public void LoadGroupPresets()
+        {
+            _groupPresets.Clear();
+
+            string groupPresetsPath = Utils.ItemGroupsPresetsFilePath();
+            if (!File.Exists(groupPresetsPath))
+                return;
+
+            string groupPresetsJson = File.ReadAllText(groupPresetsPath, Encoding.UTF8);
+            if (string.IsNullOrWhiteSpace(groupPresetsJson))
+                return;
+
+            try
+            {
+                List<JsonGroupPreset>? jsonGroupPresets = JsonSerializer.Deserialize<List<JsonGroupPreset>>(groupPresetsJson);
+                if (jsonGroupPresets != null && jsonGroupPresets.Count > 0)
+                    _groupPresets = jsonGroupPresets;
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private void SaveGroupPresets()
+        {
+            try
+            {
+                string jsonString = JsonSerializer.Serialize<List<JsonGroupPreset>>(_groupPresets, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.ItemGroupsPresetsFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in SaveGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        [RelayCommand]
+        private void GroupPresetSelect(JsonGroupPreset? preset)
+        {
+            _selectedGroupPreset = null;
+            tb_ExistingGroupPreset.Text = "Click here...";
+            btn_LoadGroupPreset.IsEnabled = false;
+            btn_RemoveGroupPreset.IsEnabled = false;
+
+            if (preset == null)
+                return;
+
+            _selectedGroupPreset = preset;
+            tb_ExistingGroupPreset.Text = preset.Name;
+            btn_LoadGroupPreset.IsEnabled = true;
+            btn_RemoveGroupPreset.IsEnabled = true;
+        }
+
+        private void FillGroupPresetsDropDown()
+        {
+            mf_ExistingGroupPresets.Items.Clear();
+            foreach (var preset in _groupPresets)
+                if (preset != null && !string.IsNullOrEmpty(preset.Name) && preset.FiltersPresets != null && preset.FiltersPresets.Count > 0)
+                {
+                    mf_ExistingGroupPresets.Items.Add(new MenuFlyoutItem
+                    {
+                        Text = preset.Name,
+                        Command = GroupPresetSelectCommand,
+                        CommandParameter = preset
+                    });
+                }
+        }
+
+        private void btn_SaveCurrentGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(tb_GroupPresetName.Text))
+            {
+                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                return;
+            }
+
+            foreach (var preset in _groupPresets)
+                if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_GroupPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    return;
+                }
+
+            try
+            {
+                List<KeyValuePair<FilterOperator, string>> group = new List<KeyValuePair<FilterOperator, string>>();
+                foreach (var g in _group)
+                    if (g.Key != FilterOperator.NONE && g.Value != null && !string.IsNullOrEmpty(g.Value.Name))
+                        group.Add(new KeyValuePair<FilterOperator, string>(g.Key, g.Value.Name));
+                if (group.Count > 0)
+                {
+                    _selectedGroupPreset = null;
+                    tb_ExistingGroupPreset.Text = "Click here...";
+                    btn_LoadGroupPreset.IsEnabled = false;
+                    btn_RemoveGroupPreset.IsEnabled = false;
+
+                    JsonGroupPreset newPreset = new JsonGroupPreset()
+                    {
+                        Name = tb_GroupPresetName.Text,
+                        FiltersPresets = group,
+                    };
+                    _groupPresets.Add(newPreset);
+                    mf_ExistingGroupPresets.Items.Add(new MenuFlyoutItem
+                    {
+                        Text = newPreset.Name,
+                        Command = GroupPresetSelectCommand,
+                        CommandParameter = newPreset
+                    });
+                }
+                SaveGroupPresets();
+                FillGroupPresetsDropDown();
+                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in btn_SaveCurrentGroup_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private void btn_GroupPresets_Click(object sender, RoutedEventArgs e)
+        {
+            if (GroupPresetsPopup.IsOpen)
+                return;
+
+            tb_GroupPresetName.Text = "";
+            _selectedGroupPreset = null;
+            tb_ExistingGroupPreset.Text = "Click here...";
+            btn_LoadGroupPreset.IsEnabled = false;
+            btn_RemoveGroupPreset.IsEnabled = false;
+
+            LoadFiltersPresets();
+            LoadGroupPresets();
+            FillGroupPresetsDropDown();
+
+            GroupPresetsPopup.IsOpen = true;
+        }
+
+        private void btn_LoadGroupPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedGroupPreset == null || _selectedGroupPreset.FiltersPresets == null || _selectedGroupPreset.FiltersPresets.Count <= 0)
+            {
+                MainWindow.ShowToast("Group preset is empty.", BackgroundColor.WARNING);
+                return;
+            }
+
+            Type type = typeof(Item);
+            _group.Clear();
+            foreach (var filter in _selectedGroupPreset.FiltersPresets)
+                if (filter.Key != FilterOperator.NONE && !string.IsNullOrEmpty(filter.Value))
+                    foreach (var filtersPreset in _filtersPresets)
+                        if (filtersPreset != null && string.Compare(filter.Value, filtersPreset.Name, StringComparison.InvariantCulture) == 0)
+                        {
+                            _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(filter.Key, filtersPreset));
+                            break;
+                        }
+            MainWindow.ShowToast("Group preset has been loaded.", BackgroundColor.SUCCESS);
+            ApplyFiltersAndSort();
+        }
+
+        private void btn_RemoveGroupPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedGroupPreset == null || string.IsNullOrEmpty(_selectedGroupPreset.Name))
+            {
+                MainWindow.ShowToast("No group preset is currently selected.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (_groupPresets != null && _groupPresets.Count > 0)
+            {
+                int toDel = -1;
+                for (int i = 0; i < _groupPresets.Count; i++)
+                    if (_groupPresets[i] != null && string.Compare(_groupPresets[i].Name, _selectedGroupPreset.Name, StringComparison.InvariantCulture) == 0)
+                    {
+                        toDel = i;
+                        break;
+                    }
+
+                if (toDel >= 0)
+                {
+                    _selectedGroupPreset = null;
+                    tb_ExistingGroupPreset.Text = "Click here...";
+                    btn_LoadGroupPreset.IsEnabled = false;
+                    btn_RemoveGroupPreset.IsEnabled = false;
+
+                    _groupPresets.RemoveAt(toDel);
+                    SaveGroupPresets();
+                    FillGroupPresetsDropDown();
+                }
+                else
+                    MainWindow.ShowToast($"Preset \"{_selectedGroupPreset.Name}\" not found.", BackgroundColor.WARNING);
+            }
+        }
+
+        private void tb_GroupPresetName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            btn_SaveCurrentGroup.IsEnabled = (tb_GroupPresetName.Text.Length > 0);
+        }
+
+        private void btn_CloseGroupPresetsPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (GroupPresetsPopup.IsOpen)
+                GroupPresetsPopup.IsOpen = false;
         }
 
         #endregion
@@ -1726,13 +2350,15 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null && item.ItemID != null && item.ItemID.ItemID1 != null && item.ItemID.ItemID1.HasValue && item.ItemID.ItemID2 != null && item.ItemID.ItemID2.HasValue)
                         clipboardStr = $"{item.ItemID.ItemID1.Value.ToString(CultureInfo.InvariantCulture)}{item.ItemID.ItemID2.Value.ToString(CultureInfo.InvariantCulture)}";
                 }
+                Utils.AddToClipboard(clipboardStr);
             }
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetID_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Utils.AddToClipboard(clipboardStr, false);
             }
-            Utils.AddToClipboard(clipboardStr);
         }
 
         private void mfi_contextMenuGetCoords_Click(object sender, RoutedEventArgs e)
@@ -1747,13 +2373,15 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null && item.Location != null)
                         clipboardStr = item.Location;
                 }
+                Utils.AddToClipboard(clipboardStr);
             }
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetCoords_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Utils.AddToClipboard(clipboardStr, false);
             }
-            Utils.AddToClipboard(clipboardStr);
         }
 
         private void mfi_contextMenuGetJson_Click(object sender, RoutedEventArgs e)
@@ -1768,13 +2396,15 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null)
                         clipboardStr = JsonSerializer.Serialize<Item>(item, new JsonSerializerOptions() { WriteIndented = true, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
                 }
+                Utils.AddToClipboard(clipboardStr);
             }
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Utils.AddToClipboard(clipboardStr, false);
             }
-            Utils.AddToClipboard(clipboardStr);
         }
 
         private void mfi_contextMenuGetAllJson_Click(object sender, RoutedEventArgs e)
@@ -1799,13 +2429,15 @@ namespace ASA_Save_Inspector.Pages
                         items = null;
                     }
                 }
+                Utils.AddToClipboard(clipboardStr);
             }
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Utils.AddToClipboard(clipboardStr, false);
             }
-            Utils.AddToClipboard(clipboardStr);
         }
 
         private void mfi_contextMenuGoToContainer_Click(object sender, RoutedEventArgs e)
@@ -1819,7 +2451,7 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null)
                     {
                         var owner = item.Owner();
-                        if (owner != null && owner.HasValue && owner.Value.Value != null && 
+                        if (owner != null && owner.HasValue && owner.Value.Value != null &&
                             (owner.Value.Key == ArkObjectType.PLAYER_PAWN || owner.Value.Key == ArkObjectType.DINO || owner.Value.Key == ArkObjectType.STRUCTURE))
                         {
 #pragma warning disable CS1998
@@ -1894,6 +2526,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToContainer_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
