@@ -181,6 +181,7 @@ namespace ASA_Save_Inspector.Pages
             });
 
             // Set save file datetime et in-game datetime.
+            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
             tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
             tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }

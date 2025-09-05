@@ -182,6 +182,7 @@ namespace ASA_Save_Inspector.Pages
             });
 
             // Set save file datetime et in-game datetime.
+            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
             tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
             tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
@@ -2524,14 +2525,14 @@ namespace ASA_Save_Inspector.Pages
                                         ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                                         {
                                             if (!ItemsPage._page.GoToItem(dino.Cryopod.ItemID.ItemID1, dino.Cryopod.ItemID.ItemID2))
-                                                MainWindow.ShowToast("Cryopod not found, check filters", BackgroundColor.WARNING);
+                                                MainWindow.ShowToast("Cryopod not found, check filters.", BackgroundColor.WARNING);
                                         });
                                 });
                             }
 #pragma warning restore CS1998
                         }
                         else
-                            MainWindow.ShowToast("Cryopod not found", BackgroundColor.WARNING);
+                            MainWindow.ShowToast("Cryopod not found.", BackgroundColor.WARNING);
                     }
                 }
             }

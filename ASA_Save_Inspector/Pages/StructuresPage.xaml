@@ -115,8 +115,9 @@
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="Structures" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
-            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: X</TextBlock>
-            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Y</TextBlock>
+            <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right">Map name: X</TextBlock>
+            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: Y</TextBlock>
+            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Z</TextBlock>
         </StackPanel>
         <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
             <Grid.ColumnDefinitions>
@@ -193,6 +194,7 @@
                         <MenuFlyoutItem Text="Copy current structure ID to clipboard" Click="mfi_contextMenuGetID_Click" />
                         <MenuFlyoutItem Text="Copy current structure JSON to clipboard" Click="mfi_contextMenuGetJson_Click" />
                         <MenuFlyoutItem Text="Copy current structure UE coords to clipboard" Click="mfi_contextMenuGetCoords_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToInventoryItems" Text="Go to inventory items" Click="mfi_contextMenuGoToInventoryItems_Click" Visibility="Collapsed" />
                         <MenuFlyoutSeparator/>
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetAllJson" Text="Copy selected structures JSON to clipboard" Click="mfi_contextMenuGetAllJson_Click" Visibility="Collapsed" />
                     </MenuFlyout.Items>
@@ -343,6 +345,18 @@
                             <DropDownButton.Flyout>
                                 <MenuFlyout x:Name="mf_ExistingFiltersPresets" Placement="BottomEdgeAlignedLeft">
                                     <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset" Text="Default preset" Click="mfi_DefaultFiltersPreset_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_OilVeins" Text="Oil Veins" Click="mfi_DefaultFiltersPreset_OilVeins_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_WaterVeins" Text="Water Veins" Click="mfi_DefaultFiltersPreset_WaterVeins_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_GasVeins" Text="Gas Veins" Click="mfi_DefaultFiltersPreset_GasVeins_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_PowerNodes" Text="Power Nodes" Click="mfi_DefaultFiltersPreset_PowerNodes_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_BeaverDams" Text="Beaver Dams" Click="mfi_DefaultFiltersPreset_BeaverDams_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_ZPlants" Text="Z Plants" Click="mfi_DefaultFiltersPreset_ZPlants_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_WyvernNests" Text="Wyvern Nests" Click="mfi_DefaultFiltersPreset_WyvernNests_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_GigantoraptorNests" Text="Gigantoraptor Nests" Click="mfi_DefaultFiltersPreset_GigantoraptorNests_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_ArtifactCrates" Text="Artifact Crates" Click="mfi_DefaultFiltersPreset_ArtifactCrates_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_HordeCrates" Text="Horde Crates" Click="mfi_DefaultFiltersPreset_HordeCrates_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_TributeTerminals" Text="Tribute Terminals" Click="mfi_DefaultFiltersPreset_TributeTerminals_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset_CityTerminals" Text="City Terminals" Click="mfi_DefaultFiltersPreset_CityTerminals_Click"/>
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>

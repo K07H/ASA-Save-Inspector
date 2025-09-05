@@ -182,6 +182,7 @@ namespace ASA_Save_Inspector.Pages
             });
 
             // Set save file datetime et in-game datetime.
+            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
             tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
             tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
@@ -250,6 +251,22 @@ namespace ASA_Save_Inspector.Pages
                 }
             }
             return false;
+        }
+
+        public bool FilterByInventoryUUID(string? inventoryUUID)
+        {
+            if (string.IsNullOrEmpty(inventoryUUID))
+                return false;
+
+            PropertyInfo? prop = Utils.GetProperty(typeof(Item), "OwnerInventoryUUID");
+            if (prop != null)
+            {
+                _group.Clear();
+                _filters.Clear();
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = inventoryUUID }));
+                ApplyFiltersAndSort();
+            }
+            return true;
         }
 
         private bool LastItemDoubleTap(MapPoint? point)

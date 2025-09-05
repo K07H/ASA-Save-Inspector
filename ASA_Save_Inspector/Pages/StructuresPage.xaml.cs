@@ -53,17 +53,37 @@ namespace ASA_Save_Inspector.Pages
 
         private static List<KeyValuePair<FilterOperator, JsonFiltersPreset>> _group = new List<KeyValuePair<FilterOperator, JsonFiltersPreset>>();
 
-        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset()
-        {
-            Name = "Default preset",
-            Filters = new List<JsonFilter>()
-        };
-
         private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset()
         {
             Name = "Default preset",
             Columns = new List<string>()
         };
+
+        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset() { Name = "Default preset", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_OilVeins = new JsonFiltersPreset() { Name = "Oil Veins", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_WaterVeins = new JsonFiltersPreset() { Name = "Water Veins", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_GasVeins = new JsonFiltersPreset() { Name = "Gas Veins", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_PowerNodes = new JsonFiltersPreset() { Name = "Power Nodes", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_BeaverDams = new JsonFiltersPreset() { Name = "Beaver Dams", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_ZPlants = new JsonFiltersPreset() { Name = "Z Plants", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_WyvernNests = new JsonFiltersPreset() { Name = "Wyvern Nests", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_GigantoraptorNests = new JsonFiltersPreset() { Name = "Gigantoraptor Nests", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_ArtifactCrates = new JsonFiltersPreset() { Name = "Artifact Crates", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_HordeCrates = new JsonFiltersPreset() { Name = "Horde Crates", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = "Tribute Terminals", Filters = new List<JsonFilter>() };
+
+        private static JsonFiltersPreset _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = "City Terminals", Filters = new List<JsonFilter>() };
 
         #endregion
 
@@ -182,6 +202,7 @@ namespace ASA_Save_Inspector.Pages
             });
 
             // Set save file datetime et in-game datetime.
+            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
             tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
             tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
@@ -418,6 +439,16 @@ namespace ASA_Save_Inspector.Pages
         private void dg_Structures_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
             tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Structures.SelectedItems != null ? dg_Structures.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
+
+            Visibility goToInventoryItemsVisibility = Visibility.Collapsed;
+            DataGridRow? row = Utils.FindParent<DataGridRow>((UIElement)e.OriginalSource);
+            if (row != null)
+            {
+                Structure? s = row.DataContext as Structure;
+                if (s != null && !string.IsNullOrEmpty(s.InventoryUUID))
+                    goToInventoryItemsVisibility = Visibility.Visible;
+            }
+            mfi_contextMenuGoToInventoryItems.Visibility = goToInventoryItemsVisibility;
             mfi_contextMenuGetAllJson.Visibility = (dg_Structures.SelectedItems != null && dg_Structures.SelectedItems.Count > 1 ? Visibility.Visible : Visibility.Collapsed);
         }
 
@@ -563,7 +594,7 @@ namespace ASA_Save_Inspector.Pages
                             }
                         if (!found)
                         {
-                            Filter defaultFilter = new Filter() { FilterType = FilterType.GREATER_THAN, FilterValue = "49999" };
+                            Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.GREATER_THAN, FilterValue = "49999" };
                             _filters.Add(new KeyValuePair<PropertyInfo, Filter>(targetingTeam, defaultFilter));
                             if (_defaultFiltersPreset?.Filters != null)
                                 _defaultFiltersPreset.Filters.Add(new JsonFilter()
@@ -573,21 +604,59 @@ namespace ASA_Save_Inspector.Pages
                                 });
                         }
                     }
-                    /*
-                    // Add "bIsLocked == True".
-                    PropertyInfo? bIsLockedProp = typeof(Structure).GetProperty("bIsLocked", BindingFlags.Instance | BindingFlags.Public);
-                    if (bIsLockedProp != null && !_filters.ContainsKey(bIsLockedProp))
+
+                    PropertyInfo? itemArchetype = typeof(Structure).GetProperty("ItemArchetype", BindingFlags.Instance | BindingFlags.Public);
+                    if (itemArchetype != null)
                     {
-                        Filter defaultFilter = new Filter() { FilterType = FilterType.EXACT_MATCH, FilterValues = new List<string>() { "True" } };
-                        _filters[bIsLockedProp] = defaultFilter;
-                        if (_defaultFiltersPreset?.Filters != null)
-                            _defaultFiltersPreset.Filters.Add(new JsonFilter()
-                            {
-                                PropertyName = bIsLockedProp.Name,
-                                Filter = defaultFilter
-                            });
+                        // Add "Oil Veins".
+                        Filter defaultFilter_OilVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "OilVein" };
+                        if (_defaultFiltersPreset_OilVeins?.Filters != null)
+                            _defaultFiltersPreset_OilVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_OilVeins });
+                        // Add "Water Veins".
+                        Filter defaultFilter_WaterVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WaterVein" };
+                        if (_defaultFiltersPreset_WaterVeins?.Filters != null)
+                            _defaultFiltersPreset_WaterVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WaterVeins });
+                        // Add "Gas Veins".
+                        Filter defaultFilter_GasVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GasVein" };
+                        if (_defaultFiltersPreset_GasVeins?.Filters != null)
+                            _defaultFiltersPreset_GasVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GasVeins });
+                        // Add "Power Nodes".
+                        Filter defaultFilter_PowerNodes = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "PrimalStructurePowerNode" };
+                        if (_defaultFiltersPreset_PowerNodes?.Filters != null)
+                            _defaultFiltersPreset_PowerNodes.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_PowerNodes });
+                        // Add "Beaver Dams".
+                        Filter defaultFilter_BeaverDams = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "BeaverDam" };
+                        if (_defaultFiltersPreset_BeaverDams?.Filters != null)
+                            _defaultFiltersPreset_BeaverDams.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_BeaverDams });
+                        // Add "Z Plants".
+                        Filter defaultFilter_ZPlants = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "Structure_PlantSpeciesZ_Wild" };
+                        if (_defaultFiltersPreset_ZPlants?.Filters != null)
+                            _defaultFiltersPreset_ZPlants.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ZPlants });
+                        // Add "Wyvern Nests".
+                        Filter defaultFilter_WyvernNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WyvernNest" };
+                        if (_defaultFiltersPreset_WyvernNests?.Filters != null)
+                            _defaultFiltersPreset_WyvernNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WyvernNests });
+                        // Add "Gigantoraptor Nests".
+                        Filter defaultFilter_GigantoraptorNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GigantoraptorNest" };
+                        if (_defaultFiltersPreset_GigantoraptorNests?.Filters != null)
+                            _defaultFiltersPreset_GigantoraptorNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GigantoraptorNests });
+                        // Add "Artifact Crates".
+                        Filter defaultFilter_ArtifactCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "ArtifactCrate" };
+                        if (_defaultFiltersPreset_ArtifactCrates?.Filters != null)
+                            _defaultFiltersPreset_ArtifactCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ArtifactCrates });
+                        // Add "Horde Crates".
+                        Filter defaultFilter_HordeCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "HordeCrates" };
+                        if (_defaultFiltersPreset_HordeCrates?.Filters != null)
+                            _defaultFiltersPreset_HordeCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_HordeCrates });
+                        // Add "Tribute Terminals".
+                        Filter defaultFilter_TributeTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "TributeTerminal" };
+                        if (_defaultFiltersPreset_TributeTerminals?.Filters != null)
+                            _defaultFiltersPreset_TributeTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_TributeTerminals });
+                        // Add "City Terminals".
+                        Filter defaultFilter_CityTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "CityTerminal" };
+                        if (_defaultFiltersPreset_CityTerminals?.Filters != null)
+                            _defaultFiltersPreset_CityTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_CityTerminals });
                     }
-                    */
                 }
             }
         }
@@ -1156,14 +1225,6 @@ namespace ASA_Save_Inspector.Pages
                                 FilterType = FilterType.EXACT_MATCH,
                                 FilterValues = new List<string>(_selectedStructureFilter_Values)
                             }));
-                            /*
-                            _filters[prop] = new Filter()
-                            {
-                                FilterOperator = filterOperator,
-                                FilterType = FilterType.EXACT_MATCH,
-                                FilterValues = new List<string>(_selectedStructureFilter_Values)
-                            };
-                            */
                         }
                         else if (tb_FilterByOther.Text != null)
                         {
@@ -1188,14 +1249,6 @@ namespace ASA_Save_Inspector.Pages
                                     FilterType = ft,
                                     FilterValue = tb_FilterByOther.Text
                                 }));
-                                /*
-                                _filters[prop] = new Filter()
-                                {
-                                    FilterOperator = filterOperator,
-                                    FilterType = ft,
-                                    FilterValue = tb_FilterByOther.Text
-                                };
-                                */
                             }
                         }
                         ApplyFiltersAndSort();
@@ -1726,18 +1779,37 @@ namespace ASA_Save_Inspector.Pages
             _selectedFiltersPreset = preset;
             tb_ExistingFiltersPreset.Text = preset.Name;
             btn_LoadFiltersPreset.IsEnabled = true;
-            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0);
+            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Oil Veins", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Water Veins", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Gas Veins", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Power Nodes", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Beaver Dams", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Z Plants", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Wyvern Nests", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Gigantoraptor Nests", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Artifact Crates", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Horde Crates", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "Tribute Terminals", StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, "City Terminals", StringComparison.InvariantCulture) != 0);
         }
 
         private void FillFiltersPresetsDropDown()
         {
             mf_ExistingFiltersPresets.Items.Clear();
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem
-            {
-                Text = "Default preset",
-                Command = FiltersPresetSelectCommand,
-                CommandParameter = _defaultFiltersPreset
-            });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Default preset", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Oil Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_OilVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Water Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WaterVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Gas Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GasVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Power Nodes", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_PowerNodes });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Beaver Dams", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_BeaverDams });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Z Plants", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ZPlants });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Wyvern Nests", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WyvernNests });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Gigantoraptor Nests", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GigantoraptorNests });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Artifact Crates", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ArtifactCrates });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Horde Crates", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_HordeCrates });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Tribute Terminals", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_TributeTerminals });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "City Terminals", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_CityTerminals });
             foreach (var preset in _filtersPresets)
                 if (preset != null && !string.IsNullOrEmpty(preset.Name) && preset.Filters != null && preset.Filters.Count > 0)
                 {
@@ -1893,13 +1965,39 @@ namespace ASA_Save_Inspector.Pages
             btn_SaveCurrentFilters.IsEnabled = (tb_FiltersPresetName.Text.Length > 0);
         }
 
-        private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e)
+        private void DefaultFiltersPresetSelected(string presetLabel, JsonFiltersPreset? preset)
         {
-            tb_ExistingFiltersPreset.Text = "Default preset";
+            tb_ExistingFiltersPreset.Text = presetLabel;
             btn_LoadFiltersPreset.IsEnabled = true;
             btn_RemoveFiltersPreset.IsEnabled = false;
-            _selectedFiltersPreset = _defaultFiltersPreset;
+            _selectedFiltersPreset = preset;
         }
+
+        private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Default preset", _defaultFiltersPreset);
+
+        private void mfi_DefaultFiltersPreset_OilVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Oil Veins", _defaultFiltersPreset_OilVeins);
+        
+        private void mfi_DefaultFiltersPreset_WaterVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Water Veins", _defaultFiltersPreset_WaterVeins);
+        
+        private void mfi_DefaultFiltersPreset_GasVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Gas Veins", _defaultFiltersPreset_GasVeins);
+        
+        private void mfi_DefaultFiltersPreset_PowerNodes_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Power Nodes", _defaultFiltersPreset_PowerNodes);
+
+        private void mfi_DefaultFiltersPreset_BeaverDams_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Beaver Dams", _defaultFiltersPreset_BeaverDams);
+        
+        private void mfi_DefaultFiltersPreset_ZPlants_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Z Plants", _defaultFiltersPreset_ZPlants);
+
+        private void mfi_DefaultFiltersPreset_WyvernNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Wyvern Nests", _defaultFiltersPreset_WyvernNests);
+
+        private void mfi_DefaultFiltersPreset_GigantoraptorNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Gigantoraptor Nests", _defaultFiltersPreset_GigantoraptorNests);
+
+        private void mfi_DefaultFiltersPreset_ArtifactCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Artifact Crates", _defaultFiltersPreset_ArtifactCrates);
+        
+        private void mfi_DefaultFiltersPreset_HordeCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Horde Crates", _defaultFiltersPreset_HordeCrates);
+
+        private void mfi_DefaultFiltersPreset_TributeTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Tribute Terminals", _defaultFiltersPreset_TributeTerminals);
+        
+        private void mfi_DefaultFiltersPreset_CityTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("City Terminals", _defaultFiltersPreset_CityTerminals);
 
         #endregion
 
@@ -2390,6 +2488,49 @@ namespace ASA_Save_Inspector.Pages
                 MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetCoords_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
+            }
+        }
+
+        private void mfi_contextMenuGoToInventoryItems_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MenuFlyoutItem? mfi = (sender as MenuFlyoutItem);
+                if (mfi != null)
+                {
+                    Structure? structure = (mfi.DataContext as Structure);
+                    if (structure != null && !string.IsNullOrEmpty(structure.InventoryUUID))
+                    {
+#pragma warning disable CS1998
+                        if (MainWindow._mainWindow != null)
+                        {
+                            MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                            {
+                                if (MainWindow._mainWindow != null)
+                                {
+                                    if (MainWindow._mainWindow._navView != null)
+                                        MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnItems;
+                                    MainWindow._mainWindow.NavView_Navigate(typeof(ItemsPage), new EntranceNavigationTransitionInfo());
+                                }
+                                await Task.Delay(250);
+                                if (ItemsPage._page != null)
+                                    ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                                    {
+                                        if (!ItemsPage._page.FilterByInventoryUUID(structure.InventoryUUID))
+                                            MainWindow.ShowToast("Fiter by inventory UUID failed, check filters", BackgroundColor.WARNING);
+                                    });
+                            });
+                        }
+#pragma warning restore CS1998
+                    }
+                    else
+                        MainWindow.ShowToast("Inventory UUID not found.", BackgroundColor.WARNING);
+                }
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToInventoryItems_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
 

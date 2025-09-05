@@ -20,6 +20,108 @@ from arkparse.player.ark_player import ArkPlayer
 from arkparse.saves.save_connection import SaveConnection
 from arkparse.utils.json_utils import DefaultJsonEncoder
 
+BLUEPRINTS_TO_SKIP: list[str] = [ "/AI/",
+                                  "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C",
+                                  "/ByteArrayObject",
+                                  "/DinoCharacterStatus_BP",
+                                  "/DinoDeathHarvestingComponent_",
+                                  "/DinoDropInventoryComponent_",
+                                  "/DinoInventoryComponent_",
+                                  "/DinoTamedInventoryComponent_",
+                                  "/DinoWildInventoryComponent_",
+                                  "/Doorsystem/ButtonSystem",
+                                  "/Foliage",
+                                  "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
+                                  "/NPCZoneManagerBlueprint_",
+                                  "/PlayerCharacterStatusComponent_BP",
+                                  "/PlayerControllerBlueprint",
+                                  "/Script/ShooterGame.ShooterMatineeActor",
+                                  "/Script/ShooterGame.StructurePaintingComponent",
+                                  "/Sound/",
+                                  "/Traps/DoorAndButtons",
+                                  "/Trap/Multi_Switch_Door",
+                                  "/Weapons/Weap",
+                                  "AnimSequence",
+                                  "BossArenaManager",
+                                  "DinoCharacterStatusComponent_",
+                                  "DinoCharacterStatusComponent_BP",
+                                  "Engine.BlockingVolume",
+                                  "Engine.MaterialInstanceConstant",
+                                  "InstancedFoliageActor",
+                                  "NPCZoneManager",
+                                  "NPCZoneVolume",
+                                  "PrimalPersistentWorldData",
+                                  "_AIController" ]
+
+BLUEPRINTS_NO_PARSE: list[str] = [ "PrimalInventory",
+                                   "/Buffs/",
+                                   "DayCycle" ]
+
+def is_dino_blueprint(blueprint: str) -> bool:
+    if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dinos/" in blueprint or "Creature" in blueprint):
+        return True
+    if "/Raft_BP.Raft_BP" in blueprint \
+            or "/Raft/MotorRaft_BP.MotorRaft_BP" in blueprint \
+            or "Car_Vehicle_BP.Car_Vehicle_BP_C" in blueprint \
+            or "BP_HelperBot_DockingBay" in blueprint \
+            or "Polar_Bear.Polar_Bear_C" in blueprint:
+        return True
+    return False
+
+def is_structure_blueprint(blueprint: str) -> bool:
+    if "/Structures" in blueprint \
+            or "/GigantoraptorNest" in blueprint \
+            or "Rug_Shag" in blueprint \
+            or "TributeTerminal" in blueprint \
+            or "StructureStandingTurret_Flightseeker" in blueprint \
+            or "ArtifactCrate_" in blueprint \
+            or "/WyvernNest" in blueprint \
+            or "/Structure_PlantSpecies" in blueprint \
+            or "/HordeCrates/ElementWall_Horde" in blueprint \
+            or "/Flag_SM_" in blueprint \
+            or "/SupplyCrateBaseBP_" in blueprint \
+            or "/StructureBP_WoodBench" in blueprint \
+            or "MB_Button.MB_Button_C" in blueprint \
+            or "/PortableRope_Ladder_" in blueprint:
+        return True
+    return False
+
+def is_item_blueprint(blueprint: str) -> bool:
+    if "/DroppedItemGeneric" in blueprint or \
+            "Egg_Wyvern_Fertilized" in blueprint or \
+            "Items/Raft/Tireme_BP_" in blueprint or \
+            "/PrimalItem_" in blueprint or \
+            "/PrimalItemAmmo_" in blueprint or \
+            "/PrimalItemArmor_" in blueprint or \
+            "/PrimalItemArtifact" in blueprint or \
+            "/PrimalItemC4Ammo" in blueprint or \
+            "/PrimalItemConsumable_" in blueprint or \
+            "/PrimalItemConsumableBuff_Parachute" in blueprint or \
+            "/PrimalItemConsumableEatable_" in blueprint or \
+            "/PrimalItemConsumableMiracleGro" in blueprint or \
+            "/PrimalItemConsumableRespecSoup" in blueprint or \
+            "/PrimalItemConsumableSoap" in blueprint or \
+            "/PrimalItemCustomDrinkRecipe_" in blueprint or \
+            "/PrimalItemCustomFoodRecipe_" in blueprint or \
+            "/PrimalItemDye_" in blueprint or \
+            "/PrimalItemMotorboat" in blueprint or \
+            "/PrimalItemRadio" in blueprint or \
+            "/PrimalItemRaft" in blueprint or \
+            "/PrimalItemResource_" in blueprint or \
+            "/PrimalItemStructure_" in blueprint or \
+            "/PrimalItemTrophy" in blueprint or \
+            "/PrimalItemWeaponAttachment_" in blueprint:
+        return True
+    return False
+
+def is_in_str(search_for: list[str], search_in: str) -> bool:
+    if search_in is None or len(search_in) <= 0 or search_for is None or len(search_for) <= 0:
+        return False
+    for s in search_for:
+        if s is not None and len(s) > 0 and s in search_in:
+            return True
+    return False
+
 def human_readable_time(time_in_sec : float):
     hours = math.floor(time_in_sec / 3600)
     remaining = time_in_sec % 3600
@@ -215,15 +317,50 @@ def update_files(parsing_data: PlayersAndTribesParsing):
 
 def parse_single_structure(obj: ArkGameObject, save: AsaSave, bypass_inventory: bool = True) -> Optional[Structure | StructureWithInventory]:
     try:
+        game_bin: Optional[ArkBinaryParser] = None
+        if obj.uuid in save.game_obj_binaries:
+            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
         if obj.get_property_value("MaxItemCount") is not None or (obj.get_property_value("MyInventoryComponent") is not None and obj.get_property_value("CurrentItemCount") is not None):
-            structure = StructureWithInventory(obj.uuid, save, bypass_inventory=bypass_inventory)
+            structure = StructureWithInventory(obj.uuid, save, bypass_inventory=bypass_inventory, game_bin=game_bin, game_obj=obj)
         else:
-            structure = Structure(obj.uuid, save)
+            structure = Structure(obj.uuid, save, game_bin=game_bin, game_obj=obj)
         if obj.uuid in save.save_context.actor_transforms:
             structure.set_actor_transform(save.save_context.actor_transforms[obj.uuid])
         return structure
     except Exception as e:
-        print(f"Exception caught when parsing structure: {e}", flush=True)
+        print(f"Exception caught when parsing structure {obj.uuid}: {e}", flush=True)
+        return None
+
+def parse_single_cryopod(obj: ArkGameObject, save: AsaSave) -> Optional[Cryopod]:
+    try:
+        game_bin: Optional[ArkBinaryParser] = None
+        if obj.uuid in save.game_obj_binaries:
+            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
+        return Cryopod(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+    except Exception as e:
+        if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
+            print(f"Exception caught when parsing cryopod {obj.uuid}: {e}", flush=True)
+        return None
+
+def parse_single_dino(obj: ArkGameObject, save: AsaSave):
+    try:
+        game_bin: Optional[ArkBinaryParser] = None
+        if obj.uuid in save.game_obj_binaries:
+            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
+        is_tamed = obj.get_property_value("TamedTimeStamp") is not None
+        is_baby = obj.get_property_value("bIsBaby", False)
+        if is_tamed:
+            if is_baby:
+                return TamedBaby(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+            else:
+                return TamedDino(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+        else:
+            if is_baby:
+                return Baby(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+            else:
+                return Dino(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+    except Exception as e:
+        print(f"Exception caught when parsing dino {obj.uuid}: {e}", flush=True)
         return None
 
 def pawn_to_json(pawn_obj: ArkGameObject) -> dict:
@@ -269,16 +406,6 @@ def asi_export_process(arg_obj):
     # save_context: SaveContext = arg_obj["save_context"]
     # the_queue: Queue = arg_obj["queue"]
 
-    skip_list = [
-        "/Game/PrimalEarth/CoreBlueprints/Items/Notes/PrimalItem_StartingNote.PrimalItem_StartingNote_C",
-        "/Script/ShooterGame.StructurePaintingComponent",
-        "/Game/Packs/Frontier/Structures/TreasureCache/TreasureMap/PrimalItem_TreasureMap_WildSupplyDrop.PrimalItem_TreasureMap_WildSupplyDrop_C",
-        "/Game/PrimalEarth/Structures/Wooden/CropPlotLarge_SM.CropPlotLarge_SM_C",
-        "/Game/PrimalEarth/Structures/Pipes/WaterPipe_Stone_Intake.WaterPipe_Stone_Intake_C",
-        "/Game/PrimalEarth/Structures/BuildingBases/WaterTank_Metal.WaterTank_Metal_C",
-        "/Game/PrimalEarth/Structures/WaterTap_Metal.WaterTap_Metal_C"
-    ]
-
     all_objs: list = []
     for key, value in arg_obj["dataset"].items():
         byte_buffer = ArkBinaryParser(value, arg_obj["save_context"])
@@ -289,7 +416,7 @@ def asi_export_process(arg_obj):
             class_name = None
             print(f"Exception caught when parsing object with UUID {obj_uuid}: {ex}", flush=True)
 
-        if class_name is not None and not class_name in skip_list:
+        if class_name is not None and not class_name in BLUEPRINTS_TO_SKIP:
             try:
                 game_obj = ArkGameObject(obj_uuid, class_name, byte_buffer)
             except Exception as e:
@@ -307,137 +434,54 @@ def asi_parse_process(arg_obj):
     # save: AsaSave = arg_obj["save"]
     # the_queue: Queue = arg_obj["queue"]
 
-    skip_list = [
-        "/Game/PrimalEarth/CoreBlueprints/Items/Notes/PrimalItem_StartingNote.PrimalItem_StartingNote_C",
-        "/Script/ShooterGame.StructurePaintingComponent",
-        "/Game/Packs/Frontier/Structures/TreasureCache/TreasureMap/PrimalItem_TreasureMap_WildSupplyDrop.PrimalItem_TreasureMap_WildSupplyDrop_C",
-        "/Game/PrimalEarth/Structures/Wooden/CropPlotLarge_SM.CropPlotLarge_SM_C",
-        "/Game/PrimalEarth/Structures/Pipes/WaterPipe_Stone_Intake.WaterPipe_Stone_Intake_C",
-        "/Game/PrimalEarth/Structures/BuildingBases/WaterTank_Metal.WaterTank_Metal_C",
-        "/Game/PrimalEarth/Structures/WaterTap_Metal.WaterTap_Metal_C",
-    ]
-
     all_dinos = []
     all_pawns_objects = []
     all_items = []
     all_structures = []
+    skipped_bps: list[str] = []
+    unknown_bps: list[str] = []
+    failed_parsing: list[str] = []
     for obj in arg_obj["objects"]:
         if obj is not None:
             try:
-                if obj.blueprint in skip_list or (obj.has_property("bIsEngram") and obj.get_property_value("bIsEngram", False)):
+                if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint): # or (obj.has_property("bIsEngram") and obj.get_property_value("bIsEngram", False)):
+                    if __debug__ and obj.blueprint not in skipped_bps:
+                        skipped_bps.append(obj.blueprint)
                     continue
 
-                if "Dinos/" in obj.blueprint and "_Character_" in obj.blueprint:
-                    is_tamed = obj.get_property_value("TamedTimeStamp") is not None
-                    is_baby = obj.get_property_value("bIsBaby", False)
-                    if is_tamed:
-                        if is_baby:
-                            dino = TamedBaby(obj.uuid, arg_obj["save"])
-                        else:
-                            dino = TamedDino(obj.uuid, arg_obj["save"])
-                    else:
-                        if is_baby:
-                            dino = Baby(obj.uuid, arg_obj["save"])
-                        else:
-                            dino = Dino(obj.uuid, arg_obj["save"])
+                if is_dino_blueprint(obj.blueprint):
+                    dino = parse_single_dino(obj, arg_obj["save"])
                     if dino is not None:
                         all_dinos.append(dino)
-                elif "/Raft_BP.Raft_BP" in obj.blueprint or "/Raft/MotorRaft_BP.MotorRaft_BP" in obj.blueprint:
-                    is_tamed = obj.get_property_value("TamedTimeStamp") is not None
-                    if is_tamed:
-                        dino = TamedDino(obj.uuid, arg_obj["save"])
-                    else:
-                        dino = Dino(obj.uuid, arg_obj["save"])
-                    if dino is not None:
-                        all_dinos.append(dino)
+                    elif __debug__:
+                        failed_parsing.append(f"Dino {obj.uuid} with class {obj.blueprint}.")
                 elif "PrimalItem_WeaponEmptyCryopod_C" in obj.blueprint:
-                    try:
-                        cryopod = Cryopod(obj.uuid, arg_obj["save"])
-                    except Exception as ce:
-                        cryopod = None
-                        if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(ce):
-                            print(f"Exception caught during cryopod parsing: {ce}", flush=True)
-                    if not cryopod is None:
-                        if not cryopod.dino is None:
+                    cryopod = parse_single_cryopod(obj, arg_obj["save"])
+                    if cryopod is not None:
+                        if cryopod.dino is not None:
                             cryopod.dino.is_cryopodded = True
                             all_dinos.append(cryopod.dino)
+                    elif __debug__:
+                        failed_parsing.append(f"Cryopod {obj.uuid} content.")
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 elif "/PlayerPawnTest_Female.PlayerPawnTest_Female_C" in obj.blueprint or "/PlayerPawnTest_Male.PlayerPawnTest_Male_C" in obj.blueprint:
                     all_pawns_objects.append(obj)
-                elif ("/Structures" in obj.blueprint or "/GigantoraptorNest" in obj.blueprint or "Rug_Shag" in obj.blueprint) \
-                        and not "PrimalItemStructure_" in obj.blueprint \
-                        and not "/Skins/" in obj.blueprint \
-                        and not "PrimalInventory" in obj.blueprint \
-                        and not "PrimalItemStructureSkin" in obj.blueprint \
-                        and not "PrimalItemResource" in obj.blueprint \
-                        and not "/TrainCarts/" in obj.blueprint:
-                    if obj.get_property_value("StructureID") is None:
-                        continue
+                elif is_item_blueprint(obj.blueprint):
+                    all_items.append(JsonApi.primal_item_to_json_obj(obj))
+                elif is_structure_blueprint(obj.blueprint) and obj.get_property_value("StructureID") is not None:
                     structure = parse_single_structure(obj, arg_obj["save"], True)
                     if structure is not None:
                         all_structures.append(structure)
-                elif "/PrimalItemArmor_" in obj.blueprint or \
-                        "/PrimalItem_" in obj.blueprint or \
-                        "/PrimalItemAmmo_" in obj.blueprint or \
-                        "/PrimalItemC4Ammo" in obj.blueprint or \
-                        "/PrimalItemResource_" in obj.blueprint or \
-                        "/PrimalItemConsumable_" in obj.blueprint or \
-                        "/PrimalItemConsumableSoap" in obj.blueprint or \
-                        "/PrimalItemConsumableMiracleGro" in obj.blueprint or \
-                        "/PrimalItemConsumableRespecSoup" in obj.blueprint or \
-                        "/PrimalItemConsumableBuff_Parachute" in obj.blueprint or \
-                        "/PrimalItemConsumableEatable_" in obj.blueprint or \
-                        "/PrimalItemArtifact" in obj.blueprint or \
-                        "/PrimalItemTrophy" in obj.blueprint or \
-                        "/PrimalItemWeaponAttachment_" in obj.blueprint or \
-                        "/PrimalItemCustomDrinkRecipe_" in obj.blueprint or \
-                        "/PrimalItemCustomFoodRecipe_" in obj.blueprint or \
-                        "/PrimalItemDye_" in obj.blueprint or \
-                        "/PrimalItemRadio" in obj.blueprint or \
-                        "/PrimalItemRaft" in obj.blueprint or \
-                        "/PrimalItemStructure_" in obj.blueprint or \
-                        "/DroppedItemGeneric_" in obj.blueprint or \
-                        "Egg_Wyvern_Fertilized" in obj.blueprint:
-                    all_items.append(JsonApi.primal_item_to_json_obj(obj))
-                elif not "/PrimalInventory_" in obj.blueprint \
-                        and not "/PrimalInventoryBP_" in obj.blueprint \
-                        and not "/Skins/" in obj.blueprint \
-                        and not "PrimalInventory" in obj.blueprint \
-                        and not "/PrimalItemStructureSkin_" in obj.blueprint \
-                        and not "/PrimalItemSkin_" in obj.blueprint \
-                        and not "/PrimalItemCostume_" in obj.blueprint \
-                        and not "/PrimalItemDinoCostume_" in obj.blueprint \
-                        and not "/TrainCarts/" in obj.blueprint \
-                        and not "/WeapFists" in obj.blueprint \
-                        and not "/PlayerControllerBlueprint" in obj.blueprint \
-                        and not "/PlayerCharacterStatusComponent_BP" in obj.blueprint \
-                        and not "DinoCharacterStatusComponent_BP" in obj.blueprint \
-                        and not "/DinoCharacterStatus_BP" in obj.blueprint \
-                        and not "/DinoInventoryComponent_" in obj.blueprint \
-                        and not "/DinoTamedInventoryComponent_" in obj.blueprint \
-                        and not "/DinoDropInventoryComponent_" in obj.blueprint \
-                        and not "/NPCZoneManagerBlueprint_" in obj.blueprint \
-                        and not "/Foliage" in obj.blueprint \
-                        and not "InstancedFoliageActor" in obj.blueprint \
-                        and not "BossArenaManager" in obj.blueprint \
-                        and not "PrimalPersistentWorldData" in obj.blueprint \
-                        and not "_AIController" in obj.blueprint \
-                        and not "/Buffs/" in obj.blueprint \
-                        and not "/AI/" in obj.blueprint \
-                        and not "/Sound/" in obj.blueprint \
-                        and not "/ByteArrayObject" in obj.blueprint \
-                        and not "DayCycle" in obj.blueprint \
-                        and not "AnimSequence" in obj.blueprint \
-                        and not "Engine.BlockingVolume" in obj.blueprint \
-                        and not "Engine.MaterialInstanceConstant" in obj.blueprint \
-                        and not "NPCZoneManager" in obj.blueprint \
-                        and not "NPCZoneVolume" in obj.blueprint:
-                    print(f"Unknown object of class {obj.blueprint}", flush=True)
+                    elif __debug__:
+                        failed_parsing.append(f"Structure {obj.uuid} with class {obj.blueprint}.")
+                elif not is_in_str(BLUEPRINTS_NO_PARSE, obj.blueprint):
+                    if __debug__ and obj.blueprint not in unknown_bps:
+                        unknown_bps.append(obj.blueprint)
             except Exception as e:
                 if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
                     print(f"Exception caught during parsing: {e}", flush=True)
 
-    arg_obj["queue"].put({ "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures })
+    arg_obj["queue"].put({ "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures, "skipped_blueprints": skipped_bps, "unknown_blueprints": unknown_bps, "failed_parsing": failed_parsing })
 
 def parse_players_and_tribes_for_process(players_data: dict[uuid.UUID, bytes], tribes_data: dict[uuid.UUID, bytes]):
     parsed_players: dict[int, ArkPlayer] = {}
@@ -727,7 +771,7 @@ if __name__ == '__main__':
 
     '''
     save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Ragnarok\\Ragnarok_WP.ark")
-    export_path: Path = Path.cwd() / "json_exports"
+    export_path: Path = Path.cwd() / "json_exports" / "Ragnarok"
     export_dinos: bool = True
     export_pawns: bool = True
     export_items: bool = True
@@ -747,7 +791,7 @@ if __name__ == '__main__':
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.OBJECTS, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.DEBUG, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.INFO, False)
-    ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.WARNING, False)
+    ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.WARNING, True)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.ERROR, True)
 
     # Configure number of process to use
@@ -846,8 +890,15 @@ if __name__ == '__main__':
     pawns: list = []
     items: list = []
     structures: list = []
+    skipped_blueprints: list[str] = []
+    unknown_blueprints: list[str] = []
+    failed_to_parse: list[str] = []
 
     for i in range(nb_processes):
+        if __debug__:
+            skipped_blueprints += processes_results_b[i]["skipped_blueprints"]
+            unknown_blueprints += processes_results_b[i]["unknown_blueprints"]
+            failed_to_parse += processes_results_b[i]["failed_parsing"]
         dinos += processes_results_b[i]["dinos"]
         items += processes_results_b[i]["items"]
         structures += processes_results_b[i]["structures"]
@@ -855,6 +906,13 @@ if __name__ == '__main__':
         for pawn_object in processes_results_b[i]["pawns"]:
             if not pawn_object is None:
                 pawns.append(pawn_to_json(pawn_object))
+
+    if __debug__:
+        skipped_blueprints = list(dict.fromkeys(skipped_blueprints))
+        skipped_blueprints.sort()
+        unknown_blueprints = list(dict.fromkeys(unknown_blueprints))
+        unknown_blueprints.sort()
+        failed_to_parse.sort()
 
     end = time.time()
     print('Parsed game objects (time spent: ' + human_readable_time(end - start) + ').', flush=True)
@@ -881,6 +939,14 @@ if __name__ == '__main__':
         export_path.mkdir(parents=True, exist_ok=True)
 
     # Write JSONs.
+    if __debug__:
+        with open(export_path / "skipped_blueprints.json", "w") as text_file:
+            text_file.write(json.dumps(skipped_blueprints, indent=4, cls=DefaultJsonEncoder))
+        with open(export_path / "unknown_blueprints.json", "w") as text_file:
+            text_file.write(json.dumps(unknown_blueprints, indent=4, cls=DefaultJsonEncoder))
+        with open(export_path / "failed_to_parse.json", "w") as text_file:
+            text_file.write(json.dumps(failed_to_parse, indent=4, cls=DefaultJsonEncoder))
+
     with open(export_path / "save_info.json", "w") as text_file:
         text_file.write(
             json.dumps(save_info, default=lambda o: o.to_json_obj() if hasattr(o, 'to_json_obj') else None,

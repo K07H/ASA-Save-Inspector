@@ -1092,8 +1092,8 @@ namespace ASA_Save_Inspector.Pages
 
             if (_selectedJsonExportProfile == null)
             {
-                Logger.Instance.Log("Failed to remove JSON Data (no export profile selected).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to remove JSON Data (no export profile selected).";
+                Logger.Instance.Log("Failed to remove JSON data (no export profile selected).", Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = "Failed to remove JSON data (no export profile selected).";
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -1104,13 +1104,7 @@ namespace ASA_Save_Inspector.Pages
                 folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
 
             if (!Directory.Exists(folderPath))
-            {
-                Logger.Instance.Log($"Failed to remove JSON Data, folder not found at \"{folderPath}\".", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = $"Failed to remove JSON Data, folder not found at \"{folderPath}\".";
-                tb_JsonDataLoaded.Foreground = _errorColor;
-                tb_JsonDataLoaded.Visibility = Visibility.Visible;
-                return;
-            }
+                Logger.Instance.Log($"JSON data has already been removed (folder not found at \"{folderPath}\").", Logger.LogLevel.ERROR);
 
             List<JsonExportProfile> toRemove = new List<JsonExportProfile>();
             if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
@@ -1123,15 +1117,16 @@ namespace ASA_Save_Inspector.Pages
                         toRemove.Add(jsonExportProfile);
                 }
 
-            try { Directory.Delete(folderPath, true); }
-            catch (Exception ex)
-            {
-                Logger.Instance.Log($"Failed to remove JSON Data. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to remove JSON Data (exception caught).";
-                tb_JsonDataLoaded.Foreground = _errorColor;
-                tb_JsonDataLoaded.Visibility = Visibility.Visible;
-                return;
-            }
+            if (Directory.Exists(folderPath))
+                try { Directory.Delete(folderPath, true); }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"Failed to remove JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    tb_JsonDataLoaded.Text = "Failed to remove JSON data (exception caught).";
+                    tb_JsonDataLoaded.Foreground = _errorColor;
+                    tb_JsonDataLoaded.Visibility = Visibility.Visible;
+                    return;
+                }
 
             if (toRemove.Count > 0)
             {

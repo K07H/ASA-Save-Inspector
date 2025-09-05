@@ -115,8 +115,9 @@
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="Tribes" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Tribes, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
-            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: X</TextBlock>
-            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Y</TextBlock>
+            <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right">Map name: X</TextBlock>
+            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: Y</TextBlock>
+            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Z</TextBlock>
         </StackPanel>
         <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
             <Grid.ColumnDefinitions>
