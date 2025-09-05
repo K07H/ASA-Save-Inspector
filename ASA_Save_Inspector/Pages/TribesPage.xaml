@@ -412,7 +412,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filters group:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filters preset:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_TribeFiltersGroupName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>

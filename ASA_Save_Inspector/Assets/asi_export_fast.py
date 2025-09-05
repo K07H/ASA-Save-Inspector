@@ -612,9 +612,9 @@ def parse_players_and_tribes_as_json(players_and_tribes: PlayersAndTribesParsing
     legacy_parse_is_valid: bool = False
     if not players_and_tribes.from_store:
         legacy_parse = True
-        if arkparse_save.save_connection.save_dir is not None:
+        if arkparse_save.save_dir is not None:
             legacy_parse_is_valid = True
-            get_files_from_directory(arkparse_save.save_connection.save_dir, players_and_tribes)
+            get_files_from_directory(arkparse_save.save_dir, players_and_tribes)
     else:
         get_offsets_from_db(arkparse_save, players_and_tribes)
 
@@ -761,7 +761,6 @@ if __name__ == '__main__':
     arkparse_save.custom_value_GameModeCustomBytes = save_connection.get_custom_value("GameModeCustomBytes")
     arkparse_save.custom_value_SaveHeader = save_connection.get_custom_value("SaveHeader")
     arkparse_save.custom_value_ActorTransforms = save_connection.get_custom_value("ActorTransforms")
-    arkparse_save.save_connection = save_connection
     arkparse_save.initialize()
 
     end = time.time()

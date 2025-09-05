@@ -13,49 +13,36 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
                     <AcrylicBrush x:Key="MyAcrylicBrush"
-                                  TintColor="#70000000"
-                                  TintOpacity="0.3"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.3"
-                                  FallbackColor="#700c0c14"/>
+                                  TintColor="#80000000"
+                                  TintOpacity="0.5"
+                                  TintLuminosityOpacity="0.6"
+                                  Opacity="0.4"
+                                  FallbackColor="#B00c0c14"/>
                     <AcrylicBrush x:Key="MyAcrylicBrushDarker"
                                   TintColor="#C0000000"
                                   TintOpacity="0.5"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.5"
-                                  FallbackColor="#C00c0c14"/>
-
-                    
+                                  TintLuminosityOpacity="0.6"
+                                  Opacity="0.6"
+                                  FallbackColor="#E00c0c14"/>
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="HighContrast">
-                    <AcrylicBrush x:Key="MyAcrylicBrush"
-                                  TintColor="#C0000000"
-                                  TintOpacity="0.3"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.3"
-                                  FallbackColor="#C00c0c14"/>
-                    <AcrylicBrush x:Key="MyAcrylicBrushDarker"
-                                  TintColor="#F0000000"
-                                  TintOpacity="0.5"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.5"
-                                  FallbackColor="#F00c0c14"/>
+                    <SolidColorBrush x:Key="MyAcrylicBrush" Color="{ThemeResource SystemColorWindowColor}"/>
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="Light">
                     <AcrylicBrush x:Key="MyAcrylicBrush"
-                                  TintColor="#70000000"
-                                  TintOpacity="0.3"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.3"
-                                  FallbackColor="#700c0c14"/>
-                    <AcrylicBrush x:Key="MyAcrylicBrushDarker"
-                                  TintColor="#C0000000"
+                                  TintColor="#80acaca4"
                                   TintOpacity="0.5"
-                                  TintLuminosityOpacity="0.5"
-                                  Opacity="0.5"
-                                  FallbackColor="#C00c0c14"/>
+                                  TintLuminosityOpacity="0.6"
+                                  Opacity="0.4"
+                                  FallbackColor="#90acaca4"/>
+                    <AcrylicBrush x:Key="MyAcrylicBrushDarker"
+                                  TintColor="#A0fcfcf4"
+                                  TintOpacity="0.5"
+                                  TintLuminosityOpacity="0.6"
+                                  Opacity="0.6"
+                                  FallbackColor="#B0fcfcf4"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
