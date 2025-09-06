@@ -16,7 +16,11 @@
         <StackPanel Margin="4">
             <TextBlock Text="Other" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
             <StackPanel Orientation="Vertical" Margin="10,15,0,0">
-                <Button x:Name="btn_OpenMinimap" Content="Open Minimap" Width="200" Click="btn_OpenMinimap_Click" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Application theme:" VerticalAlignment="Center" />
+                    <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Checked="cb_AppTheme_Checked" Unchecked="cb_AppTheme_Unchecked" Margin="15,2,0,0" Content="Dark" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Button x:Name="btn_OpenMinimap" Content="Open Minimap" Width="200" Click="btn_OpenMinimap_Click" Margin="0,15,0,0" />
                 <Button x:Name="btn_OpenAppDataFolder" Content="Open ASI data folder" Width="200" Click="btn_OpenAppDataFolder_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_AddCustomBlueprints" Content="Custom blueprints" Width="200" Click="btn_ConfigureCustomBlueprints_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_ForceArkParseUpdate" Content="Force reinstall ArkParse" Width="200" Click="btn_ForceArkParseUpdate_Click" Margin="0,10,0,0" />
@@ -33,7 +37,6 @@
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                                 <Border BorderBrush="Transparent" BorderThickness="0">
-                                    
                                 </Border>
                             </StackPanel>
                             <TextBlock FontSize="16" FontStyle="Italic" VerticalAlignment="Center" Margin="10,10,10,0" Text="You can use this section to register and manage custom blueprints. Note that registering a custom blueprint does not necessarily means that its data will be extracted successfully (data extraction succeeds if the object is similar enough to a basic ASA game object)." TextWrapping="Wrap"/>

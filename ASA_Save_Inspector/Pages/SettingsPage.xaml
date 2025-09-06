@@ -60,7 +60,12 @@
                     <TextBlock x:Name="tb_JsonDataSelect" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                     <DropDownButton.Flyout>
                         <MenuFlyout x:Name="mf_JsonDataSelect" Placement="BottomEdgeAlignedLeft">
-                            <MenuFlyoutItem x:Name="mfi_JsonDataArkParse" Text="Extract JSON Data" Click="mfi_JsonDataArkParse_Click">
+                            <MenuFlyoutItem x:Name="mfi_JsonDataArkParse" Text="Extract JSON Data (single save file)" Click="mfi_JsonDataArkParse_Click">
+                                <MenuFlyoutItem.Icon>
+                                    <ImageIcon Source="ms-appx:///Assets/ArkParserIcon96.png" Width="20" Height="20"/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Name="mfi_JsonDataArkParseWithPreset" Text="Extract JSON Data (using preset)" Click="mfi_JsonDataArkParseWithPreset_Click">
                                 <MenuFlyoutItem.Icon>
                                     <ImageIcon Source="ms-appx:///Assets/ArkParserIcon96.png" Width="20" Height="20"/>
                                 </MenuFlyoutItem.Icon>
@@ -81,6 +86,113 @@
                 <TextBlock x:Name="tb_JsonDataLoaded" Text="JSON Data successfully loaded." Foreground="Green" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
             </StackPanel>
         </StackPanel>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="SelectExportPresetPopup">
+            <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Select extraction preset" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Preset:" TextWrapping="Wrap"/>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExportPresetExtract" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExportPresetExtract" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,5,0,0" MaxHeight="350">
+                                <StackPanel x:Name="sp_ExportPresetExtract" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
+
+                                </StackPanel>
+                            </ScrollViewer>
+                            <Button x:Name="btn_ExportPresetExtract" Content="Extract" Width="80" Click="btn_ExportPresetExtract_Click" FontSize="16" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,10">
+                                <Button Content="Close" Width="80" Click="btn_CloseSelectExportPresetPopup_Click" FontSize="16" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Border>
+        </Popup>
+        
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ExtractProfilePresetsPopup">
+            <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                <Border BorderBrush="Transparent" BorderThickness="0">
+                                </Border>
+                            </StackPanel>
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Add current extraction settings to preset" TextWrapping="Wrap" Margin="10,0,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Preset:" TextWrapping="Wrap"/>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExistingExtractionPresets_AddTo" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_AddTo" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                                <Button x:Name="btn_ExistingExtractionPresets_AddTo" Content="Add" Width="90" Click="btn_ExistingExtractionPresets_AddTo_Click" FontSize="16" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Create new extraction preset" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,10,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                                <TextBox x:Name="tb_CreateExtractionPreset" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="10,0,0,0" TextChanged="tb_CreateExtractionPreset_TextChanged"/>
+                                <Button x:Name="btn_CreateExtractionPreset" Content="Create" IsEnabled="False" Width="90" Click="btn_CreateExtractionPreset_Click" FontSize="16" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Remove existing extraction preset" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Preset:" TextWrapping="Wrap"/>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExistingExtractionPresets_Remove" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_Remove" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                                <Button x:Name="btn_RemoveExistingExtractionPreset" Content="Remove" Width="90" Click="btn_RemoveExistingExtractionPreset_Click" FontSize="16" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="View extraction preset details" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Preset:" TextWrapping="Wrap"/>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExistingExtractionPresets_Details" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_Details" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="10,5,0,0" MaxHeight="350">
+                                <StackPanel x:Name="sp_ExistingExtractionPresetDetails" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
+
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="10,30,10,10">
+                                <Button Content="Close" Width="80" Click="btn_CloseExtractProfilePresetsPopup_Click" FontSize="16" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Border>
+        </Popup>
 
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="StandardPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
@@ -129,10 +241,14 @@
                                     </MenuFlyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
-                            <Button Content="Extract" Width="200" Click="ExtractASASaveFileClicked" Margin="0,15,0,0" FontSize="18"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,40,0,0">
+                                <Button Content="Extract" Width="90" Click="ExtractASASaveFileClicked" FontSize="18"/>
+                                <Button Content="Add to preset" Width="140" Click="AddExtractProfileToPresetClicked" FontSize="18" Margin="15,0,0,0"/>
+                                <Button Content="Cancel" Width="90" Click="CloseArkParserPopupClicked" Margin="15,0,0,0" FontSize="18"/>
+                            </StackPanel>
                             <TextBlock x:Name="tb_ExtractJsonResult" Text="Failed to extract" TextWrapping="WrapWholeWords" Visibility="Collapsed" Margin="0,5,0,0" FontSize="18"/>
                         </StackPanel>
-                        <Button Content="Cancel" Width="200" Click="CloseArkParserPopupClicked" Margin="0,55,0,0" FontSize="18"/>
+                        <Button x:Name="btn_CancelBottom" Content="Cancel" Width="90" Click="CloseArkParserPopupClicked" Margin="0,40,0,0" FontSize="18"/>
                     </StackPanel>
                 </Border>
             </Border>

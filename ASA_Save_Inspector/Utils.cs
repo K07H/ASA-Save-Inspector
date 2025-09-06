@@ -62,6 +62,7 @@ namespace ASA_Save_Inspector
         public static string TribeGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_groups.json");
         public static string TribeColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_columns.json");
         public static string ExportProfilesFilePath() => Path.Combine(GetDataDir(), "export_profiles.json");
+        public static string ExportPresetsFilePath() => Path.Combine(GetDataDir(), "export_presets.json");
         public static string ArkParseProjectFilePath() => Path.Combine(ArkParseFolder(), "pyproject.toml");
         public static string ArkParseJsonApiFilePath() => Path.Combine(ArkParseFolder(), "src", "arkparse", "api", "json_api.py");
         public static string ArkParseArchiveFilePath() => Path.Combine(GetDataDir(), "ark-save-parser-main.zip");

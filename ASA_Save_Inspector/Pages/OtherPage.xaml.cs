@@ -11,6 +11,8 @@ namespace ASA_Save_Inspector.Pages
 {
     public sealed partial class OtherPage : Page, INotifyPropertyChanged
     {
+        private bool _initialized = false;
+
         public OtherPage()
         {
             InitializeComponent();
@@ -18,8 +20,12 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
+            cb_AppTheme.IsChecked = (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
+
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
+
+            _initialized = true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -433,5 +439,19 @@ namespace ASA_Save_Inspector.Pages
         private void mfi_RegisteredBlueprintTypeItems_Click(object sender, RoutedEventArgs e) => RegisteredBlueprintsTypeSelected(GetSelectedMenuFlyoutItem(sender));
 
         private void mfi_RegisteredBlueprintTypeStructures_Click(object sender, RoutedEventArgs e) => RegisteredBlueprintsTypeSelected(GetSelectedMenuFlyoutItem(sender));
+
+        private void SwitchAppTheme(bool darkTheme, bool showToast)
+        {
+            string themeLabel = (darkTheme ? "Dark" : "Light");
+            cb_AppTheme.Content = themeLabel;
+            SettingsPage._darkTheme = darkTheme;
+            SettingsPage.SaveSettings();
+            if (showToast)
+                MainWindow.ShowToast($"{themeLabel} theme enabled. Restart app to see changes.", BackgroundColor.SUCCESS, 4000);
+        }
+
+        private void cb_AppTheme_Checked(object sender, RoutedEventArgs e) => SwitchAppTheme(true, _initialized);
+
+        private void cb_AppTheme_Unchecked(object sender, RoutedEventArgs e) => SwitchAppTheme(false, _initialized);
     }
 }

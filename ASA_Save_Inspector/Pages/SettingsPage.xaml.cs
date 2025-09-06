@@ -40,12 +40,20 @@ namespace ASA_Save_Inspector.Pages
 
         public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
         public string GetExportFolderName() => (Directory.Exists(SaveFilePath) ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
+        public override string ToString() => $"Map: {(MapName ?? "")}, FilePath: \"{(SaveFilePath ?? "")}\", Extract: {(ExtractedDinos ? "dinos," : "")}{(ExtractedPlayerPawns ? "pawns," : "")}{(ExtractedItems ? "items," : "")}{(ExtractedStructures ? "structures," : "")}{(ExtractedPlayers ? "players," : "")}{(ExtractedTribes ? "tribes," : "")}";
+    }
+
+    public class JsonExportPreset
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<JsonExportProfile> ExportProfiles { get; set; } = new List<JsonExportProfile>();
     }
 
     public class JsonSettings
     {
         public SettingsPage.ASILanguage Language { get; set; } = SettingsPage.ASILanguage.ENGLISH;
         public string? PythonExeFilePath { get; set; } = string.Empty;
+        public bool? DarkTheme { get; set; } = true;
     }
 
     public class MapBounds
@@ -115,6 +123,7 @@ namespace ASA_Save_Inspector.Pages
         private static readonly object lockObject = new object();
 
         public static SettingsPage? _page = null;
+        public static bool? _darkTheme = true;
 
         public static ASILanguage? _language = null;
         public static string? _pythonExePath = null;
@@ -125,6 +134,8 @@ namespace ASA_Save_Inspector.Pages
 
         public static List<JsonExportProfile> _jsonExportProfiles = new List<JsonExportProfile>();
         public static JsonExportProfile? _selectedJsonExportProfile = null;
+
+        public static List<JsonExportPreset> _jsonExportPresets = new List<JsonExportPreset>();
         
         public static List<Dino>? _dinosData = null;
         public static List<PlayerPawn>? _playerPawnsData = null;
@@ -161,6 +172,9 @@ namespace ASA_Save_Inspector.Pages
 
             // Calculate page center.
             AdjustToSizeChange();
+
+            tb_ExtractJsonResult.Visibility = Visibility.Collapsed;
+            RefreshExtractProfilePresetsPopup();
 
             List<string>? pythonPaths = PythonManager.GetPythonExePaths();
             if (pythonPaths != null && pythonPaths.Count > 0)
@@ -209,6 +223,7 @@ namespace ASA_Save_Inspector.Pages
                         AddJsonExportProfileToDropDown(jsonProfile);
 
             LoadSettings();
+            LoadJsonExportPresets();
             LoadCustomBlueprints();
             AsaSaveFilePathChanged();
             MapNameChanged();
@@ -284,6 +299,7 @@ namespace ASA_Save_Inspector.Pages
                 {
                     _pythonExePath = jsonSettings.PythonExeFilePath;
                     _language = jsonSettings.Language;
+                    _darkTheme = jsonSettings.DarkTheme;
                     PythonPathChanged();
                     LanguageChanged();
                 }
@@ -294,14 +310,41 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public void SaveSettings()
+        public static void LoadSettingsStatic()
+        {
+            string settingsPath = Utils.SettingsFilePath();
+            if (!File.Exists(settingsPath))
+                return;
+
+            try
+            {
+                string settingsJson = File.ReadAllText(settingsPath, Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(settingsJson))
+                    return;
+
+                JsonSettings? jsonSettings = JsonSerializer.Deserialize<JsonSettings>(settingsJson);
+                if (jsonSettings != null)
+                {
+                    _pythonExePath = jsonSettings.PythonExeFilePath;
+                    _language = jsonSettings.Language;
+                    _darkTheme = jsonSettings.DarkTheme;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in LoadSettingsStatic. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        public static void SaveSettings()
         {
             try
             {
                 JsonSettings settings = new JsonSettings()
                 {
                     Language = (_language != null && _language.HasValue ? _language.Value : ASILanguage.ENGLISH),
-                    PythonExeFilePath = _pythonExePath
+                    PythonExeFilePath = _pythonExePath,
+                    DarkTheme = _darkTheme
                 };
                 string jsonString = JsonSerializer.Serialize<JsonSettings>(settings, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(Utils.SettingsFilePath(), jsonString, Encoding.UTF8);
@@ -484,7 +527,7 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
+        public static JsonExportProfile? FormatNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
             if (string.IsNullOrWhiteSpace(saveFilePath) || string.IsNullOrWhiteSpace(mapName))
                 return null;
@@ -495,7 +538,7 @@ namespace ASA_Save_Inspector.Pages
                     if (jsonProfile != null && jsonProfile.ID > highestId)
                         highestId = jsonProfile.ID;
 
-            JsonExportProfile toAdd = new JsonExportProfile()
+            return new JsonExportProfile()
             {
                 ID = (highestId + 1),
                 SaveFilePath = saveFilePath,
@@ -509,13 +552,20 @@ namespace ASA_Save_Inspector.Pages
                 ExtractedTribes = extractTribes,
                 FastExtract = fastExtract,
             };
+        }
+
+        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
+        {
+            JsonExportProfile? p = FormatNewJsonExportProfile(saveFilePath, mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+            if (p == null)
+                return null;
 
             if (_jsonExportProfiles == null)
                 return null;
 
-            _jsonExportProfiles.Add(toAdd);
+            _jsonExportProfiles.Add(p);
             SettingsPage.SaveJsonExportProfiles();
-            return toAdd;
+            return p;
         }
 
         /*
@@ -659,9 +709,13 @@ namespace ASA_Save_Inspector.Pages
             {
                 tb_ASASaveFilePath.Text = _asaSaveFilePath;
                 sp_extractJsonPopup.Visibility = Visibility.Visible;
+                btn_CancelBottom.Visibility = Visibility.Collapsed;
             }
             else
+            {
                 sp_extractJsonPopup.Visibility = Visibility.Collapsed;
+                btn_CancelBottom.Visibility = Visibility.Visible;
+            }
         }
 
         public void FolderMapNameChanged()
@@ -703,8 +757,8 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(_mapName) || tb_FolderMapNameSelect.Text == "Click here...")
             {
-                Logger.Instance.Log("Cannot get JSON Data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("Cannot get JSON Data: Incorrect ASA map name.", BackgroundColor.WARNING);
+                Logger.Instance.Log("Cannot get JSON data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast("Cannot get JSON data: Incorrect ASA map name.", BackgroundColor.WARNING);
                 return;
             }
 
@@ -717,8 +771,8 @@ namespace ASA_Save_Inspector.Pages
 
             if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
             {
-                Logger.Instance.Log("Cannot get JSON Data: No valid JSON file name found.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("Cannot get JSON Data: No valid JSON file name found.", BackgroundColor.WARNING);
+                Logger.Instance.Log("Cannot get JSON data: No valid JSON file name found.", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast("Cannot get JSON data: No valid JSON file name found.", BackgroundColor.WARNING);
                 return;
             }
 
@@ -809,26 +863,85 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS4014
 
         private bool _isExtracting = false;
+        private async Task DoExtract(bool useJsonResultTb, string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
+        {
+            if (string.IsNullOrWhiteSpace(saveFilePath) || !File.Exists(saveFilePath))
+            {
+                Logger.Instance.Log("Cannot extract JSON data: Incorrect ASA save file path.", Logger.LogLevel.WARNING);
+                if (useJsonResultTb)
+                {
+                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: Incorrect ASA save file path.";
+                    tb_ExtractJsonResult.Foreground = _errorColor;
+                    tb_ExtractJsonResult.Visibility = Visibility.Visible;
+                }
+                else
+                    MainWindow.ShowToast("Incorrect ASA save file.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(mapName))
+            {
+                Logger.Instance.Log("Cannot extract JSON data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
+                if (useJsonResultTb)
+                {
+                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: Please select a map name.";
+                    tb_ExtractJsonResult.Foreground = _errorColor;
+                    tb_ExtractJsonResult.Visibility = Visibility.Visible;
+                }
+                else
+                    MainWindow.ShowToast("Incorrect map name.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
+            {
+                Logger.Instance.Log("Cannot extract JSON data: No data type selected.", Logger.LogLevel.WARNING);
+                if (useJsonResultTb)
+                {
+                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: No data type selected.";
+                    tb_ExtractJsonResult.Foreground = _errorColor;
+                    tb_ExtractJsonResult.Visibility = Visibility.Visible;
+                }
+                else
+                    MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (useJsonResultTb)
+                tb_ExtractJsonResult.Visibility = Visibility.Collapsed;
+            bool ret = false;
+            if (!_isExtracting)
+            {
+                _isExtracting = true;
+                ret = await PythonManager.RunArkParse(saveFilePath,
+                    mapName,
+                    extractDinos,
+                    extractPlayerPawns,
+                    extractItems,
+                    extractStructures,
+                    extractPlayers,
+                    extractTribes,
+                    fastExtract,
+                    extractions,
+                    callback);
+                _isExtracting = false;
+            }
+            if (!ret)
+            {
+                Logger.Instance.Log("JSON data extraction failed.", Logger.LogLevel.ERROR);
+                if (useJsonResultTb)
+                {
+                    tb_ExtractJsonResult.Text = "JSON data extraction failed.";
+                    tb_ExtractJsonResult.Foreground = _errorColor;
+                    tb_ExtractJsonResult.Visibility = Visibility.Visible;
+                }
+                else
+                    MainWindow.ShowToast("JSON data extraction failed.", BackgroundColor.WARNING);
+            }
+        }
+
         private async void ExtractASASaveFileClicked(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_asaSaveFilePath) || !File.Exists(_asaSaveFilePath))
-            {
-                Logger.Instance.Log("Cannot extract JSON Data: Incorrect ASA save file path.", Logger.LogLevel.WARNING);
-                tb_ExtractJsonResult.Text = "Cannot extract JSON Data: Incorrect ASA save file path.";
-                tb_ExtractJsonResult.Foreground = _errorColor;
-                tb_ExtractJsonResult.Visibility = Visibility.Visible;
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(_mapName))
-            {
-                Logger.Instance.Log("Cannot extract JSON Data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
-                tb_ExtractJsonResult.Text = "Cannot extract JSON Data: Please select a map name.";
-                tb_ExtractJsonResult.Foreground = _errorColor;
-                tb_ExtractJsonResult.Visibility = Visibility.Visible;
-                return;
-            }
-
             bool extractDinos = (cb_extractDinos.IsChecked != null && cb_extractDinos.IsChecked.HasValue ? cb_extractDinos.IsChecked.Value : false);
             bool extractPlayerPawns = (cb_extractPlayerPawns.IsChecked != null && cb_extractPlayerPawns.IsChecked.HasValue ? cb_extractPlayerPawns.IsChecked.Value : false);
             bool extractItems = (cb_extractItems.IsChecked != null && cb_extractItems.IsChecked.HasValue ? cb_extractItems.IsChecked.Value : false);
@@ -836,37 +949,9 @@ namespace ASA_Save_Inspector.Pages
             bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
             bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
 
-            if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
-            {
-                Logger.Instance.Log("Cannot extract JSON Data: No data type selected.", Logger.LogLevel.WARNING);
-                tb_ExtractJsonResult.Text = "Cannot extract JSON Data: No data type selected.";
-                tb_ExtractJsonResult.Foreground = _errorColor;
-                tb_ExtractJsonResult.Visibility = Visibility.Visible;
-                return;
-            }
+            bool fastExtract = string.Compare(tb_ExtractionType.Text, "Legacy extraction", StringComparison.InvariantCulture) != 0;
 
-            tb_ExtractJsonResult.Visibility = Visibility.Collapsed;
-            bool ret = false;
-            if (!_isExtracting)
-            {
-                _isExtracting = true;
-                bool fastExtract = string.Compare(tb_ExtractionType.Text, "Legacy extraction", StringComparison.InvariantCulture) != 0;
-                ret = await PythonManager.RunArkParse(extractDinos,
-                    extractPlayerPawns,
-                    extractItems,
-                    extractStructures,
-                    extractPlayers,
-                    extractTribes,
-                    fastExtract);
-                _isExtracting = false;
-            }
-            if (!ret)
-            {
-                Logger.Instance.Log("JSON Data extraction failed.", Logger.LogLevel.ERROR);
-                tb_ExtractJsonResult.Text = "JSON Data extraction failed.";
-                tb_ExtractJsonResult.Foreground = _errorColor;
-                tb_ExtractJsonResult.Visibility = Visibility.Visible;
-            }
+            await DoExtract(true, _asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
         }
 
         public void CloseArkParserPopupClicked(object sender, RoutedEventArgs e)
@@ -915,8 +1000,8 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedJsonExportProfile == null)
             {
-                Logger.Instance.Log("Failed to load JSON Data (no export profile selected).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to load JSON Data (no export profile selected).";
+                Logger.Instance.Log("Failed to load JSON data (no export profile selected).", Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = "Failed to load JSON data (no export profile selected).";
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -927,8 +1012,8 @@ namespace ASA_Save_Inspector.Pages
                 folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
             if (!Directory.Exists(folderPath))
             {
-                Logger.Instance.Log("Failed to load JSON Data (export folder not found).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to load JSON Data (export folder not found).";
+                Logger.Instance.Log("Failed to load JSON data (export folder not found).", Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = "Failed to load JSON data (export folder not found).";
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -982,9 +1067,6 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _dinosData = JsonSerializer.Deserialize<List<Dino>>(File.ReadAllText(dinosFilePath, Encoding.UTF8));
-                        //if (_dinosData != null && _dinosData.Count > 0)
-                        //    foreach (Dino d in _dinosData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(d, typeof(Dino));
                     }
                     catch (Exception ex)
                     {
@@ -1007,9 +1089,6 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _playerPawnsData = JsonSerializer.Deserialize<List<PlayerPawn>>(File.ReadAllText(playerPawnsFilePath, Encoding.UTF8));
-                        //if (_playerPawnsData != null && _playerPawnsData.Count > 0)
-                        //    foreach (PlayerPawn pp in _playerPawnsData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(pp, typeof(PlayerPawn));
                     }
                     catch (Exception ex)
                     {
@@ -1032,9 +1111,6 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _itemsData = JsonSerializer.Deserialize<List<Item>>(File.ReadAllText(itemsFilePath, Encoding.UTF8));
-                        //if (_itemsData != null && _itemsData.Count > 0)
-                        //    foreach (Item i in _itemsData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(i, typeof(Item));
                     }
                     catch (Exception ex)
                     {
@@ -1057,9 +1133,6 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _structuresData = JsonSerializer.Deserialize<List<Structure>>(File.ReadAllText(structuresFilePath, Encoding.UTF8));
-                        //if (_structuresData != null && _structuresData.Count > 0)
-                        //    foreach (Structure s in _structuresData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(s, typeof(Structure));
                     }
                     catch (Exception ex)
                     {
@@ -1125,12 +1198,12 @@ namespace ASA_Save_Inspector.Pages
 
             if (hasErrors)
             {
-                tb_JsonDataLoaded.Text = "JSON Data was partially loaded (see logs for more info).";
+                tb_JsonDataLoaded.Text = "JSON data was partially loaded (see logs for more info).";
                 tb_JsonDataLoaded.Foreground = _warningColor;
             }
             else
             {
-                tb_JsonDataLoaded.Text = "JSON Data successfully loaded.";
+                tb_JsonDataLoaded.Text = "JSON data successfully loaded.";
                 tb_JsonDataLoaded.Foreground = _successColor;
             }
             tb_JsonDataLoaded.Visibility = Visibility.Visible;
@@ -1229,5 +1302,483 @@ namespace ASA_Save_Inspector.Pages
         private void mfi_ExtractFast_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Fast extraction";
 
         private void mfi_ExtractLegacy_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Legacy extraction";
+
+        #region Extraction presets
+
+        public static void LoadJsonExportPresets()
+        {
+            string jsonExportPresetsPath = Utils.ExportPresetsFilePath();
+            if (!File.Exists(jsonExportPresetsPath))
+                return;
+
+            try
+            {
+                string presetsJson = File.ReadAllText(jsonExportPresetsPath, Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(presetsJson))
+                    return;
+
+                List<JsonExportPreset>? jsonExportPresets = JsonSerializer.Deserialize<List<JsonExportPreset>>(presetsJson);
+                _jsonExportPresets.Clear();
+                if (jsonExportPresets != null)
+                    _jsonExportPresets = jsonExportPresets;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in LoadJsonExportPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        public static void SaveJsonExportPresets()
+        {
+            try
+            {
+                string jsonString = JsonSerializer.Serialize<List<JsonExportPreset>>(_jsonExportPresets, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.ExportPresetsFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in SaveJsonExportPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private void JsonExportPresetSelected_AddTo(string presetName)
+        {
+            tb_ExistingExtractionPresets_AddTo.Text = presetName;
+            btn_ExistingExtractionPresets_AddTo.IsEnabled = true;
+        }
+
+        private void JsonExportPresetSelected_Remove(string presetName)
+        {
+            tb_ExistingExtractionPresets_Remove.Text = presetName;
+            btn_RemoveExistingExtractionPreset.IsEnabled = true;
+        }
+
+        private void JsonExportPresetSelected_Details(string presetName)
+        {
+            tb_ExistingExtractionPresets_Details.Text = presetName;
+            sp_ExistingExtractionPresetDetails.Children.Clear();
+
+            if (_jsonExportPresets != null && _jsonExportPresets.Count > 0)
+                foreach (JsonExportPreset preset in _jsonExportPresets)
+                    if (preset != null && string.Compare(presetName, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        if (preset.ExportProfiles != null && preset.ExportProfiles.Count > 0)
+                            foreach (JsonExportProfile jep in preset.ExportProfiles)
+                                if (jep != null)
+                                {
+                                    TextBox tb = new TextBox()
+                                    {
+                                        FontSize = 12.0d,
+                                        TextWrapping = TextWrapping.NoWrap,
+                                        AcceptsReturn = false,
+                                        IsReadOnly = true,
+                                        MaxWidth = 1200.0d,
+                                        Text = jep.ToString(), //$"Map: {(jep.MapName ?? "")}, FilePath: \"{(jep.SaveFilePath ?? "")}\", Extract: {(jep.ExtractedDinos ? "dinos," : "")}{(jep.ExtractedPlayerPawns ? "pawns," : "")}{(jep.ExtractedItems ? "items," : "")}{(jep.ExtractedStructures ? "structures," : "")}{(jep.ExtractedPlayers ? "players," : "")}{(jep.ExtractedTribes ? "tribes," : "")}",
+                                        VerticalAlignment = VerticalAlignment.Center,
+                                        HorizontalAlignment = HorizontalAlignment.Left,
+                                        Margin = new Thickness(0.0d, 5.0d, 0.0d, 0.0d)
+                                    };
+                                    sp_ExistingExtractionPresetDetails.Children.Add(tb);
+                                }
+                        break;
+                    }
+        }
+
+        private void RefreshExtractProfilePresetsPopup()
+        {
+            tb_ExistingExtractionPresets_Details.Text = "Click here...";
+            sp_ExistingExtractionPresetDetails.Children.Clear();
+            mf_ExistingExtractionPresets_Details.Items.Clear();
+
+            tb_ExistingExtractionPresets_AddTo.Text = "Click here...";
+            btn_ExistingExtractionPresets_AddTo.IsEnabled = false;
+            mf_ExistingExtractionPresets_AddTo.Items.Clear();
+
+            tb_ExistingExtractionPresets_Remove.Text = "Click here...";
+            btn_RemoveExistingExtractionPreset.IsEnabled = false;
+            mf_ExistingExtractionPresets_Remove.Items.Clear();
+
+            tb_CreateExtractionPreset.Text = "";
+            btn_CreateExtractionPreset.IsEnabled = false;
+
+            if (_jsonExportPresets == null || _jsonExportPresets.Count <= 0)
+                return;
+
+            foreach (JsonExportPreset preset in _jsonExportPresets)
+                if (preset != null && !string.IsNullOrWhiteSpace(preset.Name))
+                {
+                    MenuFlyoutItem mfiDetails = new MenuFlyoutItem();
+                    mfiDetails.Text = preset.Name;
+                    mfiDetails.Click += (s, e1) => { JsonExportPresetSelected_Details(preset.Name); };
+                    mf_ExistingExtractionPresets_Details.Items.Add(mfiDetails);
+
+                    MenuFlyoutItem mfiAddTo = new MenuFlyoutItem();
+                    mfiAddTo.Text = preset.Name;
+                    mfiAddTo.Click += (s, e1) => { JsonExportPresetSelected_AddTo(preset.Name); };
+                    mf_ExistingExtractionPresets_AddTo.Items.Add(mfiAddTo);
+
+                    MenuFlyoutItem mfiRemove = new MenuFlyoutItem();
+                    mfiRemove.Text = preset.Name;
+                    mfiRemove.Click += (s, e1) => { JsonExportPresetSelected_Remove(preset.Name); };
+                    mf_ExistingExtractionPresets_Remove.Items.Add(mfiRemove);
+                }
+        }
+
+        private void tb_CreateExtractionPreset_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            btn_CreateExtractionPreset.IsEnabled = (!string.IsNullOrWhiteSpace(tb_CreateExtractionPreset.Text) && tb_CreateExtractionPreset.Text.Length > 0);
+        }
+
+        private void btn_CreateExtractionPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (_jsonExportPresets == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(tb_CreateExtractionPreset.Text))
+            {
+                MainWindow.ShowToast("An extraction preset requires a name.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (_jsonExportPresets.Count > 0)
+                foreach (JsonExportPreset preset in _jsonExportPresets)
+                    if (preset != null && string.Compare(tb_CreateExtractionPreset.Text, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        MainWindow.ShowToast("This preset name already exists.", BackgroundColor.WARNING);
+                        return;
+                    }
+
+            _jsonExportPresets.Add(new JsonExportPreset() { Name = tb_CreateExtractionPreset.Text });
+            SaveJsonExportPresets();
+            RefreshExtractProfilePresetsPopup();
+            MainWindow.ShowToast("Extraction preset created.", BackgroundColor.SUCCESS);
+        }
+
+        private void btn_RemoveExistingExtractionPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (_jsonExportPresets == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_Remove.Text) || string.Compare(tb_ExistingExtractionPresets_Remove.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            {
+                MainWindow.ShowToast("No extraction preset selected.", BackgroundColor.WARNING);
+                return;
+
+            }
+            if (_jsonExportPresets.Count > 0)
+            {
+                int toDel = -1;
+                for (int i = 0; i < _jsonExportPresets.Count; i++)
+                    if (_jsonExportPresets[i] != null && string.Compare(tb_ExistingExtractionPresets_Remove.Text, _jsonExportPresets[i].Name, StringComparison.InvariantCulture) == 0)
+                    {
+                        toDel = i;
+                        break;
+                    }
+                if (toDel >= 0)
+                {
+                    _jsonExportPresets.RemoveAt(toDel);
+                    SaveJsonExportPresets();
+                    RefreshExtractProfilePresetsPopup();
+                    MainWindow.ShowToast("Preset removed.", BackgroundColor.SUCCESS);
+                    return;
+                }
+            }
+
+            MainWindow.ShowToast($"Preset \"{tb_ExistingExtractionPresets_Remove.Text}\" not found.", BackgroundColor.WARNING);
+        }
+
+        private void btn_ExistingExtractionPresets_AddTo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_jsonExportPresets == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_AddTo.Text) || string.Compare(tb_ExistingExtractionPresets_AddTo.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            {
+                MainWindow.ShowToast("No extraction preset selected.", BackgroundColor.WARNING);
+                return;
+            }
+
+            bool extractDinos = (cb_extractDinos.IsChecked != null && cb_extractDinos.IsChecked.HasValue ? cb_extractDinos.IsChecked.Value : false);
+            bool extractPlayerPawns = (cb_extractPlayerPawns.IsChecked != null && cb_extractPlayerPawns.IsChecked.HasValue ? cb_extractPlayerPawns.IsChecked.Value : false);
+            bool extractItems = (cb_extractItems.IsChecked != null && cb_extractItems.IsChecked.HasValue ? cb_extractItems.IsChecked.Value : false);
+            bool extractStructures = (cb_extractStructures.IsChecked != null && cb_extractStructures.IsChecked.HasValue ? cb_extractStructures.IsChecked.Value : false);
+            bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
+            bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
+
+            if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
+            {
+                Logger.Instance.Log("Cannot add current extraction settings to preset: No data type selected.", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                return;
+            }
+
+            JsonExportProfile? p = FormatNewJsonExportProfile(_asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
+            if (p == null)
+            {
+                MainWindow.ShowToast("Failed to format extraction settings.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (_jsonExportPresets.Count > 0)
+                foreach (JsonExportPreset preset in _jsonExportPresets)
+                    if (preset != null && string.Compare(tb_ExistingExtractionPresets_AddTo.Text, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        preset.ExportProfiles.Add(p);
+                        SaveJsonExportPresets();
+                        RefreshExtractProfilePresetsPopup();
+                        MainWindow.ShowToast("Extraction settings added to preset.", BackgroundColor.SUCCESS);
+                        return;
+                    }
+
+            MainWindow.ShowToast($"Preset \"{tb_ExistingExtractionPresets_AddTo.Text}\" not found.", BackgroundColor.WARNING);
+        }
+
+        private void btn_CloseExtractProfilePresetsPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (ExtractProfilePresetsPopup.IsOpen)
+                ExtractProfilePresetsPopup.IsOpen = false;
+        }
+
+        private void AddExtractProfileToPresetClicked(object sender, RoutedEventArgs e)
+        {
+            if (!ExtractProfilePresetsPopup.IsOpen)
+            {
+
+                if (string.IsNullOrWhiteSpace(_asaSaveFilePath) || !File.Exists(_asaSaveFilePath))
+                {
+                    Logger.Instance.Log("Cannot add to preset: Incorrect ASA save file.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast("Incorrect ASA save file.", BackgroundColor.WARNING);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(_mapName))
+                {
+                    Logger.Instance.Log("Cannot add to preset: Incorrect map name.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast("Incorrect map name.", BackgroundColor.WARNING);
+                    return;
+                }
+
+                bool extractDinos = (cb_extractDinos.IsChecked != null && cb_extractDinos.IsChecked.HasValue ? cb_extractDinos.IsChecked.Value : false);
+                bool extractPlayerPawns = (cb_extractPlayerPawns.IsChecked != null && cb_extractPlayerPawns.IsChecked.HasValue ? cb_extractPlayerPawns.IsChecked.Value : false);
+                bool extractItems = (cb_extractItems.IsChecked != null && cb_extractItems.IsChecked.HasValue ? cb_extractItems.IsChecked.Value : false);
+                bool extractStructures = (cb_extractStructures.IsChecked != null && cb_extractStructures.IsChecked.HasValue ? cb_extractStructures.IsChecked.Value : false);
+                bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
+                bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
+
+                if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
+                {
+                    Logger.Instance.Log("Cannot add to preset: No data type selected.", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                    return;
+                }
+
+                RefreshExtractProfilePresetsPopup();
+                ExtractProfilePresetsPopup.IsOpen = true;
+            }
+        }
+
+        private void JsonExportPresetSelected_Extract(string presetName)
+        {
+            tb_ExportPresetExtract.Text = presetName;
+            if (!string.IsNullOrWhiteSpace(presetName) && string.Compare(presetName, "Click here...", StringComparison.InvariantCulture) != 0)
+            {
+                sp_ExportPresetExtract.Children.Clear();
+                if (_jsonExportPresets == null || _jsonExportPresets.Count <= 0)
+                    return;
+                foreach (JsonExportPreset preset in _jsonExportPresets)
+                    if (preset != null && !string.IsNullOrWhiteSpace(preset.Name) && string.Compare(presetName, preset.Name, StringComparison.InvariantCulture) == 0)
+                    {
+                        if (preset.ExportProfiles != null && preset.ExportProfiles.Count > 0)
+                            foreach (var jep in preset.ExportProfiles)
+                                if (jep != null)
+                                {
+                                    Grid grd = new Grid()
+                                    {
+                                        VerticalAlignment = VerticalAlignment.Top,
+                                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                                        Margin = new Thickness(0.0d, 5.0d, 0.0d, 0.0d)
+                                    };
+                                    grd.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
+                                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(30.0d, GridUnitType.Pixel) });
+                                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
+                                    TextBlock tb1 = new TextBlock()
+                                    {
+                                        FontSize = 14.0d,
+                                        Text = "Extract:",
+                                        Margin = new Thickness(0.0d, 7.0d, 0.0d, 0.0d)
+                                    };
+                                    TextBox tb2 = new TextBox()
+                                    {
+                                        FontSize = 12.0d,
+                                        TextWrapping = TextWrapping.NoWrap,
+                                        AcceptsReturn = false,
+                                        IsReadOnly = true,
+                                        MaxWidth = 1200.0d,
+                                        Text = jep.ToString(), //$"Map: {(jep.MapName ?? "")}, FilePath: \"{(jep.SaveFilePath ?? "")}\", Extract: {(jep.ExtractedDinos ? "dinos," : "")}{(jep.ExtractedPlayerPawns ? "pawns," : "")}{(jep.ExtractedItems ? "items," : "")}{(jep.ExtractedStructures ? "structures," : "")}{(jep.ExtractedPlayers ? "players," : "")}{(jep.ExtractedTribes ? "tribes," : "")}",
+                                        VerticalAlignment = VerticalAlignment.Center,
+                                        HorizontalAlignment = HorizontalAlignment.Left,
+                                        Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                                    };
+                                    CheckBox cb = new CheckBox()
+                                    {
+                                        FontSize = 12.0d,
+                                        IsChecked = true,
+                                        Content = "",
+                                        HorizontalAlignment = HorizontalAlignment.Left,
+                                        Width = 30.0d,
+                                        MaxWidth = 30.0d,
+                                        Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                                    };
+                                    grd.Children.Add(tb1);
+                                    Grid.SetRow(tb1, 0);
+                                    Grid.SetColumn(tb1, 0);
+                                    grd.Children.Add(cb);
+                                    Grid.SetRow(cb, 0);
+                                    Grid.SetColumn(cb, 1);
+                                    grd.Children.Add(tb2);
+                                    Grid.SetRow(tb2, 0);
+                                    Grid.SetColumn(tb2, 2);
+
+                                    sp_ExportPresetExtract.Children.Add(grd);
+                                }
+                        break;
+                    }
+            }
+        }
+
+        private void RefreshSelectExportPresetPopup()
+        {
+            tb_ExportPresetExtract.Text = "Click here...";
+            mf_ExportPresetExtract.Items.Clear();
+            sp_ExportPresetExtract.Children.Clear();
+
+            if (_jsonExportPresets == null || _jsonExportPresets.Count <= 0)
+                return;
+
+            foreach (JsonExportPreset preset in _jsonExportPresets)
+                if (preset != null && !string.IsNullOrWhiteSpace(preset.Name))
+                {
+                    MenuFlyoutItem mfiPreset = new MenuFlyoutItem();
+                    mfiPreset.Text = preset.Name;
+                    mfiPreset.Click += (s, e1) => { JsonExportPresetSelected_Extract(preset.Name); };
+                    mf_ExportPresetExtract.Items.Add(mfiPreset);
+                }
+        }
+
+        private async void OnCurrentExtractionComplete(List<KeyValuePair<JsonExportProfile, bool>>? extractions)
+        {
+            if (extractions == null || extractions.Count <= 0)
+                return;
+
+            for (int i = 0; i < extractions.Count; i++)
+                if (!extractions[i].Value)
+                {
+                    extractions[i] = new KeyValuePair<JsonExportProfile, bool>(extractions[i].Key, true);
+                    await Task.Delay(1000);
+                    await DoExtract(false,
+                        extractions[i].Key.SaveFilePath,
+                        extractions[i].Key.MapName,
+                        extractions[i].Key.ExtractedDinos,
+                        extractions[i].Key.ExtractedPlayerPawns,
+                        extractions[i].Key.ExtractedItems,
+                        extractions[i].Key.ExtractedStructures,
+                        extractions[i].Key.ExtractedPlayers,
+                        extractions[i].Key.ExtractedTribes,
+                        extractions[i].Key.FastExtract, 
+                        extractions, 
+                        OnCurrentExtractionComplete);
+                    return;
+                }
+        }
+
+        private void btn_ExportPresetExtract_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(tb_ExportPresetExtract.Text) || string.Compare(tb_ExportPresetExtract.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            {
+                MainWindow.ShowToast("No preset selected.", BackgroundColor.WARNING);
+                return;
+            }
+
+            if (_jsonExportPresets == null || _jsonExportPresets.Count <= 0)
+                return;
+
+            foreach (JsonExportPreset preset in _jsonExportPresets)
+                if (preset != null && !string.IsNullOrWhiteSpace(preset.Name) && string.Compare(tb_ExportPresetExtract.Text, preset.Name, StringComparison.InvariantCulture) == 0)
+                {
+                    if (preset.ExportProfiles != null && preset.ExportProfiles.Count > 0)
+                    {
+                        Dictionary<string, bool> selected = new Dictionary<string, bool>();
+                        if (sp_ExportPresetExtract.Children != null && sp_ExportPresetExtract.Children.Count > 0)
+                            foreach (var obj in sp_ExportPresetExtract.Children)
+                            {
+                                Grid? grd = obj as Grid;
+                                if (grd != null)
+                                {
+                                    CheckBox? cb = grd.Children[1] as CheckBox;
+                                    TextBox? tb = grd.Children[2] as TextBox;
+                                    if (cb != null && tb != null)
+                                        selected.Add(tb.Text, (cb.IsChecked != null && cb.IsChecked.HasValue && cb.IsChecked.Value));
+                                }
+                            }
+                        if (selected.Count <= 0)
+                        {
+                            MainWindow.ShowToast("No export profile selected.", BackgroundColor.WARNING);
+                            return;
+                        }
+                        List<KeyValuePair<JsonExportProfile, bool>> toExtract = new List<KeyValuePair<JsonExportProfile, bool>>();
+                        foreach (JsonExportProfile jep in preset.ExportProfiles)
+                            if (jep != null)
+                            {
+                                bool doAdd = false;
+                                string jepDescription = jep.ToString();
+                                foreach (var selection in selected)
+                                    if (string.Compare(jepDescription, selection.Key, StringComparison.InvariantCulture) == 0)
+                                    {
+                                        doAdd = selection.Value;
+                                        break;
+                                    }
+                                if (doAdd)
+                                    toExtract.Add(new KeyValuePair<JsonExportProfile, bool>(jep, false));
+                            }
+                        if (toExtract.Count > 0)
+                        {
+                            if (SelectExportPresetPopup.IsOpen)
+                                SelectExportPresetPopup.IsOpen = false;
+                            if (SettingsPage._page != null)
+                                SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                                {
+                                    await Task.Delay(250);
+                                    OnCurrentExtractionComplete(toExtract);
+                                });
+                            MainWindow.ShowToast("Extraction started. Please wait.", BackgroundColor.SUCCESS);
+                        }
+                        else
+                            MainWindow.ShowToast("Preset is empty.", BackgroundColor.WARNING);
+                    }
+                    else
+                        MainWindow.ShowToast("Preset is empty.", BackgroundColor.WARNING);
+                    return;
+                }
+
+            MainWindow.ShowToast($"Preset \"{tb_ExportPresetExtract.Text}\" not found.", BackgroundColor.WARNING);
+        }
+
+        private void mfi_JsonDataArkParseWithPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (!SelectExportPresetPopup.IsOpen)
+            {
+                RefreshSelectExportPresetPopup();
+                SelectExportPresetPopup.IsOpen = true;
+            }
+        }
+
+        private void btn_CloseSelectExportPresetPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectExportPresetPopup.IsOpen)
+                SelectExportPresetPopup.IsOpen = false;
+        }
+
+        #endregion
     }
 }

@@ -543,9 +543,9 @@ namespace ASA_Save_Inspector
         {
             if (!File.Exists(Utils.PythonFilePathFromVenv()))
                 return false;
-            if (string.IsNullOrWhiteSpace(SettingsPage._asaSaveFilePath))
-                return false;
             if (jep == null)
+                return false;
+            if (string.IsNullOrWhiteSpace(jep.SaveFilePath) || !File.Exists(jep.SaveFilePath))
                 return false;
             string asiExportAllPath = jep.FastExtract ? Utils.AsiExportFastFilePath() : Utils.AsiExportAllFilePath();
             if (!File.Exists(asiExportAllPath))
@@ -590,7 +590,7 @@ namespace ASA_Save_Inspector
 ""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9}{10}
 ", Utils.PythonFilePathFromVenv(), 
    asiExportAllPath, 
-   SettingsPage._asaSaveFilePath, 
+   jep.SaveFilePath, 
    finalExportFolderPath, 
    (jep.ExtractedDinos ? "1" : "0"), 
    (jep.ExtractedPlayerPawns ? "1" : "0"), 
@@ -728,7 +728,7 @@ namespace ASA_Save_Inspector
             await SetupPythonVenv();
         }
 
-        public static async Task<bool> RunArkParse(bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
+        public static async Task<bool> RunArkParse(string saveFilePath, string mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
         {
             if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
             {
@@ -739,7 +739,7 @@ namespace ASA_Save_Inspector
 
             ShowInstallingPopup("Extracting JSON Data, please wait...");
 
-            JsonExportProfile? jep = SettingsPage.AddNewJsonExportProfile(SettingsPage._asaSaveFilePath, SettingsPage._mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+            JsonExportProfile? jep = SettingsPage.AddNewJsonExportProfile(saveFilePath, mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
             if (jep == null)
             {
                 Logger.Instance.Log("Failed to create new JSON export profile.", Logger.LogLevel.ERROR);
@@ -818,6 +818,9 @@ namespace ASA_Save_Inspector
                             cnt++;
                         }
                     }
+
+                    if (callback != null && extractions != null)
+                        callback(extractions);
                 }
             });
 
