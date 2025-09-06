@@ -449,6 +449,7 @@ namespace ASA_Save_Inspector.Pages
                     goToInventoryItemsVisibility = Visibility.Visible;
             }
             mfi_contextMenuGoToInventoryItems.Visibility = goToInventoryItemsVisibility;
+
             mfi_contextMenuGetAllJson.Visibility = (dg_Structures.SelectedItems != null && dg_Structures.SelectedItems.Count > 1 ? Visibility.Visible : Visibility.Collapsed);
         }
 
@@ -2517,7 +2518,7 @@ namespace ASA_Save_Inspector.Pages
                                     ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                                     {
                                         if (!ItemsPage._page.FilterByInventoryUUID(structure.InventoryUUID))
-                                            MainWindow.ShowToast("Fiter by inventory UUID failed, check filters", BackgroundColor.WARNING);
+                                            MainWindow.ShowToast("Filter by inventory UUID failed.", BackgroundColor.WARNING);
                                     });
                             });
                         }

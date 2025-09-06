@@ -421,6 +421,16 @@ namespace ASA_Save_Inspector.Pages
             tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_PlayerPawns.SelectedItems != null ? dg_PlayerPawns.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
             mfi_contextMenuGetAllJson.Visibility = (dg_PlayerPawns.SelectedItems != null && dg_PlayerPawns.SelectedItems.Count > 1 ? Visibility.Visible : Visibility.Collapsed);
             mfi_contextMenuGetCoords.Visibility = Visibility.Visible;
+
+            Visibility goToInventoryItemsVisibility = Visibility.Collapsed;
+            DataGridRow? row = Utils.FindParent<DataGridRow>((UIElement)e.OriginalSource);
+            if (row != null)
+            {
+                PlayerPawn? pp = row.DataContext as PlayerPawn;
+                if (pp != null && !string.IsNullOrEmpty(pp.InventoryUUID))
+                    goToInventoryItemsVisibility = Visibility.Visible;
+            }
+            mfi_contextMenuGoToInventoryItems.Visibility = goToInventoryItemsVisibility;
         }
 
         private void dg_PlayerPawns_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2472,6 +2482,49 @@ namespace ASA_Save_Inspector.Pages
                 MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
+            }
+        }
+
+        private void mfi_contextMenuGoToInventoryItems_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MenuFlyoutItem? mfi = (sender as MenuFlyoutItem);
+                if (mfi != null)
+                {
+                    PlayerPawn? pp = (mfi.DataContext as PlayerPawn);
+                    if (pp != null && !string.IsNullOrEmpty(pp.InventoryUUID))
+                    {
+#pragma warning disable CS1998
+                        if (MainWindow._mainWindow != null)
+                        {
+                            MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                            {
+                                if (MainWindow._mainWindow != null)
+                                {
+                                    if (MainWindow._mainWindow._navView != null)
+                                        MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnItems;
+                                    MainWindow._mainWindow.NavView_Navigate(typeof(ItemsPage), new EntranceNavigationTransitionInfo());
+                                }
+                                await Task.Delay(250);
+                                if (ItemsPage._page != null)
+                                    ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                                    {
+                                        if (!ItemsPage._page.FilterByInventoryUUID(pp.InventoryUUID))
+                                            MainWindow.ShowToast("Filter by inventory UUID failed.", BackgroundColor.WARNING);
+                                    });
+                            });
+                        }
+#pragma warning restore CS1998
+                    }
+                    else
+                        MainWindow.ShowToast("Inventory UUID not found.", BackgroundColor.WARNING);
+                }
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToInventoryItems_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
 

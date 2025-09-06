@@ -194,6 +194,7 @@
                         <MenuFlyoutItem Text="Copy current dino ID to clipboard" Click="mfi_contextMenuGetID_Click" />
                         <MenuFlyoutItem Text="Copy current dino JSON to clipboard" Click="mfi_contextMenuGetJson_Click" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetCoords" Text="Copy current dino UE coords to clipboard" Click="mfi_contextMenuGetCoords_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToInventoryItems" Text="Go to inventory items" Click="mfi_contextMenuGoToInventoryItems_Click" Visibility="Collapsed" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGoToCryopod" Text="Go to cryopod item" Click="mfi_contextMenuGoToCryopod_Click" Visibility="Collapsed" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetCryopodCoords" Text="Copy current cryopod UE coords to clipboard" Click="mfi_contextMenuGetCryopodCoords_Click" Visibility="Collapsed" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetCryopodMapCoords" Text="Copy current cryopod GPS coords to clipboard" Click="mfi_contextMenuGetCryopodMapCoords_Click" Visibility="Collapsed" />

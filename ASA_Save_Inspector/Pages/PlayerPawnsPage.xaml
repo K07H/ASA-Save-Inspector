@@ -195,6 +195,7 @@
                         <MenuFlyoutItem Text="Copy current pawn JSON to clipboard" Click="mfi_contextMenuGetJson_Click" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetCoords" Text="Copy current pawn UE coords to clipboard" Click="mfi_contextMenuGetCoords_Click" />
                         <MenuFlyoutItem x:Name="mfi_contextMenuGoToPlayerData" Text="Go to associated player data" Click="mfi_contextMenuGoToPlayerData_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToInventoryItems" Text="Go to inventory items" Click="mfi_contextMenuGoToInventoryItems_Click" Visibility="Collapsed" />
                         <MenuFlyoutSeparator/>
                         <MenuFlyoutItem x:Name="mfi_contextMenuGetAllJson" Text="Copy selected pawns JSON to clipboard" Click="mfi_contextMenuGetAllJson_Click" Visibility="Collapsed" />
                     </MenuFlyout.Items>
