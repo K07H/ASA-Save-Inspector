@@ -583,11 +583,22 @@ namespace ASA_Save_Inspector
                 }
             }
 
+            string customBlueprintsB64 = (SettingsPage.GetCustomBlueprintsB64() ?? string.Empty);
             string arkParseRunnerPath = Utils.ArkParseRunnerFilePath();
             string arkParseRunnerContent = string.Format(
 @"
-""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9}
-", Utils.PythonFilePathFromVenv(), asiExportAllPath, SettingsPage._asaSaveFilePath, finalExportFolderPath, (jep.ExtractedDinos ? "1" : "0"), (jep.ExtractedPlayerPawns ? "1" : "0"), (jep.ExtractedItems ? "1" : "0"), (jep.ExtractedStructures ? "1" : "0"), (jep.ExtractedPlayers ? "1" : "0"), (jep.ExtractedTribes ? "1" : "0"));
+""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9}{10}
+", Utils.PythonFilePathFromVenv(), 
+   asiExportAllPath, 
+   SettingsPage._asaSaveFilePath, 
+   finalExportFolderPath, 
+   (jep.ExtractedDinos ? "1" : "0"), 
+   (jep.ExtractedPlayerPawns ? "1" : "0"), 
+   (jep.ExtractedItems ? "1" : "0"), 
+   (jep.ExtractedStructures ? "1" : "0"), 
+   (jep.ExtractedPlayers ? "1" : "0"), 
+   (jep.ExtractedTribes ? "1" : "0"), 
+   (customBlueprintsB64.Length > 0 ? $" {customBlueprintsB64}" : string.Empty));
 
             try
             {

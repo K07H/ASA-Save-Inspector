@@ -42,6 +42,7 @@ namespace ASA_Save_Inspector
         public static string PreviousLogsFilePath() => Path.Combine(GetDataDir(), "logs_previous.txt");
         public static string MapsInfoFilePath() => Path.Combine(GetDataDir(), "maps_info.json");
         public static string SettingsFilePath() => Path.Combine(GetDataDir(), "settings.json");
+        public static string CustomBlueprintsFilePath() => Path.Combine(GetDataDir(), "custom_blueprints.json");
         public static string DinoFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "dino_filters.json");
         public static string DinoGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_groups.json");
         public static string DinoColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_columns.json");

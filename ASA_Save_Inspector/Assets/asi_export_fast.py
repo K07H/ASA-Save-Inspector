@@ -1,3 +1,4 @@
+import base64
 import json
 import math
 import sys
@@ -57,7 +58,7 @@ BLUEPRINTS_NO_PARSE: list[str] = [ "PrimalInventory",
                                    "/Buffs/",
                                    "DayCycle" ]
 
-def is_dino_blueprint(blueprint: str) -> bool:
+def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
     if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dinos/" in blueprint or "Creature" in blueprint):
         return True
     if "/Raft_BP.Raft_BP" in blueprint \
@@ -66,9 +67,14 @@ def is_dino_blueprint(blueprint: str) -> bool:
             or "BP_HelperBot_DockingBay" in blueprint \
             or "Polar_Bear.Polar_Bear_C" in blueprint:
         return True
+    if additional_blueprints is not None and len(additional_blueprints) > 0:
+        for additional_blueprint in additional_blueprints:
+            if additional_blueprint is not None and len(additional_blueprints) > 0:
+                if additional_blueprint in blueprint:
+                    return True
     return False
 
-def is_structure_blueprint(blueprint: str) -> bool:
+def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
     if "/Structures" in blueprint \
             or "/GigantoraptorNest" in blueprint \
             or "Rug_Shag" in blueprint \
@@ -84,9 +90,14 @@ def is_structure_blueprint(blueprint: str) -> bool:
             or "MB_Button.MB_Button_C" in blueprint \
             or "/PortableRope_Ladder_" in blueprint:
         return True
+    if additional_blueprints is not None and len(additional_blueprints) > 0:
+        for additional_blueprint in additional_blueprints:
+            if additional_blueprint is not None and len(additional_blueprints) > 0:
+                if additional_blueprint in blueprint:
+                    return True
     return False
 
-def is_item_blueprint(blueprint: str) -> bool:
+def is_item_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
     if "/DroppedItemGeneric" in blueprint or \
             "Egg_Wyvern_Fertilized" in blueprint or \
             "Items/Raft/Tireme_BP_" in blueprint or \
@@ -101,17 +112,26 @@ def is_item_blueprint(blueprint: str) -> bool:
             "/PrimalItemConsumableMiracleGro" in blueprint or \
             "/PrimalItemConsumableRespecSoup" in blueprint or \
             "/PrimalItemConsumableSoap" in blueprint or \
+            "/PrimalItemCostume_" in blueprint or \
             "/PrimalItemCustomDrinkRecipe_" in blueprint or \
             "/PrimalItemCustomFoodRecipe_" in blueprint or \
+            "/PrimalItemDinoCostume_" in blueprint or \
             "/PrimalItemDye_" in blueprint or \
             "/PrimalItemMotorboat" in blueprint or \
             "/PrimalItemRadio" in blueprint or \
             "/PrimalItemRaft" in blueprint or \
             "/PrimalItemResource_" in blueprint or \
+            "/PrimalItemSkin_" in blueprint or \
             "/PrimalItemStructure_" in blueprint or \
+            "/PrimalItemStructureSkin_" in blueprint or \
             "/PrimalItemTrophy" in blueprint or \
             "/PrimalItemWeaponAttachment_" in blueprint:
         return True
+    if additional_blueprints is not None and len(additional_blueprints) > 0:
+        for additional_blueprint in additional_blueprints:
+            if additional_blueprint is not None and len(additional_blueprints) > 0:
+                if additional_blueprint in blueprint:
+                    return True
     return False
 
 def is_in_str(search_for: list[str], search_in: str) -> bool:
@@ -449,7 +469,7 @@ def asi_parse_process(arg_obj):
                         skipped_bps.append(obj.blueprint)
                     continue
 
-                if is_dino_blueprint(obj.blueprint):
+                if is_dino_blueprint(obj.blueprint, arg_obj["dino_bps"]):
                     dino = parse_single_dino(obj, arg_obj["save"])
                     if dino is not None:
                         all_dinos.append(dino)
@@ -466,9 +486,9 @@ def asi_parse_process(arg_obj):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 elif "/PlayerPawnTest_Female.PlayerPawnTest_Female_C" in obj.blueprint or "/PlayerPawnTest_Male.PlayerPawnTest_Male_C" in obj.blueprint:
                     all_pawns_objects.append(obj)
-                elif is_item_blueprint(obj.blueprint):
+                elif is_item_blueprint(obj.blueprint, arg_obj["item_bps"]):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
-                elif is_structure_blueprint(obj.blueprint) and obj.get_property_value("StructureID") is not None:
+                elif is_structure_blueprint(obj.blueprint, arg_obj["structure_bps"]) and obj.get_property_value("StructureID") is not None:
                     structure = parse_single_structure(obj, arg_obj["save"], True)
                     if structure is not None:
                         all_structures.append(structure)
@@ -477,6 +497,7 @@ def asi_parse_process(arg_obj):
                 elif not is_in_str(BLUEPRINTS_NO_PARSE, obj.blueprint):
                     if __debug__ and obj.blueprint not in unknown_bps:
                         unknown_bps.append(obj.blueprint)
+                        print(f"Unknown object {obj.uuid} with class {obj.blueprint}.", flush=True)
             except Exception as e:
                 if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
                     print(f"Exception caught during parsing: {e}", flush=True)
@@ -744,6 +765,38 @@ def parse_players_and_tribes_as_json(players_and_tribes: PlayersAndTribesParsing
 
     return players_and_tribes_to_json(players_and_tribes, pawn_objects)
 
+def parse_custom_blueprints_arg(custom_blueprints: str):
+    custom_blueprints_dinos: list[str] = []
+    custom_blueprints_items: list[str] = []
+    custom_blueprints_structures: list[str] = []
+    try:
+        if custom_blueprints is not None and len(custom_blueprints) > 0:
+            split_blueprints: list[str] = custom_blueprints.split("|")
+            if split_blueprints is not None and len(split_blueprints) > 0:
+                for split_blueprint in split_blueprints:
+                    if split_blueprint is not None and len(split_blueprint) > 0:
+                        if split_blueprint.startswith("Dinos=") and len(split_blueprint) > 6:
+                            dinos_blueprints: list[str] = split_blueprint[6:].split(";")
+                            if dinos_blueprints is not None and len(dinos_blueprints) > 0:
+                                for dino_blueprint in dinos_blueprints:
+                                    if dino_blueprint is not None and len(dino_blueprint) > 0:
+                                        custom_blueprints_dinos.append(dino_blueprint)
+                        elif split_blueprint.startswith("Items=") and len(split_blueprint) > 6:
+                            items_blueprints: list[str] = split_blueprint[6:].split(";")
+                            if items_blueprints is not None and len(items_blueprints) > 0:
+                                for items_blueprint in items_blueprints:
+                                    if items_blueprint is not None and len(items_blueprint) > 0:
+                                        custom_blueprints_items.append(items_blueprint)
+                        elif split_blueprint.startswith("Structures=") and len(split_blueprint) > 11:
+                            structures_blueprints: list[str] = split_blueprint[11:].split(";")
+                            if structures_blueprints is not None and len(structures_blueprints) > 0:
+                                for structures_blueprint in structures_blueprints:
+                                    if structures_blueprint is not None and len(structures_blueprint) > 0:
+                                        custom_blueprints_structures.append(structures_blueprint)
+    except Exception:
+        pass
+    return [ custom_blueprints_dinos, custom_blueprints_items, custom_blueprints_structures ]
+
 if __name__ == '__main__':
     # argv[0]: This script name
     # argv[1]: ASA save file path
@@ -757,7 +810,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 9:
         print('Wrong number of arguments provided.', flush=True)
-        print('USAGE: asasaveinspector_api.py [ASA_Save_File_Path] [JSON_Export_Folder_Path] [Export_Dinos] [Export_Pawns] [Export_Items] [Export_Structures] [Export_Players] [Export_Tribes]', flush=True)
+        print('USAGE: asi_export_fast.py [ASA_Save_File_Path] [JSON_Export_Folder_Path] [Export_Dinos] [Export_Pawns] [Export_Items] [Export_Structures] [Export_Players] [Export_Tribes] [Additional_Blueprints]', flush=True)
         sys.exit(2) # Exit with command line syntax error code
 
     save_path: Path = Path(sys.argv[1])
@@ -768,6 +821,20 @@ if __name__ == '__main__':
     export_structures: bool = sys.argv[6] == '1'
     export_players: bool = sys.argv[7] == '1'
     export_tribes: bool = sys.argv[8] == '1'
+
+    custom_bps_dinos: list[str] = []
+    custom_bps_items: list[str] = []
+    custom_bps_structures: list[str] = []
+    if len(sys.argv) > 9 and len(sys.argv[9]) > 0:
+        try:
+            encoded_bps: str = sys.argv[9].replace('_', '/').replace('-', '+').replace(',','=')
+            custom_bps: str = base64.b64decode(encoded_bps).decode('utf-8')
+            parsed_custom_bps = parse_custom_blueprints_arg(custom_bps)
+            custom_bps_dinos = parsed_custom_bps[0]
+            custom_bps_items = parsed_custom_bps[1]
+            custom_bps_structures = parsed_custom_bps[2]
+        except Exception:
+            print(f"Failed to decode custom blueprints: {sys.argv[9]}", flush=True)
 
     '''
     save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Ragnarok\\Ragnarok_WP.ark")
@@ -875,7 +942,7 @@ if __name__ == '__main__':
     for i in range(nb_processes):
         queue_b = Queue()
         queues_b.append(queue_b)
-        processes_b.append(Process(target=asi_parse_process, args=({ "objects": [item["object"] for item in processes_results[i]], "save": arkparse_save, "queue": queue_b },)))
+        processes_b.append(Process(target=asi_parse_process, args=({ "objects": [item["object"] for item in processes_results[i]], "save": arkparse_save, "queue": queue_b, "dino_bps": custom_bps_dinos, "item_bps": custom_bps_items, "structure_bps": custom_bps_structures },)))
 
     for i in range(nb_processes):
         processes_b[i].start()

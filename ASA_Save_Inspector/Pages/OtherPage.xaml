@@ -4,10 +4,13 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ASA_Save_Inspector.Pages"
+    xmlns:styling="using:ASA_Save_Inspector.Styling"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    FontSize="16">
+    FontSize="16"
+    SizeChanged="page_SizeChanged"
+    x:Name="page_Other">
 
     <Grid>
         <StackPanel Margin="4">
@@ -15,8 +18,90 @@
             <StackPanel Orientation="Vertical" Margin="10,15,0,0">
                 <Button x:Name="btn_OpenMinimap" Content="Open Minimap" Width="200" Click="btn_OpenMinimap_Click" />
                 <Button x:Name="btn_OpenAppDataFolder" Content="Open ASI data folder" Width="200" Click="btn_OpenAppDataFolder_Click" Margin="0,10,0,0" />
+                <Button x:Name="btn_AddCustomBlueprints" Content="Custom blueprints" Width="200" Click="btn_ConfigureCustomBlueprints_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_ForceArkParseUpdate" Content="Force reinstall ArkParse" Width="200" Click="btn_ForceArkParseUpdate_Click" Margin="0,10,0,0" />
             </StackPanel>
         </StackPanel>
+
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddCustomBlueprintsPopup">
+            <Border Width="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Other, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                <Border BorderBrush="Transparent" BorderThickness="0">
+                                    
+                                </Border>
+                            </StackPanel>
+                            <TextBlock FontSize="16" FontStyle="Italic" VerticalAlignment="Center" Margin="10,10,10,0" Text="You can use this section to register and manage custom blueprints. Note that registering a custom blueprint does not necessarily means that its data will be extracted successfully (data extraction succeeds if the object is similar enough to a basic ASA game object)." TextWrapping="Wrap"/>
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Register custom blueprint" TextWrapping="Wrap" Margin="10,20,10,0"/>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Blueprint type:" TextWrapping="Wrap" Margin="10,5,10,0"/>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock x:Name="tb_BlueprintType" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_BlueprintType" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_BlueprintTypeDino" Text="Dino blueprint" Click="mfi_BlueprintTypeDino_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_BlueprintTypeItem" Text="Item blueprint" Click="mfi_BlueprintTypeItem_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_BlueprintTypeStructure" Text="Structure blueprint" Click="mfi_BlueprintTypeStructure_Click"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <StackPanel x:Name="sp_BlueprintClass" Orientation="Vertical" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,10,10,0" Visibility="Collapsed">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" Text="Blueprint class name:" TextWrapping="Wrap"/>
+                                <TextBox x:Name="tb_BlueprintClass" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}" Text="" ToolTipService.ToolTip="Example: PrimalItem_WeaponCrossbow" Margin="0,5,0,0" TextChanged="tb_BlueprintClass_TextChanged"/>
+                                <Button x:Name="btn_AddCustomBlueprint" Content="Register custom blueprint" IsEnabled="False" Width="220" Click="btn_AddCustomBlueprint_Click" FontSize="16" Margin="0,5,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="Custom blueprints registered" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock x:Name="tb_RegisteredBlueprintsType" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="mf_RegisteredBlueprintType" Placement="BottomEdgeAlignedLeft">
+                                        <MenuFlyoutItem x:Name="mfi_RegisteredBlueprintTypeDinos" Text="Dino blueprints" Click="mfi_RegisteredBlueprintTypeDinos_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_RegisteredBlueprintTypeItems" Text="Item blueprints" Click="mfi_RegisteredBlueprintTypeItems_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_RegisteredBlueprintTypeStructures" Text="Structure blueprints" Click="mfi_RegisteredBlueprintTypeStructures_Click"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+
+                            <StackPanel x:Name="sp_RegisteredDinoBlueprintsBlock" Orientation="Vertical" Margin="10,5,10,0" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed">
+                                <TextBlock FontSize="14" VerticalAlignment="Center" Text="Dino blueprints:" TextWrapping="Wrap"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300" styling:CustomScrollBar.LargeVerticalScrollBar="True" styling:CustomScrollBar.KeepVerticalExpanded="True">
+                                    <StackPanel x:Name="sp_RegisteredDinoBlueprints" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="0,0,0,15">
+
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </StackPanel>
+
+                            <StackPanel x:Name="sp_RegisteredItemBlueprintsBlock" Orientation="Vertical" Margin="10,5,10,0" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed">
+                                <TextBlock FontSize="14" VerticalAlignment="Center" Text="Item blueprints:" TextWrapping="Wrap"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300" styling:CustomScrollBar.LargeVerticalScrollBar="True" styling:CustomScrollBar.KeepVerticalExpanded="True">
+                                    <StackPanel x:Name="sp_RegisteredItemBlueprints" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="0,0,0,15">
+
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </StackPanel>
+
+                            <StackPanel x:Name="sp_RegisteredStructureBlueprintsBlock" Orientation="Vertical" Margin="10,5,10,0" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed">
+                                <TextBlock FontSize="14" VerticalAlignment="Center" Text="Structure blueprints:" TextWrapping="Wrap"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300" styling:CustomScrollBar.LargeVerticalScrollBar="True" styling:CustomScrollBar.KeepVerticalExpanded="True">
+                                    <StackPanel x:Name="sp_RegisteredStructureBlueprints" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="0,0,0,15">
+
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </StackPanel>
+
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="10,30,10,10">
+                                <Button Content="Close" Width="80" Click="btn_CloseAddCustomBlueprintsPopup_Click" FontSize="16" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Border>
+        </Popup>
     </Grid>
 </Page>

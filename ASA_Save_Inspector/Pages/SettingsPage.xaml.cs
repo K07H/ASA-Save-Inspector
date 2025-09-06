@@ -97,6 +97,13 @@ namespace ASA_Save_Inspector.Pages
         public DateTime? SaveDateTime { get; set; } = null;
     }
 
+    public class CustomBlueprints
+    {
+        public List<string> Dinos { get; set; } = new List<string>();
+        public List<string> Items { get; set; } = new List<string>();
+        public List<string> Structures { get; set; } = new List<string>();
+    }
+
     public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     {
         public enum ASILanguage
@@ -128,6 +135,8 @@ namespace ASA_Save_Inspector.Pages
         public static SaveFileInfo? _saveFileData = null;
 
         public static string? _currentlyLoadedMapName = null;
+
+        public static CustomBlueprints _customBlueprints = new CustomBlueprints();
 
         private BitmapImage _flagEnglish = new BitmapImage(new Uri("ms-appx:///Assets/FlagGBIcon96.png", UriKind.Absolute));
         private BitmapImage _flagFrench = new BitmapImage(new Uri("ms-appx:///Assets/FlagFRIcon96.png", UriKind.Absolute));
@@ -200,6 +209,7 @@ namespace ASA_Save_Inspector.Pages
                         AddJsonExportProfileToDropDown(jsonProfile);
 
             LoadSettings();
+            LoadCustomBlueprints();
             AsaSaveFilePathChanged();
             MapNameChanged();
             if (_selectedJsonExportProfile != null)
@@ -300,6 +310,77 @@ namespace ASA_Save_Inspector.Pages
             {
                 Logger.Instance.Log($"Exception caught in SaveSettings. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
+        }
+
+        public static void LoadCustomBlueprints()
+        {
+            string customBlueprintsFilepath = Utils.CustomBlueprintsFilePath();
+            if (!File.Exists(customBlueprintsFilepath))
+                return;
+
+            try
+            {
+                string customBlueprintsJson = File.ReadAllText(customBlueprintsFilepath, Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(customBlueprintsJson))
+                    return;
+
+                CustomBlueprints? customBlueprints = JsonSerializer.Deserialize<CustomBlueprints>(customBlueprintsJson);
+                if (customBlueprints != null)
+                    _customBlueprints = customBlueprints;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in LoadCustomBlueprints. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        public static void SaveCustomBlueprints()
+        {
+            try
+            {
+                string jsonString = JsonSerializer.Serialize<CustomBlueprints>(_customBlueprints, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.CustomBlueprintsFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in SaveCustomBlueprints. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        public static string GetCustomBlueprintsB64()
+        {
+            string ret = string.Empty;
+
+            if (SettingsPage._customBlueprints?.Dinos != null && SettingsPage._customBlueprints.Dinos.Count > 0)
+            {
+                ret += "Dinos=";
+                foreach (string str in SettingsPage._customBlueprints.Dinos)
+                    if (!string.IsNullOrWhiteSpace(str))
+                        ret += $"{str};";
+            }
+            if (SettingsPage._customBlueprints?.Items != null && SettingsPage._customBlueprints.Items.Count > 0)
+            {
+                if (ret.Length > 0)
+                    ret += "|";
+                ret += "Items=";
+                foreach (string str in SettingsPage._customBlueprints.Items)
+                    if (!string.IsNullOrWhiteSpace(str))
+                        ret += $"{str};";
+            }
+            if (SettingsPage._customBlueprints?.Structures != null && SettingsPage._customBlueprints.Structures.Count > 0)
+            {
+                if (ret.Length > 0)
+                    ret += "|";
+                ret += "Structures=";
+                foreach (string str in SettingsPage._customBlueprints.Structures)
+                    if (!string.IsNullOrWhiteSpace(str))
+                        ret += $"{str};";
+            }
+
+            if (ret.Length > 0)
+                ret = Convert.ToBase64String(Encoding.UTF8.GetBytes(ret), Base64FormattingOptions.None).Replace("=", ",", StringComparison.InvariantCulture).Replace("+", "-", StringComparison.InvariantCulture).Replace("/", "_", StringComparison.InvariantCulture);
+            
+            return ret;
         }
 
         public void RemoveJsonExportProfileFromDropDown(JsonExportProfile jsonProfile)
