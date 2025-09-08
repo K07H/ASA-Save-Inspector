@@ -83,7 +83,7 @@ As you can see in the grouping example I gave above (at the beginning of "Groups
 This makes it easy to use grouping, because our grouping syntax will produce an easily predictable result.
 
 For example, if we have the following grouping syntax:<br>
-AND FiltersPreset(x AND y)  OR  FiltersPreset(c)  AND  FiltersPreset(a OR b)  OR  FiltersPreset(j AND k)<br>
+AND FiltersPreset(x AND y)  OR  FiltersPreset(c)  AND  FiltersPreset(a AND b)  OR  FiltersPreset(j AND k)<br>
 this will produce the following easily predictable result:<br>
 Items = (x AND y AND a AND b) OR (c) OR (j AND k)<br>
 
