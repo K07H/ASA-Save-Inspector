@@ -105,6 +105,12 @@ OR  FiltersPreset1  OR  FiltersPreset2  OR  FiltersPreset3<br>
 This will produce the following result:<br>
 (a AND b AND c) OR (j AND k) OR (x)<br>
 
+### Default filters
+Some default filters are enabled by default on Dinos and Structures pages:
+* Dinos page: Only displays tamed dinos by default (IsTamed is True).
+* Structures page: Only displays structures belonging to a tribe (Tribe ID is greater than 49999).
+You can remove these default filters if you want to see wild dinos and structures.
+
 ## Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
