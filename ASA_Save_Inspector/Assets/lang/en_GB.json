@@ -77,7 +77,7 @@
     "CopyCryopodGPSCoordsToClipboard": "Copy cryopod GPS coords to clipboard",
     "CopySelectedLinesJsonToClipboard": "Copy selected lines JSON to clipboard",
     "CopyTribeLogsToClipboard": "Copy tribe logs to clipboard",
-    "IncludeVariablesWithMoreThanNValues": "Include variables with more than #VALUES_AMOUNT# values (not recommended).",
+    "IncludeVariablesWithMoreThanNValues": "Include variables with more than #VALUES_AMOUNT# values (slower but shows all variables).",
     "FilterBy": "Filter by",
     "FilterType": "Filter type",
     "FilterType_ExactMatch": "Exact match",

@@ -77,7 +77,7 @@
     "CopyCryopodGPSCoordsToClipboard": "Copier les coords GPS de la cryopod dans le presse-papier",
     "CopySelectedLinesJsonToClipboard": "Copier le JSON des lignes s\u00E9lectionn\u00E9es dans le presse-papier",
     "CopyTribeLogsToClipboard": "Copier les logs de tribu dans le presse-papier",
-    "IncludeVariablesWithMoreThanNValues": "Inclure les variables qui ont plus de #VALUES_AMOUNT# valeurs (non recommand\u00E9).",
+    "IncludeVariablesWithMoreThanNValues": "Inclure les variables qui ont plus de #VALUES_AMOUNT# valeurs (plus lent mais affiche toutes les variables).",
     "FilterBy": "Filtrer par",
     "FilterType": "Type de filtre",
     "FilterType_ExactMatch": "Correspondance exacte",
