@@ -35,6 +35,7 @@ namespace ASA_Save_Inspector
         public NavigationViewItem? _navBtnStructures = null;
         public NavigationViewItem? _navBtnPlayersData = null;
         public NavigationViewItem? _navBtnTribesData = null;
+        public NavigationViewItem? _navBtnAbout = null;
         public static Minimap? _minimap = null;
         private static List<MapPoint> _emptyPoints = new List<MapPoint>();
 
@@ -62,6 +63,8 @@ namespace ASA_Save_Inspector
         {
             InitializeComponent();
 
+            ASILang.SwitchLanguage(!string.IsNullOrEmpty(SettingsPage._language) && ASILang._languages.ContainsKey(SettingsPage._language) ? SettingsPage._language : ASILang.DEFAULT_LANGUAGE_CODE);
+
             this._appWindow = this.AppWindow;
             this._navView = NavView;
             this._navBtnSettings = nvi_Settings;
@@ -71,6 +74,7 @@ namespace ASA_Save_Inspector
             this._navBtnStructures = nvi_Structures;
             this._navBtnPlayersData = nvi_Players;
             this._navBtnTribesData = nvi_Tribes;
+            this._navBtnAbout = nvi_About;
             MainWindow._mainWindow = this;
             Activated += MainWindow_Activated;
             App.Current.UnhandledException += Current_UnhandledException;
@@ -110,12 +114,30 @@ namespace ASA_Save_Inspector
             */
         }
 
+        public void LanguageChanged()
+        {
+            tb_updateAvailableTitle.Text = ASILang.Get("UpdateAvailable");
+            tb_updateAvailableDescription.Text = ASILang.Get("UpdateAvailableDescription");
+            btn_InstallUpdate.Content = ASILang.Get("Yes");
+            btn_DontUpdate.Content = ASILang.Get("No");
+
+            nvi_Settings.Content = ASILang.Get("Settings");
+            nvi_PlayerPawns.Content = ASILang.Get("Pawns");
+            nvi_Dinos.Content = ASILang.Get("Dinos");
+            nvi_Structures.Content = ASILang.Get("Structures");
+            nvi_Items.Content = ASILang.Get("Items");
+            nvi_Players.Content = ASILang.Get("Players");
+            nvi_Tribes.Content = ASILang.Get("Tribes");
+            nvi_Other.Content = ASILang.Get("Other");
+            nvi_About.Content = ASILang.Get("About");
+        }
+
         private void Current_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             Logger.Instance.Log($"An unhandled exception got caught. Exception=[{e.Exception}]", Logger.LogLevel.ERROR);
             var t = PythonManager.DeactivatePythonVenv();
             if (t != null)
-                t.Wait(4000);
+                t.Wait(5000);
             Logger.Instance.Log("ASA Save Inspector has stopped.");
             App.Current.Exit();
         }
@@ -188,7 +210,7 @@ namespace ASA_Save_Inspector
             if (_minimap == null)
             {
                 _minimap = new Minimap();
-                string mapName = SettingsPage._currentlyLoadedMapName != null ? SettingsPage._currentlyLoadedMapName : "Unknown";
+                string mapName = SettingsPage._currentlyLoadedMapName != null ? SettingsPage._currentlyLoadedMapName : ASILang.Get("Unknown");
                 ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(mapName);
                 Minimap.InitMap(points, (mapInfo != null ? mapInfo.MinimapFilename : "TheIsland_Minimap_Margin.jpg"), onDoubleTap);
             }
@@ -222,7 +244,8 @@ namespace ASA_Save_Inspector
 
         private void ContentFrame_NavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+            Logger.Instance.Log($"Failed to load page \"{e.SourcePageType.FullName}\".", Logger.LogLevel.ERROR);
+            throw new Exception($"Failed to load page \"{e.SourcePageType.FullName}\".");
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)
@@ -233,8 +256,7 @@ namespace ASA_Save_Inspector
             NavView_Navigate(typeof(HomePage), new EntranceNavigationTransitionInfo());
         }
 
-        private void NavView_ItemInvoked(NavigationView sender,
-                                         NavigationViewItemInvokedEventArgs args)
+        private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
             if (args.InvokedItemContainer != null)
             {
@@ -386,7 +408,7 @@ namespace ASA_Save_Inspector
             }
         }
 
-        public static void ShowToast(string msg, BackgroundColor color = BackgroundColor.DEFAULT, int duration = 3000)
+        public static void ShowToast(string msg, BackgroundColor color = BackgroundColor.DEFAULT, int duration = 4000)
         {
             if (duration < 1100)
                 duration = 1100;
@@ -404,7 +426,7 @@ namespace ASA_Save_Inspector
             var t = PythonManager.DeactivatePythonVenv();
             if (t != null)
                 t.Wait(4000);
-            Logger.Instance.Log("ASA Save Inspector has stopped.");
+            Logger.Instance.Log(ASILang.Get("ASIStopped"));
             App.Current.Exit();
         }
 
@@ -421,25 +443,25 @@ namespace ASA_Save_Inspector
             string projectFileContent = await PythonManager._client.GetStringAsync(Utils.ASIVersionFileUrl);
             if (string.IsNullOrWhiteSpace(projectFileContent))
             {
-                Logger.Instance.Log($"Failed to check for update. Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
                 return;
             }
             string latestVersion = projectFileContent.Replace("\r\n", "", StringComparison.InvariantCulture).Replace("\n", "", StringComparison.InvariantCulture);
             if (latestVersion.Length < 3 || latestVersion.Length > 7 || !latestVersion.Contains('.', StringComparison.InvariantCulture))
             {
-                Logger.Instance.Log($"Failed to check for update. Response=[{latestVersion}]", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{latestVersion}]", Logger.LogLevel.WARNING);
                 return;
             }
             string currentVersion = Utils.GetVersionStr();
             if (string.Compare(latestVersion, currentVersion, StringComparison.InvariantCulture) == 0)
             {
-                Logger.Instance.Log($"ASI is up to date.", Logger.LogLevel.INFO);
+                Logger.Instance.Log(ASILang.Get("ASIIsUpToDate"), Logger.LogLevel.INFO);
                 return;
             }
             _latestVersion = latestVersion;
             if (!UpdateAvailablePopup.IsOpen)
             {
-                tb_updateAvailableDescription.Text = $"Version {latestVersion} of ASA Save Inspector is available (you are currently using version {currentVersion}). Would you like to download it (this will open the GitHub page in your web browser)?";
+                tb_updateAvailableDescription.Text = $"{ASILang.Get("UpdateAvailableDescription").Replace("#NEW_VERSION#", $"{latestVersion}", StringComparison.InvariantCulture).Replace("#MY_VERSION#", $"{currentVersion}", StringComparison.InvariantCulture)}";
                 UpdateAvailablePopup.IsOpen = true;
             }
         }
@@ -481,7 +503,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Failed to open web browser with URL {Utils.ASILatestVersionUrl}. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("OpenURLFailed").Replace("#URL#", $"{Utils.ASILatestVersionUrl}", StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
 

@@ -67,11 +67,11 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock x:Name="tb_updateAvailableTitle" Text="New update available" TextWrapping="WrapWholeWords" FontSize="20"/>
-                        <TextBlock x:Name="tb_updateAvailableDescription" Text="Version x.x of ASA Save Inspector is available (you are currently using version y.y). Would you like to install it?" TextWrapping="WrapWholeWords" FontSize="16" Margin="0,5,0,0"/>
+                        <TextBlock x:Name="tb_updateAvailableTitle" Text="{x:Bind local:ASILang.Get('UpdateAvailable'), Mode=OneWay}" TextWrapping="WrapWholeWords" FontSize="20"/>
+                        <TextBlock x:Name="tb_updateAvailableDescription" Text="{x:Bind local:ASILang.Get('UpdateAvailableDescription'), Mode=OneWay}" TextWrapping="WrapWholeWords" FontSize="16" Margin="0,5,0,0"/>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,5,0,0">
-                            <Button x:Name="btn_InstallUpdate" Content="Yes" Width="60" Click="btn_InstallUpdate_Click" FontSize="18"/>
-                            <Button Content="No" Width="60" Click="btn_CloseUpdateAvailablePopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                            <Button x:Name="btn_InstallUpdate" Content="{x:Bind local:ASILang.Get('Yes'), Mode=OneWay}" Width="60" Click="btn_InstallUpdate_Click" FontSize="18"/>
+                            <Button x:Name="btn_DontUpdate" Content="{x:Bind local:ASILang.Get('No'), Mode=OneWay}" Width="60" Click="btn_CloseUpdateAvailablePopup_Click" FontSize="18" Margin="10,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -124,43 +124,43 @@
                         ShoulderNavigationEnabled="Never">
             <NavigationView.MenuItems>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Settings" Tag="ASA_Save_Inspector.Pages.SettingsPage" Content="Settings" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Settings" Tag="ASA_Save_Inspector.Pages.SettingsPage" Content="{x:Bind local:ASILang.Get('Settings'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/SettingsIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_PlayerPawns" Tag="ASA_Save_Inspector.Pages.PlayerPawnsPage" Content="Pawns" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_PlayerPawns" Tag="ASA_Save_Inspector.Pages.PlayerPawnsPage" Content="{x:Bind local:ASILang.Get('Pawns'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/PlayerPawnsIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Dinos" Tag="ASA_Save_Inspector.Pages.DinosPage" Content="Dinos" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Dinos" Tag="ASA_Save_Inspector.Pages.DinosPage" Content="{x:Bind local:ASILang.Get('Dinos'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/DinoIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Structures" Tag="ASA_Save_Inspector.Pages.StructuresPage" Content="Structures" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Structures" Tag="ASA_Save_Inspector.Pages.StructuresPage" Content="{x:Bind local:ASILang.Get('Structures'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/StructureIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Items" Tag="ASA_Save_Inspector.Pages.ItemsPage" Content="Items" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Items" Tag="ASA_Save_Inspector.Pages.ItemsPage" Content="{x:Bind local:ASILang.Get('Items'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/ItemIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Players" Tag="ASA_Save_Inspector.Pages.PlayersPage" Content="Players" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Players" Tag="ASA_Save_Inspector.Pages.PlayersPage" Content="{x:Bind local:ASILang.Get('Players'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/PlayersIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Tribes" Tag="ASA_Save_Inspector.Pages.TribesPage" Content="Tribes" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Tribes" Tag="ASA_Save_Inspector.Pages.TribesPage" Content="{x:Bind local:ASILang.Get('Tribes'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/TribesIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
@@ -169,12 +169,12 @@
             </NavigationView.MenuItems>
             <NavigationView.FooterMenuItems>
                 <NavigationViewItemSeparator/>
-                <NavigationViewItem x:Name="nvi_Other" Tag="ASA_Save_Inspector.Pages.OtherPage" Content="Other" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_Other" Tag="ASA_Save_Inspector.Pages.OtherPage" Content="{x:Bind local:ASILang.Get('Other'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/OtherIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="nvi_About" Tag="ASA_Save_Inspector.Pages.AboutPage" Content="About" FontSize="18" Margin="0" MinHeight="50">
+                <NavigationViewItem x:Name="nvi_About" Tag="ASA_Save_Inspector.Pages.AboutPage" Content="{x:Bind local:ASILang.Get('About'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/AboutIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>

@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -71,7 +72,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Exception caught in DownloadArkParse. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("ArkParseDownloadingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             return false;
         }
@@ -81,13 +82,13 @@ namespace ASA_Save_Inspector
             string arkParseProjectFilePath = Utils.ArkParseProjectFilePath();
             if (!File.Exists(arkParseProjectFilePath))
             {
-                Logger.Instance.Log("Could not get ArkParse version (pyproject.toml file not found on disk).", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileNotFound")}", Logger.LogLevel.WARNING);
                 return null;
             }
             string[] lines = File.ReadAllLines(arkParseProjectFilePath);
             if (lines == null || lines.Length <= 0)
             {
-                Logger.Instance.Log("Could not get ArkParse version (local pyproject.toml is empty).", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileIsEmpty")}", Logger.LogLevel.WARNING);
                 return null;
             }
             foreach (string line in lines)
@@ -98,7 +99,7 @@ namespace ASA_Save_Inspector
                         return splitted[1];
                     break;
                 }
-            Logger.Instance.Log("Could not get ArkParse version (could not find line starting with 'version = \"' in local pyproject.toml).", Logger.LogLevel.WARNING);
+            Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileParsingFailed")}", Logger.LogLevel.WARNING);
             return null;
         }
 
@@ -107,13 +108,13 @@ namespace ASA_Save_Inspector
             string projectFileContent = await _client.GetStringAsync(Utils.ArkParseProjectUrl);
             if (string.IsNullOrWhiteSpace(projectFileContent))
             {
-                Logger.Instance.Log("Could not get ArkParse version (pyproject.toml file not found in repository).", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileNotFound")}", Logger.LogLevel.WARNING);
                 return null;
             }
             string[] lines = projectFileContent.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (lines == null || lines.Length <= 0)
             {
-                Logger.Instance.Log("Could not get ArkParse version (pyproject.toml from repository is empty).", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileIsEmpty")}", Logger.LogLevel.WARNING);
                 return null;
             }
             foreach (string line in lines)
@@ -124,7 +125,7 @@ namespace ASA_Save_Inspector
                         return splitted[1];
                     break;
                 }
-            Logger.Instance.Log("Could not get ArkParse version (could not find line starting with 'version = \"' in pyproject.toml from repository).", Logger.LogLevel.WARNING);
+            Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileParsingFailed")}", Logger.LogLevel.WARNING);
             return null;
         }
 
@@ -136,44 +137,44 @@ namespace ASA_Save_Inspector
                 string? repoVersion = await GetRepoArkParseVersion();
                 if (string.Compare(localVersion, repoVersion, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    AddDetailsToInstallingPopup("ArkParse is up to date.", false, false, true);
+                    AddDetailsToInstallingPopup(ASILang.Get("ArkParseUpToDate"), false, false, true);
                     return false;
                 }
-                AddDetailsToInstallingPopup("Updating ArkParse...");
+                AddDetailsToInstallingPopup(ASILang.Get("ArkParseUpdating"));
             }
             else
-                AddDetailsToInstallingPopup("Downloading ArkParse archive...");
+                AddDetailsToInstallingPopup(ASILang.Get("ArkParseDownloading"));
 
             bool downloaded = await DownloadArkParse();
             if (!downloaded)
             {
-                AddDetailsToInstallingPopup("Downloading ArkParse failed.", false, true);
+                AddDetailsToInstallingPopup(ASILang.Get("ArkParseDownloadingFail"), false, true);
                 return false;
             }
-            AddDetailsToInstallingPopup("ArkParse archive successfully downloaded.", false, false, true);
+            AddDetailsToInstallingPopup(ASILang.Get("ArkParseDownloadingSuccess"), false, false, true);
 
             string filePath = Utils.ArkParseArchiveFilePath();
             try
             {
-                AddDetailsToInstallingPopup("Extracting ArkParse archive...");
+                AddDetailsToInstallingPopup(ASILang.Get("ArkParseArchiveExtracting"));
                 ZipFile.ExtractToDirectory(filePath, Utils.GetDataDir(), true);
                 if (File.Exists(filePath))
                     try { File.Delete(filePath); }
                     catch { }
                 if (IsArkParsePresent())
                 {
-                    AddDetailsToInstallingPopup("ArkParse archive successfully extracted.", false, false, true);
+                    AddDetailsToInstallingPopup(ASILang.Get("ArkParseArchiveExtractingSuccess"), false, false, true);
                     return true;
                 }
                 else
                 {
-                    AddDetailsToInstallingPopup("ArkParse archive extraction failed.", false, true);
+                    AddDetailsToInstallingPopup(ASILang.Get("ArkParseArchiveExtractingFail"), false, true);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                AddDetailsToInstallingPopup($"ERROR: Exception caught in DownloadAndExtractArkParse. Exception=[{ex}]", false, true);
+                AddDetailsToInstallingPopup($"{ASILang.Get("ArkParseDownloadAndExtractError")} Exception=[{ex}]", false, true);
             }
 
             if (File.Exists(filePath))
@@ -187,11 +188,11 @@ namespace ASA_Save_Inspector
         {
             if (Directory.Exists(Utils.PythonVenvFolder()))
             {
-                Logger.Instance.Log("Python's virtual environment is already setup.");
+                Logger.Instance.Log(ASILang.Get("PythonVenvAlreadySetup"));
                 return await ActivatePythonVenv();
             }
 
-            AddDetailsToInstallingPopup("Setting up virtual environment for Python...");
+            AddDetailsToInstallingPopup(ASILang.Get("PythonVenvSetup"));
             Task.Run(async () =>
             {
                 Process? process = null;
@@ -214,7 +215,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    AddDetailsToInstallingPopup($"Exception caught in SetupPythonVenv. Exception=[{ex}]", false, true);
+                    AddDetailsToInstallingPopup($"{ASILang.Get("PythonVenvSetupError")} Exception=[{ex}]", false, true);
                 }
                 finally
                 {
@@ -230,10 +231,10 @@ namespace ASA_Save_Inspector
                         process = null;
                     }
                     if (exitCode == 0)
-                        AddDetailsToInstallingPopup("Python's virtual environment has been setup.", false, false, true);
+                        AddDetailsToInstallingPopup(ASILang.Get("PythonVenvSetupSuccess"), false, false, true);
                     else
-                        AddDetailsToInstallingPopup("Python's virtual environment setup failed.", false, true);
-                    Logger.Instance.Log($"Python exit code: {exitCode}", Logger.LogLevel.INFO);
+                        AddDetailsToInstallingPopup(ASILang.Get("PythonVenvSetupFail"), false, true);
+                    Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
 
                     await ActivatePythonVenv();
                 }
@@ -269,7 +270,7 @@ namespace ASA_Save_Inspector
                 return false;
             }
 
-            AddDetailsToInstallingPopup("Installing ArkParse...");
+            AddDetailsToInstallingPopup(ASILang.Get("ArkParseInstalling"));
             Task.Run(() =>
             {
                 Process? process = null;
@@ -292,8 +293,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    AddDetailsToInstallingPopup($"ERROR: Exception caught in InstallArkParse. Exception=[{ex}]", false, true);
-                    //Logger.Instance.Log($"Exception caught in InstallArkParse. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    AddDetailsToInstallingPopup($"{ASILang.Get("ArkParseInstallError")} Exception=[{ex}]", false, true);
                 }
                 finally
                 {
@@ -309,10 +309,10 @@ namespace ASA_Save_Inspector
                         process = null;
                     }
                     if (exitCode == 0)
-                        AddDetailsToInstallingPopup("ArkParse successfully installed", false, false, true);
+                        AddDetailsToInstallingPopup(ASILang.Get("ArkParseInstallSuccess"), false, false, true);
                     else
-                        AddDetailsToInstallingPopup("ArkParse installation failed.", false, true);
-                    Logger.Instance.Log($"Python exit code: {exitCode}", Logger.LogLevel.INFO);
+                        AddDetailsToInstallingPopup(ASILang.Get("ArkParseInstallFail"), false, true);
+                    Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
                     HideInstallingPopup();
                 }
             });
@@ -324,11 +324,11 @@ namespace ASA_Save_Inspector
         {
             if (!File.Exists(Utils.ActivatePythonVenvFilePath()))
             {
-                AddDetailsToInstallingPopup($"Python's virtual environment activation script not found at {Utils.ActivatePythonVenvFilePath()}.", false, true);
+                AddDetailsToInstallingPopup($"{ASILang.Get("PythonVenvActivationScriptNotFound").Replace("#FILEPATH#", $"{Utils.ActivatePythonVenvFilePath()}", StringComparison.InvariantCulture)}", false, true);
                 return false;
             }
 
-            AddDetailsToInstallingPopup("Activating Python's virtual environment...");
+            AddDetailsToInstallingPopup(ASILang.Get("PythonVenvActivate"));
             _pythonVenvDeactivated = false;
             _pythonVenvActivated = true;
             Task.Run(async () =>
@@ -353,7 +353,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    AddDetailsToInstallingPopup($"Exception caught in ActivatePythonVenv. Exception=[{ex}]", false, true);
+                    AddDetailsToInstallingPopup($"{ASILang.Get("PythonVenvActivateError")} Exception=[{ex}]", false, true);
                 }
                 finally
                 {
@@ -369,10 +369,10 @@ namespace ASA_Save_Inspector
                         process = null;
                     }
                     if (exitCode == 0)
-                        AddDetailsToInstallingPopup("Python's virtual environment has been activated.", false, false, true);
+                        AddDetailsToInstallingPopup(ASILang.Get("PythonVenvActivateSuccess"), false, false, true);
                     else
-                        AddDetailsToInstallingPopup("Python's virtual environment activation failed.", false, true);
-                    Logger.Instance.Log($"Python exit code: {exitCode}", Logger.LogLevel.INFO);
+                        AddDetailsToInstallingPopup(ASILang.Get("PythonVenvActivateFail"), false, true);
+                    Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
 
                     await UpdateOrInstallArkParse();
                 }
@@ -388,11 +388,11 @@ namespace ASA_Save_Inspector
                 return false;
             if (!File.Exists(Utils.DeactivatePythonVenvFilePath()))
             {
-                Logger.Instance.Log($"Python's virtual environment deactivation script not found at {Utils.DeactivatePythonVenvFilePath()}.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("PythonVenvDeactivationScriptNotFound").Replace("#FILEPATH#", $"{Utils.DeactivatePythonVenvFilePath()}", StringComparison.InvariantCulture)}", Logger.LogLevel.ERROR);
                 return false;
             }
 
-            Logger.Instance.Log("Deactivating Python's virtual environment...");
+            Logger.Instance.Log(ASILang.Get("PythonVenvDeactivate"));
             _pythonVenvDeactivated = true;
             _pythonVenvActivated = false;
             var t = Task.Run(() =>
@@ -417,7 +417,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Exception caught in DeactivatePythonVenv. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"{ASILang.Get("PythonVenvDeactivateError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                 }
                 finally
                 {
@@ -433,10 +433,10 @@ namespace ASA_Save_Inspector
                         process = null;
                     }
                     if (exitCode == 0)
-                        Logger.Instance.Log("Python's virtual environment has been deactivated.");
+                        Logger.Instance.Log(ASILang.Get("PythonVenvDeactivateSuccess"));
                     else
-                        Logger.Instance.Log("Python's virtual environment deactivation failed.", Logger.LogLevel.ERROR);
-                    Logger.Instance.Log($"Python exit code: {exitCode}", Logger.LogLevel.INFO);
+                        Logger.Instance.Log(ASILang.Get("PythonVenvDeactivateFail"), Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
                 }
             });
             if (t != null)
@@ -450,22 +450,22 @@ namespace ASA_Save_Inspector
         {
             if (string.IsNullOrEmpty(asiExportFilePathSource))
             {
-                Logger.Instance.Log("Wrong source file path to ASI export script provided.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log(ASILang.Get("ASIExportScript_BadSourceFilePath"), Logger.LogLevel.ERROR);
                 return false;
             }
             if (!File.Exists(asiExportFilePathSource))
             {
-                Logger.Instance.Log($"Could not find file \"{Path.GetFileName(asiExportFilePathSource)}\" in Assets folder.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("ASIExportScript_NotFound").Replace("#FILEPATH#", $"\"{Path.GetFileName(asiExportFilePathSource)}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.ERROR);
                 return false;
             }
             if (string.IsNullOrEmpty(asiExportFilePathDest))
             {
-                Logger.Instance.Log("Wrong destination file path for ASI export script provided.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log(ASILang.Get("ASIExportScript_BadDestFilePath"), Logger.LogLevel.ERROR);
                 return false;
             }
             if (Directory.Exists(asiExportFilePathDest) || (File.Exists(asiExportFilePathDest) && (File.GetAttributes(asiExportFilePathDest) & FileAttributes.Directory) == FileAttributes.Directory))
             {
-                Logger.Instance.Log($"Destination file path must not be a directory.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log(ASILang.Get("ASIExportScript_DirectoryNotAllowed"), Logger.LogLevel.ERROR);
                 return false;
             }
 
@@ -477,7 +477,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Exception caught in CreateAsiExportScriptFile. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("ASIExportScript_Error")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
 
             return File.Exists(asiExportFilePathDest);
@@ -501,7 +501,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Exception caught in AddPythonVenvSetup. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("PythonVenvAddSetupError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
 
             return File.Exists(pythonVenvSetupPath);
@@ -533,7 +533,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Exception caught in AddArkParseSetup. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("ArkParseAddSetupError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
 
             return File.Exists(arkParseSetupPath);
@@ -562,7 +562,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Exception caught in AddArkParseRunner. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                     return false;
                 }
             }
@@ -578,7 +578,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Exception caught in AddArkParseRunner. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                     return false;
                 }
             }
@@ -606,7 +606,7 @@ namespace ASA_Save_Inspector
             }
             catch (Exception exb)
             {
-                Logger.Instance.Log($"Exception caught in AddArkParseRunner. Exception=[{exb}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} Exception=[{exb}]", Logger.LogLevel.ERROR);
             }
 
             return File.Exists(arkParseRunnerPath);
@@ -722,7 +722,7 @@ namespace ASA_Save_Inspector
 
         public static async void InstallArkParse()
         {
-            ShowInstallingPopup("Installing/updating ArkParse, please wait...");
+            ShowInstallingPopup($"{ASILang.Get("ArkParseInstallingUpdating")} {ASILang.Get("PleaseWait")}");
 
             AddPythonVenvSetup();
             await SetupPythonVenv();
@@ -732,17 +732,17 @@ namespace ASA_Save_Inspector
         {
             if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
             {
-                Logger.Instance.Log("Python executable not set, check ASA Save Inspector settings.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("Python exe not set, check settings", BackgroundColor.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckASISettings")}", Logger.LogLevel.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckSettings")}", BackgroundColor.WARNING);
                 return false;
             }
 
-            ShowInstallingPopup("Extracting JSON Data, please wait...");
+            ShowInstallingPopup($"{ASILang.Get("ArkParseExtractingJsonData")} {ASILang.Get("PleaseWait")}");
 
             JsonExportProfile? jep = SettingsPage.AddNewJsonExportProfile(saveFilePath, mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
             if (jep == null)
             {
-                Logger.Instance.Log("Failed to create new JSON export profile.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log(ASILang.Get("ArkParseJsonExportProfileCreationFailed"), Logger.LogLevel.ERROR);
                 return false;
             }
             AddJsonExportProfileToSettingsPageDropDown(jep);
@@ -755,7 +755,7 @@ namespace ASA_Save_Inspector
                 return false;
             }
 
-            AddDetailsToInstallingPopup("Extracting JSON Data...");
+            AddDetailsToInstallingPopup(ASILang.Get("ArkParseExtractingJsonData"));
             Task.Run(async () =>
             {
                 Process? process = null;
@@ -778,7 +778,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception ex)
                 {
-                    AddDetailsToInstallingPopup($"ERROR: Exception caught in RunArkParse. Exception=[{ex}]", false, true);
+                    AddDetailsToInstallingPopup($"{ASILang.Get("ArkParseRunError")} Exception=[{ex}]", false, true);
                     //Logger.Instance.Log($"Exception caught in RunArkParse. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 }
                 finally
@@ -795,10 +795,10 @@ namespace ASA_Save_Inspector
                         process = null;
                     }
                     if (exitCode == 0)
-                        AddDetailsToInstallingPopup("JSON Data successfully extracted.", false, false, true);
+                        AddDetailsToInstallingPopup(ASILang.Get("ArkParseJsonExtractSuccess"), false, false, true);
                     else
-                        AddDetailsToInstallingPopup("JSON Data extraction failed.", false, true);
-                    Logger.Instance.Log($"Python exit code: {exitCode}", Logger.LogLevel.INFO);
+                        AddDetailsToInstallingPopup(ASILang.Get("ArkParseJsonExtractFail"), false, true);
+                    Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
 
                     bool hidden = false;
                     int cnt = 0;

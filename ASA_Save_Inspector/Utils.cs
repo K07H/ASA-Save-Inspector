@@ -30,6 +30,7 @@ namespace ASA_Save_Inspector
         public static string GetBaseDir() => AppDomain.CurrentDomain.BaseDirectory; //AppContext.BaseDirectory
         public static string GetDataDir() => Path.Combine(GetBaseDir(), "data");
         public static string GetAssetsDir() => Path.Combine(GetBaseDir(), "Assets");
+        public static string GetLangDir() => Path.Combine(GetAssetsDir(), "lang");
         public static string PythonVenvFolder() => Path.Combine(GetDataDir(), "python_venv");
         public static string ArkParseFolder() => Path.Combine(GetDataDir(), "ark-save-parser-main");
         public static string JsonExportsFolder() => Path.Combine(GetDataDir(), "json_exports");
@@ -322,14 +323,17 @@ namespace ASA_Save_Inspector
         {
             if (!Directory.Exists(GetDataDir()))
             {
-                try
-                {
-                    Directory.CreateDirectory(GetDataDir());
-                }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"Exception caught in EnsureDataFolderExist. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                }
+                try { Directory.CreateDirectory(GetDataDir()); }
+                catch (Exception ex) { Logger.Instance.Log($"Exception caught in EnsureDataFolderExist. Exception=[{ex}]", Logger.LogLevel.ERROR); }
+            }
+        }
+
+        public static void EnsureLangFolderExist()
+        {
+            if (!Directory.Exists(GetLangDir()))
+            {
+                try { Directory.CreateDirectory(GetLangDir()); }
+                catch (Exception ex) { Logger.Instance.Log($"Exception caught in EnsureLangFolderExist. Exception=[{ex}]", Logger.LogLevel.ERROR); }
             }
         }
 

@@ -4,20 +4,16 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Text.Unicode;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -40,7 +36,7 @@ namespace ASA_Save_Inspector.Pages
 
         public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
         public string GetExportFolderName() => (Directory.Exists(SaveFilePath) ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
-        public override string ToString() => $"Map: {(MapName ?? "")}, FilePath: \"{(SaveFilePath ?? "")}\", Extract: {(ExtractedDinos ? "dinos," : "")}{(ExtractedPlayerPawns ? "pawns," : "")}{(ExtractedItems ? "items," : "")}{(ExtractedStructures ? "structures," : "")}{(ExtractedPlayers ? "players," : "")}{(ExtractedTribes ? "tribes," : "")}";
+        public override string ToString() => $"{ASILang.Get("Map")}: {(MapName ?? "")}, {ASILang.Get("Path")}: \"{(SaveFilePath ?? "")}\", {ASILang.Get("FilePath")}: {(ExtractedDinos ? $"{ASILang.Get("Dinos")}," : "")}{(ExtractedPlayerPawns ? $"{ASILang.Get("Pawns")}," : "")}{(ExtractedItems ? $"{ASILang.Get("Items")}," : "")}{(ExtractedStructures ? $"{ASILang.Get("Structures")}," : "")}{(ExtractedPlayers ? $"{ASILang.Get("Players")}," : "")}{(ExtractedTribes ? $"{ASILang.Get("Tribes")}," : "")}";
     }
 
     public class JsonExportPreset
@@ -51,7 +47,8 @@ namespace ASA_Save_Inspector.Pages
 
     public class JsonSettings
     {
-        public SettingsPage.ASILanguage Language { get; set; } = SettingsPage.ASILanguage.ENGLISH;
+        public int Language { get; set; } = -1; // Deprecated.
+        public string? LanguageCode { get; set; } = ASILang.DEFAULT_LANGUAGE_CODE;
         public string? PythonExeFilePath { get; set; } = string.Empty;
         public bool? DarkTheme { get; set; } = true;
     }
@@ -77,7 +74,7 @@ namespace ASA_Save_Inspector.Pages
 
     public class ArkMapInfo
     {
-        public string MapName { get; set; } = "Unknown";
+        public string MapName { get; set; } = ASILang.Get("Unknown");
         public string MinimapFilename { get; set; } = "TheIsland_Minimap_Margin.jpg";
         public MapBounds Bounds { get; set; } = new MapBounds()
         {
@@ -114,23 +111,16 @@ namespace ASA_Save_Inspector.Pages
 
     public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     {
-        public enum ASILanguage
-        {
-            ENGLISH = 0,
-            FRENCH = 1
-        }
-
         private static readonly object lockObject = new object();
 
         public static SettingsPage? _page = null;
         public static bool? _darkTheme = true;
 
-        public static ASILanguage? _language = null;
+        public static string? _language = ASILang.DEFAULT_LANGUAGE_CODE;
         public static string? _pythonExePath = null;
         public static string? _jsonDataFolderPath = null;
         public static string? _asaSaveFilePath = null;
         public static string? _mapName = null;
-        //private static bool _bindedWindowResize = false;
 
         public static List<JsonExportProfile> _jsonExportProfiles = new List<JsonExportProfile>();
         public static JsonExportProfile? _selectedJsonExportProfile = null;
@@ -149,9 +139,6 @@ namespace ASA_Save_Inspector.Pages
 
         public static CustomBlueprints _customBlueprints = new CustomBlueprints();
 
-        private BitmapImage _flagEnglish = new BitmapImage(new Uri("ms-appx:///Assets/FlagGBIcon96.png", UriKind.Absolute));
-        private BitmapImage _flagFrench = new BitmapImage(new Uri("ms-appx:///Assets/FlagFRIcon96.png", UriKind.Absolute));
-
         private SolidColorBrush _errorColor = new SolidColorBrush(Colors.Red);
         private SolidColorBrush _warningColor = new SolidColorBrush(Colors.Orange);
         private SolidColorBrush _successColor = new SolidColorBrush(Colors.Green);
@@ -169,6 +156,51 @@ namespace ASA_Save_Inspector.Pages
                     _page = null;
                 _page = this;
             }
+
+            if (ASILang._languages.Count > 0)
+                foreach (var lang in ASILang._languages)
+                    if (!string.IsNullOrEmpty(lang.Key) && lang.Value != null)
+                    {
+                        string flagFilepath = (lang.Value.FlagFilepath.StartsWith("/Assets/", StringComparison.InvariantCulture) ? $"ms-appx://{lang.Value.FlagFilepath}" : lang.Value.FlagFilepath);
+                        BitmapImage? flagImage = ASILang.GetFlagImage(flagFilepath);
+
+                        MenuFlyoutItem mfi = new MenuFlyoutItem();
+                        mfi.Text = lang.Value.Name;
+                        if (flagImage != null)
+                            mfi.Icon = new ImageIcon() { Source = flagImage };
+                        mfi.Click += (s, e1) =>
+                        {
+                            _language = lang.Value.Code;
+                            r_LanguageSelect.Text = lang.Value.Name;
+                            i_LanguageSelect.Source = flagImage;
+                            LanguageChanged();
+
+#pragma warning disable CS1998
+                            if (MainWindow._mainWindow != null)
+                            {
+                                MainWindow._mainWindow.LanguageChanged();
+                                MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                                {
+                                    if (MainWindow._mainWindow != null)
+                                    {
+                                        if (MainWindow._mainWindow._navView != null)
+                                            MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnAbout;
+                                        MainWindow._mainWindow.NavView_Navigate(typeof(AboutPage), new EntranceNavigationTransitionInfo());
+                                    }
+                                    await Task.Delay(250);
+                                    if (MainWindow._mainWindow != null)
+                                    {
+                                        if (MainWindow._mainWindow._navView != null)
+                                            MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnSettings;
+                                        MainWindow._mainWindow.NavView_Navigate(typeof(SettingsPage), new EntranceNavigationTransitionInfo());
+                                    }
+                                });
+                            }
+#pragma warning restore CS1998
+                        };
+
+                        mf_LanguageSlect.Items.Add(mfi);
+                    }
 
             // Calculate page center.
             AdjustToSizeChange();
@@ -189,7 +221,7 @@ namespace ASA_Save_Inspector.Pages
 
             mf_PythonSelect.Items.Add(new MenuFlyoutItem
             {
-                Text = "Manual selection",
+                Text = ASILang.Get("ManualSelection"),
                 Command = PythonSelectPathCommand,
                 CommandParameter = "MANUAL"
             });
@@ -273,13 +305,10 @@ namespace ASA_Save_Inspector.Pages
         public void OnPropertyChanged([CallerMemberName] string name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 #pragma warning restore CS8625
 
-        private ASILanguage GetLanguageFromID(int? id)
+        public void SettingsChanged()
         {
-            if (id == null || !id.HasValue)
-                return ASILanguage.ENGLISH;
-            if (id.Value == (int)ASILanguage.FRENCH)
-                return ASILanguage.FRENCH;
-            return ASILanguage.ENGLISH;
+            PythonPathChanged();
+            LanguageChanged();
         }
 
         public void LoadSettings()
@@ -298,10 +327,9 @@ namespace ASA_Save_Inspector.Pages
                 if (jsonSettings != null)
                 {
                     _pythonExePath = jsonSettings.PythonExeFilePath;
-                    _language = jsonSettings.Language;
+                    _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
-                    PythonPathChanged();
-                    LanguageChanged();
+                    SettingsChanged();
                 }
             }
             catch (Exception ex)
@@ -326,8 +354,14 @@ namespace ASA_Save_Inspector.Pages
                 if (jsonSettings != null)
                 {
                     _pythonExePath = jsonSettings.PythonExeFilePath;
-                    _language = jsonSettings.Language;
+                    _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
+                    if (_page != null)
+                        _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                        {
+                            await Task.Delay(250);
+                            _page.SettingsChanged();
+                        });
                 }
             }
             catch (Exception ex)
@@ -342,7 +376,7 @@ namespace ASA_Save_Inspector.Pages
             {
                 JsonSettings settings = new JsonSettings()
                 {
-                    Language = (_language != null && _language.HasValue ? _language.Value : ASILanguage.ENGLISH),
+                    LanguageCode = ASILang.GetLanguageCode(_language),
                     PythonExeFilePath = _pythonExePath,
                     DarkTheme = _darkTheme
                 };
@@ -451,10 +485,7 @@ namespace ASA_Save_Inspector.Pages
                 return;
             var newMenuItem = new MenuFlyoutItem();
             newMenuItem.Text = jsonProfile.GetLabel();
-            newMenuItem.Click += (s, e1) =>
-            {
-                JsonExportProfileSelected(jsonProfile);
-            };
+            newMenuItem.Click += (s, e1) => { JsonExportProfileSelected(jsonProfile); };
             mf_JsonDataSelect.Items.Add(newMenuItem);
         }
 
@@ -693,7 +724,7 @@ namespace ASA_Save_Inspector.Pages
                     JsonDataFolderPathChanged(foundFiles);
                 }
                 else
-                    MainWindow.ShowToast("No valid JSON files were found in the folder.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("NoValidJsonFilesFound"), BackgroundColor.WARNING);
             }
         }
 
@@ -748,17 +779,17 @@ namespace ASA_Save_Inspector.Pages
                     else if (found.Key == "tribes.json")
                         cb_foundTribes.IsChecked = true;
                 }
-            tb_FolderMapNameSelect.Text = "Click here...";
+            tb_FolderMapNameSelect.Text = ASILang.Get("Click here...");
             if (!JsonFolderSelectedPopup.IsOpen)
                 JsonFolderSelectedPopup.IsOpen = true;
         }
 
         private void ValidateJsonFolderSelectedClicked(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_mapName) || tb_FolderMapNameSelect.Text == "Click here...")
+            if (string.IsNullOrWhiteSpace(_mapName) || tb_FolderMapNameSelect.Text == ASILang.Get("Click here..."))
             {
-                Logger.Instance.Log("Cannot get JSON data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("Cannot get JSON data: Incorrect ASA map name.", BackgroundColor.WARNING);
+                Logger.Instance.Log(ASILang.Get("CannotGetJsonData_IncorrectMapName"), Logger.LogLevel.WARNING);
+                MainWindow.ShowToast(ASILang.Get("CannotGetJsonData_IncorrectMapName"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -771,16 +802,16 @@ namespace ASA_Save_Inspector.Pages
 
             if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
             {
-                Logger.Instance.Log("Cannot get JSON data: No valid JSON file name found.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("Cannot get JSON data: No valid JSON file name found.", BackgroundColor.WARNING);
+                Logger.Instance.Log(ASILang.Get("CannotGetJsonData_NoValidFileName"), Logger.LogLevel.WARNING);
+                MainWindow.ShowToast(ASILang.Get("CannotGetJsonData_NoValidFileName"), BackgroundColor.WARNING);
                 return;
             }
 
             JsonExportProfile? jep = AddNewJsonExportProfile(_jsonDataFolderPath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
             if (jep == null)
             {
-                Logger.Instance.Log("Failed to create new JSON export profile.", Logger.LogLevel.ERROR);
-                MainWindow.ShowToast("Failed to create new JSON export profile.", BackgroundColor.ERROR);
+                Logger.Instance.Log(ASILang.Get("CannotGetJsonData_JsonExportProfileCreationFailed"), Logger.LogLevel.ERROR);
+                MainWindow.ShowToast(ASILang.Get("CannotGetJsonData_JsonExportProfileCreationFailed"), BackgroundColor.ERROR);
                 return;
             }
             AddJsonExportProfileToDropDown(jep);
@@ -802,26 +833,32 @@ namespace ASA_Save_Inspector.Pages
                 tb_PythonSelect.Text = _pythonExePath;
                 SaveSettings();
                 PythonManager.InstallArkParse();
+                if (_page != null)
+                    _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                    {
+                        await Task.Delay(250);
+                        _page.tb_PythonSelect.Text = _pythonExePath;
+                    });
             }
         }
 
         public void LanguageChanged()
         {
-            if (_language != null && _language.HasValue)
+            if (_language != null)
             {
-                switch (_language.Value)
+                ASILangFile? lang = (ASILang._languages.ContainsKey(_language) ? ASILang._languages[_language] : null);
+                if (lang != null)
                 {
-                    case ASILanguage.FRENCH:
-                        r_LanguageSelect.Text = "Français";
-                        i_LanguageSelect.Source = _flagFrench;
-                        break;
+                    string flagFilepath = (lang.FlagFilepath.StartsWith("/Assets/", StringComparison.InvariantCulture) ? $"ms-appx://{lang.FlagFilepath}" : lang.FlagFilepath);
+                    var flagImage = new BitmapImage(new Uri(flagFilepath, UriKind.Absolute));
 
-                    default:
-                        r_LanguageSelect.Text = "English";
-                        i_LanguageSelect.Source = _flagEnglish;
-                        break;
+                    r_LanguageSelect.Text = lang.Name;
+                    i_LanguageSelect.Source = flagImage;
+                    ASILang.SwitchLanguage(lang.Code);
+                    SaveSettings();
                 }
-                SaveSettings();
+                else
+                    Logger.Instance.Log($"Language {_language} was not found.", Logger.LogLevel.ERROR);
             }
         }
 
@@ -867,43 +904,43 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(saveFilePath) || !File.Exists(saveFilePath))
             {
-                Logger.Instance.Log("Cannot extract JSON data: Incorrect ASA save file path.", Logger.LogLevel.WARNING);
+                Logger.Instance.Log(ASILang.Get("CannotExtractJsonData_IncorrectSaveFilePath"), Logger.LogLevel.WARNING);
                 if (useJsonResultTb)
                 {
-                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: Incorrect ASA save file path.";
+                    tb_ExtractJsonResult.Text = ASILang.Get("CannotExtractJsonData_IncorrectSaveFilePath");
                     tb_ExtractJsonResult.Foreground = _errorColor;
                     tb_ExtractJsonResult.Visibility = Visibility.Visible;
                 }
                 else
-                    MainWindow.ShowToast("Incorrect ASA save file.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("IncorrectASASaveFile"), BackgroundColor.WARNING);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(mapName))
             {
-                Logger.Instance.Log("Cannot extract JSON data: Incorrect ASA map name.", Logger.LogLevel.WARNING);
+                Logger.Instance.Log(ASILang.Get("CannotExtractJsonData_IncorrectMapName"), Logger.LogLevel.WARNING);
                 if (useJsonResultTb)
                 {
-                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: Please select a map name.";
+                    tb_ExtractJsonResult.Text = ASILang.Get("CannotExtractJsonData_IncorrectMapName");
                     tb_ExtractJsonResult.Foreground = _errorColor;
                     tb_ExtractJsonResult.Visibility = Visibility.Visible;
                 }
                 else
-                    MainWindow.ShowToast("Incorrect map name.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("IncorrectMapName"), BackgroundColor.WARNING);
                 return;
             }
 
             if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
             {
-                Logger.Instance.Log("Cannot extract JSON data: No data type selected.", Logger.LogLevel.WARNING);
+                Logger.Instance.Log(ASILang.Get("CannotExtractJsonData_NoDataTypeSelected"), Logger.LogLevel.WARNING);
                 if (useJsonResultTb)
                 {
-                    tb_ExtractJsonResult.Text = "Cannot extract JSON data: No data type selected.";
+                    tb_ExtractJsonResult.Text = ASILang.Get("CannotExtractJsonData_NoDataTypeSelected");
                     tb_ExtractJsonResult.Foreground = _errorColor;
                     tb_ExtractJsonResult.Visibility = Visibility.Visible;
                 }
                 else
-                    MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("NoDataTypeSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -928,15 +965,15 @@ namespace ASA_Save_Inspector.Pages
             }
             if (!ret)
             {
-                Logger.Instance.Log("JSON data extraction failed.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log(ASILang.Get("JsonDataExtractionFailed"), Logger.LogLevel.ERROR);
                 if (useJsonResultTb)
                 {
-                    tb_ExtractJsonResult.Text = "JSON data extraction failed.";
+                    tb_ExtractJsonResult.Text = ASILang.Get("JsonDataExtractionFailed");
                     tb_ExtractJsonResult.Foreground = _errorColor;
                     tb_ExtractJsonResult.Visibility = Visibility.Visible;
                 }
                 else
-                    MainWindow.ShowToast("JSON data extraction failed.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("JsonDataExtractionFailed"), BackgroundColor.WARNING);
             }
         }
 
@@ -949,7 +986,7 @@ namespace ASA_Save_Inspector.Pages
             bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
             bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
 
-            bool fastExtract = string.Compare(tb_ExtractionType.Text, "Legacy extraction", StringComparison.InvariantCulture) != 0;
+            bool fastExtract = string.Compare(tb_ExtractionType.Text, ASILang.Get("ExtractType_Legacy"), StringComparison.InvariantCulture) != 0;
 
             await DoExtract(true, _asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
         }
@@ -964,18 +1001,6 @@ namespace ASA_Save_Inspector.Pages
         {
             if (!StandardPopup.IsOpen)
                 StandardPopup.IsOpen = true;
-        }
-
-        private void mfi_LanguageEnglish_Click(object sender, RoutedEventArgs e)
-        {
-            _language = ASILanguage.ENGLISH;
-            LanguageChanged();
-        }
-
-        private void mfi_LanguageFrench_Click(object sender, RoutedEventArgs e)
-        {
-            _language = ASILanguage.FRENCH;
-            LanguageChanged();
         }
 
         private void mfi_JsonDataArkParse_Click(object sender, RoutedEventArgs e)
@@ -1000,8 +1025,8 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedJsonExportProfile == null)
             {
-                Logger.Instance.Log("Failed to load JSON data (no export profile selected).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to load JSON data (no export profile selected).";
+                Logger.Instance.Log(ASILang.Get("LoadJsonFailed_NoExportProfileSelected"), Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_NoExportProfileSelected");
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -1012,8 +1037,8 @@ namespace ASA_Save_Inspector.Pages
                 folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
             if (!Directory.Exists(folderPath))
             {
-                Logger.Instance.Log("Failed to load JSON data (export folder not found).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to load JSON data (export folder not found).";
+                Logger.Instance.Log(ASILang.Get("LoadJsonFailed_ExportFolderNotFound"), Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_ExportFolderNotFound");
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -1030,7 +1055,7 @@ namespace ASA_Save_Inspector.Pages
             string saveInfoFilePath = Path.Combine(folderPath, "save_info.json");
             if (!File.Exists(saveInfoFilePath))
             {
-                Logger.Instance.Log($"Could not load savefile info JSON data (file not found at \"{saveInfoFilePath}\").", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoNotFound").Replace("#FILEPATH#", $"\"{saveInfoFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                 hasErrors = true;
             }
             else
@@ -1049,7 +1074,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Failed to load savefile info JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoParsingError")}. Exception=[{ex}]", Logger.LogLevel.ERROR);
                     hasErrors = true;
                 }
             }
@@ -1059,7 +1084,7 @@ namespace ASA_Save_Inspector.Pages
                 string dinosFilePath = Path.Combine(folderPath, "dinos.json");
                 if (!File.Exists(dinosFilePath))
                 {
-                    Logger.Instance.Log($"Could not load dinos JSON data (file not found at \"{dinosFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_DinosFileNotFound").Replace("#FILEPATH#", $"\"{dinosFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1070,7 +1095,7 @@ namespace ASA_Save_Inspector.Pages
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load dinos JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_DinosFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1081,7 +1106,7 @@ namespace ASA_Save_Inspector.Pages
                 string playerPawnsFilePath = Path.Combine(folderPath, "player_pawns.json");
                 if (!File.Exists(playerPawnsFilePath))
                 {
-                    Logger.Instance.Log($"Could not load player pawns JSON data (file not found at \"{playerPawnsFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PawnsFileNotFound").Replace("#FILEPATH#", $"\"{playerPawnsFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1092,7 +1117,7 @@ namespace ASA_Save_Inspector.Pages
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load player pawns JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PawnsFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1103,7 +1128,7 @@ namespace ASA_Save_Inspector.Pages
                 string itemsFilePath = Path.Combine(folderPath, "items.json");
                 if (!File.Exists(itemsFilePath))
                 {
-                    Logger.Instance.Log($"Could not load items JSON data (file not found at \"{itemsFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_ItemsFileNotFound").Replace("#FILEPATH#", $"\"{itemsFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1114,7 +1139,7 @@ namespace ASA_Save_Inspector.Pages
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load items JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_ItemsFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1125,7 +1150,7 @@ namespace ASA_Save_Inspector.Pages
                 string structuresFilePath = Path.Combine(folderPath, "structures.json");
                 if (!File.Exists(structuresFilePath))
                 {
-                    Logger.Instance.Log($"Could not load structures JSON data (file not found at \"{structuresFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_StructuresFileNotFound").Replace("#FILEPATH#", $"\"{structuresFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1136,7 +1161,7 @@ namespace ASA_Save_Inspector.Pages
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load structures JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_StructuresFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1147,7 +1172,7 @@ namespace ASA_Save_Inspector.Pages
                 string playersFilePath = Path.Combine(folderPath, "players.json");
                 if (!File.Exists(playersFilePath))
                 {
-                    Logger.Instance.Log($"Could not load players JSON data (file not found at \"{playersFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PlayersFileNotFound").Replace("#FILEPATH#", $"\"{playersFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1155,13 +1180,10 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _playersData = JsonSerializer.Deserialize<List<Player>>(File.ReadAllText(playersFilePath, Encoding.UTF8));
-                        //if (_playersData != null && _playersData.Count > 0)
-                        //    foreach (Player p in _playersData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(p, typeof(Player));
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load players JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PlayersFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1172,7 +1194,7 @@ namespace ASA_Save_Inspector.Pages
                 string tribesFilePath = Path.Combine(folderPath, "tribes.json");
                 if (!File.Exists(tribesFilePath))
                 {
-                    Logger.Instance.Log($"Could not load tribes JSON data (file not found at \"{tribesFilePath}\").", Logger.LogLevel.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_TribesFileNotFound").Replace("#FILEPATH#", $"\"{tribesFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
                     hasErrors = true;
                 }
                 else
@@ -1180,13 +1202,10 @@ namespace ASA_Save_Inspector.Pages
                     try
                     {
                         _tribesData = JsonSerializer.Deserialize<List<Tribe>>(File.ReadAllText(tribesFilePath, Encoding.UTF8));
-                        //if (_tribesData != null && _tribesData.Count > 0)
-                        //    foreach (Tribe t in _tribesData)
-                        //        Utils.ReplaceUnicodeEscapedStrInObject(t, typeof(Tribe));
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Failed to load tribes JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_TribesFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                         hasErrors = true;
                     }
                 }
@@ -1198,12 +1217,12 @@ namespace ASA_Save_Inspector.Pages
 
             if (hasErrors)
             {
-                tb_JsonDataLoaded.Text = "JSON data was partially loaded (see logs for more info).";
+                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonData_PartiallyLoaded");
                 tb_JsonDataLoaded.Foreground = _warningColor;
             }
             else
             {
-                tb_JsonDataLoaded.Text = "JSON data successfully loaded.";
+                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonData_Success");
                 tb_JsonDataLoaded.Foreground = _successColor;
             }
             tb_JsonDataLoaded.Visibility = Visibility.Visible;
@@ -1217,7 +1236,7 @@ namespace ASA_Save_Inspector.Pages
                 if (!Directory.Exists(folderPath))
                     folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
 
-                tb_confirmJsonFolderRemoval.Text = $"Are you sure that you want to delete folder \"{folderPath}\"?";
+                tb_confirmJsonFolderRemoval.Text = $"{ASILang.Get("JsonDataRemovalConfirm_Description").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}";
                 ConfirmJsonExportRemovalPopup.IsOpen = true;
             }
         }
@@ -1246,8 +1265,8 @@ namespace ASA_Save_Inspector.Pages
 
             if (_selectedJsonExportProfile == null)
             {
-                Logger.Instance.Log("Failed to remove JSON data (no export profile selected).", Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = "Failed to remove JSON data (no export profile selected).";
+                Logger.Instance.Log(ASILang.Get("RemoveJsonDataFailed_NoExportProfileSelected"), Logger.LogLevel.ERROR);
+                tb_JsonDataLoaded.Text = ASILang.Get("RemoveJsonDataFailed_NoExportProfileSelected");
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -1258,7 +1277,7 @@ namespace ASA_Save_Inspector.Pages
                 folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
 
             if (!Directory.Exists(folderPath))
-                Logger.Instance.Log($"JSON data has already been removed (folder not found at \"{folderPath}\").", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed_AlreadyRemoved").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.ERROR);
 
             List<JsonExportProfile> toRemove = new List<JsonExportProfile>();
             if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
@@ -1275,8 +1294,8 @@ namespace ASA_Save_Inspector.Pages
                 try { Directory.Delete(folderPath, true); }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Failed to remove JSON data. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                    tb_JsonDataLoaded.Text = "Failed to remove JSON data (exception caught).";
+                    Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    tb_JsonDataLoaded.Text = ASILang.Get("RemoveJsonDataFailed_Details");
                     tb_JsonDataLoaded.Foreground = _errorColor;
                     tb_JsonDataLoaded.Visibility = Visibility.Visible;
                     return;
@@ -1290,7 +1309,7 @@ namespace ASA_Save_Inspector.Pages
             }
 
             _selectedJsonExportProfile = null;
-            tb_JsonDataSelect.Text = "Click here...";
+            tb_JsonDataSelect.Text = ASILang.Get("ClickHere");
         }
 
         public void CloseJsonFolderRemovalPopupClicked(object sender, RoutedEventArgs e)
@@ -1299,9 +1318,9 @@ namespace ASA_Save_Inspector.Pages
                 ConfirmJsonExportRemovalPopup.IsOpen = false;
         }
 
-        private void mfi_ExtractFast_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Fast extraction";
+        private void mfi_ExtractFast_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = ASILang.Get("ExtractType_Fast");
 
-        private void mfi_ExtractLegacy_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = "Legacy extraction";
+        private void mfi_ExtractLegacy_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = ASILang.Get("ExtractType_Legacy");
 
         #region Extraction presets
 
@@ -1373,7 +1392,7 @@ namespace ASA_Save_Inspector.Pages
                                         AcceptsReturn = false,
                                         IsReadOnly = true,
                                         MaxWidth = 1200.0d,
-                                        Text = jep.ToString(), //$"Map: {(jep.MapName ?? "")}, FilePath: \"{(jep.SaveFilePath ?? "")}\", Extract: {(jep.ExtractedDinos ? "dinos," : "")}{(jep.ExtractedPlayerPawns ? "pawns," : "")}{(jep.ExtractedItems ? "items," : "")}{(jep.ExtractedStructures ? "structures," : "")}{(jep.ExtractedPlayers ? "players," : "")}{(jep.ExtractedTribes ? "tribes," : "")}",
+                                        Text = jep.ToString(),
                                         VerticalAlignment = VerticalAlignment.Center,
                                         HorizontalAlignment = HorizontalAlignment.Left,
                                         Margin = new Thickness(0.0d, 5.0d, 0.0d, 0.0d)
@@ -1386,15 +1405,15 @@ namespace ASA_Save_Inspector.Pages
 
         private void RefreshExtractProfilePresetsPopup()
         {
-            tb_ExistingExtractionPresets_Details.Text = "Click here...";
+            tb_ExistingExtractionPresets_Details.Text = ASILang.Get("ClickHere");
             sp_ExistingExtractionPresetDetails.Children.Clear();
             mf_ExistingExtractionPresets_Details.Items.Clear();
 
-            tb_ExistingExtractionPresets_AddTo.Text = "Click here...";
+            tb_ExistingExtractionPresets_AddTo.Text = ASILang.Get("ClickHere");
             btn_ExistingExtractionPresets_AddTo.IsEnabled = false;
             mf_ExistingExtractionPresets_AddTo.Items.Clear();
 
-            tb_ExistingExtractionPresets_Remove.Text = "Click here...";
+            tb_ExistingExtractionPresets_Remove.Text = ASILang.Get("ClickHere");
             btn_RemoveExistingExtractionPreset.IsEnabled = false;
             mf_ExistingExtractionPresets_Remove.Items.Clear();
 
@@ -1436,7 +1455,7 @@ namespace ASA_Save_Inspector.Pages
 
             if (string.IsNullOrWhiteSpace(tb_CreateExtractionPreset.Text))
             {
-                MainWindow.ShowToast("An extraction preset requires a name.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ExtractPreset_NameRequired"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1444,14 +1463,14 @@ namespace ASA_Save_Inspector.Pages
                 foreach (JsonExportPreset preset in _jsonExportPresets)
                     if (preset != null && string.Compare(tb_CreateExtractionPreset.Text, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
                     {
-                        MainWindow.ShowToast("This preset name already exists.", BackgroundColor.WARNING);
+                        MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.WARNING);
                         return;
                     }
 
             _jsonExportPresets.Add(new JsonExportPreset() { Name = tb_CreateExtractionPreset.Text });
             SaveJsonExportPresets();
             RefreshExtractProfilePresetsPopup();
-            MainWindow.ShowToast("Extraction preset created.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("ExtractPreset_Created"), BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveExistingExtractionPreset_Click(object sender, RoutedEventArgs e)
@@ -1459,9 +1478,9 @@ namespace ASA_Save_Inspector.Pages
             if (_jsonExportPresets == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_Remove.Text) || string.Compare(tb_ExistingExtractionPresets_Remove.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_Remove.Text) || string.Compare(tb_ExistingExtractionPresets_Remove.Text, ASILang.Get("ClickHere"), StringComparison.InvariantCulture) == 0)
             {
-                MainWindow.ShowToast("No extraction preset selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ExtractPreset_NoPresetSelected"), BackgroundColor.WARNING);
                 return;
 
             }
@@ -1479,12 +1498,12 @@ namespace ASA_Save_Inspector.Pages
                     _jsonExportPresets.RemoveAt(toDel);
                     SaveJsonExportPresets();
                     RefreshExtractProfilePresetsPopup();
-                    MainWindow.ShowToast("Preset removed.", BackgroundColor.SUCCESS);
+                    MainWindow.ShowToast(ASILang.Get("ExtractPreset_Removed"), BackgroundColor.SUCCESS);
                     return;
                 }
             }
 
-            MainWindow.ShowToast($"Preset \"{tb_ExistingExtractionPresets_Remove.Text}\" not found.", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExistingExtractionPresets_Remove.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void btn_ExistingExtractionPresets_AddTo_Click(object sender, RoutedEventArgs e)
@@ -1492,9 +1511,9 @@ namespace ASA_Save_Inspector.Pages
             if (_jsonExportPresets == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_AddTo.Text) || string.Compare(tb_ExistingExtractionPresets_AddTo.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            if (string.IsNullOrWhiteSpace(tb_ExistingExtractionPresets_AddTo.Text) || string.Compare(tb_ExistingExtractionPresets_AddTo.Text, ASILang.Get("ClickHere"), StringComparison.InvariantCulture) == 0)
             {
-                MainWindow.ShowToast("No extraction preset selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ExtractPreset_NoPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1507,15 +1526,15 @@ namespace ASA_Save_Inspector.Pages
 
             if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
             {
-                Logger.Instance.Log("Cannot add current extraction settings to preset: No data type selected.", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                Logger.Instance.Log(ASILang.Get("ExtractPreset_CannotAddExtractProfile_NoDataTypeSelected"), Logger.LogLevel.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ExtractPreset_NoDataTypeSelected"), BackgroundColor.WARNING);
                 return;
             }
 
             JsonExportProfile? p = FormatNewJsonExportProfile(_asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
             if (p == null)
             {
-                MainWindow.ShowToast("Failed to format extraction settings.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ExtractPreset_FailedToFormatExtractProfile"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1526,11 +1545,11 @@ namespace ASA_Save_Inspector.Pages
                         preset.ExportProfiles.Add(p);
                         SaveJsonExportPresets();
                         RefreshExtractProfilePresetsPopup();
-                        MainWindow.ShowToast("Extraction settings added to preset.", BackgroundColor.SUCCESS);
+                        MainWindow.ShowToast(ASILang.Get("ExtractPreset_ExtractProfileAdded"), BackgroundColor.SUCCESS);
                         return;
                     }
 
-            MainWindow.ShowToast($"Preset \"{tb_ExistingExtractionPresets_AddTo.Text}\" not found.", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExistingExtractionPresets_AddTo.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void btn_CloseExtractProfilePresetsPopup_Click(object sender, RoutedEventArgs e)
@@ -1546,15 +1565,15 @@ namespace ASA_Save_Inspector.Pages
 
                 if (string.IsNullOrWhiteSpace(_asaSaveFilePath) || !File.Exists(_asaSaveFilePath))
                 {
-                    Logger.Instance.Log("Cannot add to preset: Incorrect ASA save file.", Logger.LogLevel.WARNING);
-                    MainWindow.ShowToast("Incorrect ASA save file.", BackgroundColor.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("CannotAddToPreset")} {ASILang.Get("IncorrectSaveFile")}", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("IncorrectSaveFile"), BackgroundColor.WARNING);
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(_mapName))
                 {
-                    Logger.Instance.Log("Cannot add to preset: Incorrect map name.", Logger.LogLevel.WARNING);
-                    MainWindow.ShowToast("Incorrect map name.", BackgroundColor.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("CannotAddToPreset")} {ASILang.Get("IncorrectMapName")}", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("IncorrectMapName"), BackgroundColor.WARNING);
                     return;
                 }
 
@@ -1567,8 +1586,8 @@ namespace ASA_Save_Inspector.Pages
 
                 if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
                 {
-                    Logger.Instance.Log("Cannot add to preset: No data type selected.", Logger.LogLevel.WARNING);
-                    MainWindow.ShowToast("No data type selected.", BackgroundColor.WARNING);
+                    Logger.Instance.Log($"{ASILang.Get("CannotAddToPreset")} {ASILang.Get("NoDataTypeSelected")}", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast(ASILang.Get("NoDataTypeSelected"), BackgroundColor.WARNING);
                     return;
                 }
 
@@ -1580,7 +1599,7 @@ namespace ASA_Save_Inspector.Pages
         private void JsonExportPresetSelected_Extract(string presetName)
         {
             tb_ExportPresetExtract.Text = presetName;
-            if (!string.IsNullOrWhiteSpace(presetName) && string.Compare(presetName, "Click here...", StringComparison.InvariantCulture) != 0)
+            if (!string.IsNullOrWhiteSpace(presetName) && string.Compare(presetName, ASILang.Get("ClickHere"), StringComparison.InvariantCulture) != 0)
             {
                 sp_ExportPresetExtract.Children.Clear();
                 if (_jsonExportPresets == null || _jsonExportPresets.Count <= 0)
@@ -1605,7 +1624,7 @@ namespace ASA_Save_Inspector.Pages
                                     TextBlock tb1 = new TextBlock()
                                     {
                                         FontSize = 14.0d,
-                                        Text = "Extract:",
+                                        Text = $"{ASILang.Get("Extract")}:",
                                         Margin = new Thickness(0.0d, 7.0d, 0.0d, 0.0d)
                                     };
                                     TextBox tb2 = new TextBox()
@@ -1615,7 +1634,7 @@ namespace ASA_Save_Inspector.Pages
                                         AcceptsReturn = false,
                                         IsReadOnly = true,
                                         MaxWidth = 1200.0d,
-                                        Text = jep.ToString(), //$"Map: {(jep.MapName ?? "")}, FilePath: \"{(jep.SaveFilePath ?? "")}\", Extract: {(jep.ExtractedDinos ? "dinos," : "")}{(jep.ExtractedPlayerPawns ? "pawns," : "")}{(jep.ExtractedItems ? "items," : "")}{(jep.ExtractedStructures ? "structures," : "")}{(jep.ExtractedPlayers ? "players," : "")}{(jep.ExtractedTribes ? "tribes," : "")}",
+                                        Text = jep.ToString(),
                                         VerticalAlignment = VerticalAlignment.Center,
                                         HorizontalAlignment = HorizontalAlignment.Left,
                                         Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
@@ -1649,7 +1668,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void RefreshSelectExportPresetPopup()
         {
-            tb_ExportPresetExtract.Text = "Click here...";
+            tb_ExportPresetExtract.Text = ASILang.Get("ClickHere");
             mf_ExportPresetExtract.Items.Clear();
             sp_ExportPresetExtract.Children.Clear();
 
@@ -1694,9 +1713,9 @@ namespace ASA_Save_Inspector.Pages
 
         private void btn_ExportPresetExtract_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(tb_ExportPresetExtract.Text) || string.Compare(tb_ExportPresetExtract.Text, "Click here...", StringComparison.InvariantCulture) == 0)
+            if (string.IsNullOrWhiteSpace(tb_ExportPresetExtract.Text) || string.Compare(tb_ExportPresetExtract.Text, ASILang.Get("ClickHere"), StringComparison.InvariantCulture) == 0)
             {
-                MainWindow.ShowToast("No preset selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1723,7 +1742,7 @@ namespace ASA_Save_Inspector.Pages
                             }
                         if (selected.Count <= 0)
                         {
-                            MainWindow.ShowToast("No export profile selected.", BackgroundColor.WARNING);
+                            MainWindow.ShowToast(ASILang.Get("NoExportProfileSelected"), BackgroundColor.WARNING);
                             return;
                         }
                         List<KeyValuePair<JsonExportProfile, bool>> toExtract = new List<KeyValuePair<JsonExportProfile, bool>>();
@@ -1751,17 +1770,17 @@ namespace ASA_Save_Inspector.Pages
                                     await Task.Delay(250);
                                     OnCurrentExtractionComplete(toExtract);
                                 });
-                            MainWindow.ShowToast("Extraction started. Please wait.", BackgroundColor.SUCCESS);
+                            MainWindow.ShowToast($"{ASILang.Get("ExtractionStarted")} {ASILang.Get("PleaseWait")}", BackgroundColor.SUCCESS);
                         }
                         else
-                            MainWindow.ShowToast("Preset is empty.", BackgroundColor.WARNING);
+                            MainWindow.ShowToast(ASILang.Get("PresetIsEmpty"), BackgroundColor.WARNING);
                     }
                     else
-                        MainWindow.ShowToast("Preset is empty.", BackgroundColor.WARNING);
+                        MainWindow.ShowToast(ASILang.Get("PresetIsEmpty"), BackgroundColor.WARNING);
                     return;
                 }
 
-            MainWindow.ShowToast($"Preset \"{tb_ExportPresetExtract.Text}\" not found.", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExportPresetExtract.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void mfi_JsonDataArkParseWithPreset_Click(object sender, RoutedEventArgs e)

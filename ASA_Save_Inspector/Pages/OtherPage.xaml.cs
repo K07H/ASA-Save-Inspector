@@ -75,7 +75,7 @@ namespace ASA_Save_Inspector.Pages
             if (dirExists)
                 Process.Start(Environment.GetEnvironmentVariable("WINDIR") + @"\explorer.exe", $"\"{folderPath}\"");
             else
-                MainWindow.ShowToast("Error: Unable to locate ASI folder.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("CannotFindASIDataFolder"), BackgroundColor.ERROR);
         }
 
         private void btn_OpenMinimap_Click(object sender, RoutedEventArgs e)
@@ -108,7 +108,7 @@ namespace ASA_Save_Inspector.Pages
                 catch (Exception ex)
                 {
                     Logger.Instance.Log($"Failed to delete ArkParse folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                    MainWindow.ShowToast("Failed to reinstall ArkParse, please check logs.");
+                    MainWindow.ShowToast(ASILang.Get("ReinstallArkParseFailed"));
                 }
             }
         }
@@ -116,10 +116,10 @@ namespace ASA_Save_Inspector.Pages
 
         private void ResetCustomBlueprintPopup()
         {
-            tb_BlueprintType.Text = "Click here...";
+            tb_BlueprintType.Text = ASILang.Get("ClickHere");
             tb_BlueprintClass.Text = "";
             sp_BlueprintClass.Visibility = Visibility.Collapsed;
-            tb_RegisteredBlueprintsType.Text = "Click here...";
+            tb_RegisteredBlueprintsType.Text = ASILang.Get("ClickHere");
             sp_RegisteredDinoBlueprintsBlock.Visibility = Visibility.Collapsed;
             sp_RegisteredItemBlueprintsBlock.Visibility = Visibility.Collapsed;
             sp_RegisteredStructureBlueprintsBlock.Visibility = Visibility.Collapsed;
@@ -168,8 +168,8 @@ namespace ASA_Save_Inspector.Pages
             };
             Button btn = new Button()
             {
-                Width = 90.0d,
-                Content = "Remove",
+                Width = 120.0d,
+                Content = ASILang.Get("Remove"),
                 FontSize = 12.0d,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -248,7 +248,7 @@ namespace ASA_Save_Inspector.Pages
                 SettingsPage._customBlueprints.Dinos.RemoveAt(toDel);
                 SettingsPage.SaveCustomBlueprints();
                 RefreshRegisteredBlueprints();
-                MainWindow.ShowToast("Custom dino blueprint unregistered.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("CustomDinoBlueprintUnregistered"), BackgroundColor.SUCCESS);
             }
         }
 
@@ -282,7 +282,7 @@ namespace ASA_Save_Inspector.Pages
                 SettingsPage._customBlueprints.Items.RemoveAt(toDel);
                 SettingsPage.SaveCustomBlueprints();
                 RefreshRegisteredBlueprints();
-                MainWindow.ShowToast("Custom item blueprint unregistered.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("CustomItemBlueprintUnregistered"), BackgroundColor.SUCCESS);
             }
         }
 
@@ -316,7 +316,7 @@ namespace ASA_Save_Inspector.Pages
                 SettingsPage._customBlueprints.Structures.RemoveAt(toDel);
                 SettingsPage.SaveCustomBlueprints();
                 RefreshRegisteredBlueprints();
-                MainWindow.ShowToast("Custom structure blueprint unregistered.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("CustomStructureBlueprintUnregistered"), BackgroundColor.SUCCESS);
             }
         }
 
@@ -348,16 +348,16 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_BlueprintClass.Text))
             {
-                MainWindow.ShowToast("Cannot add blueprint without class name.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("CustomBlueprintNeedsClassName"), BackgroundColor.WARNING);
                 return;
             }
 
-            bool isDinoBP = (string.Compare(tb_BlueprintType.Text, "Dino blueprint", StringComparison.InvariantCulture) == 0);
-            bool isItemBP = (string.Compare(tb_BlueprintType.Text, "Item blueprint", StringComparison.InvariantCulture) == 0);
-            bool isStructureBP = (string.Compare(tb_BlueprintType.Text, "Structure blueprint", StringComparison.InvariantCulture) == 0);
+            bool isDinoBP = (string.Compare(tb_BlueprintType.Text, ASILang.Get("DinoBlueprint"), StringComparison.InvariantCulture) == 0);
+            bool isItemBP = (string.Compare(tb_BlueprintType.Text, ASILang.Get("ItemBlueprint"), StringComparison.InvariantCulture) == 0);
+            bool isStructureBP = (string.Compare(tb_BlueprintType.Text, ASILang.Get("StructureBlueprint"), StringComparison.InvariantCulture) == 0);
             if (!isDinoBP && !isItemBP && !isStructureBP)
             {
-                MainWindow.ShowToast("Bad blueprint type selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("BadBlueprintTypeSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -369,11 +369,11 @@ namespace ASA_Save_Inspector.Pages
                         foreach (string str in SettingsPage._customBlueprints.Dinos)
                             if (string.Compare(str, tb_BlueprintClass.Text, StringComparison.InvariantCulture) == 0)
                             {
-                                MainWindow.ShowToast("Custom dino blueprint already registered.", BackgroundColor.WARNING);
+                                MainWindow.ShowToast(ASILang.Get("CustomDinoBlueprintAlreadyRegistered"), BackgroundColor.WARNING);
                                 return;
                             }
                     SettingsPage._customBlueprints.Dinos.Add(tb_BlueprintClass.Text);
-                    MainWindow.ShowToast("Custom dino blueprint has been added.", BackgroundColor.SUCCESS);
+                    MainWindow.ShowToast(ASILang.Get("CustomDinoBlueprintAdded"), BackgroundColor.SUCCESS);
                 }
             }
             else if (isItemBP)
@@ -384,11 +384,11 @@ namespace ASA_Save_Inspector.Pages
                         foreach (string str in SettingsPage._customBlueprints.Items)
                             if (string.Compare(str, tb_BlueprintClass.Text, StringComparison.InvariantCulture) == 0)
                             {
-                                MainWindow.ShowToast("Custom item blueprint already registered.", BackgroundColor.WARNING);
+                                MainWindow.ShowToast(ASILang.Get("CustomItemBlueprintAlreadyRegistered"), BackgroundColor.WARNING);
                                 return;
                             }
                     SettingsPage._customBlueprints.Items.Add(tb_BlueprintClass.Text);
-                    MainWindow.ShowToast("Custom item blueprint has been added.", BackgroundColor.SUCCESS);
+                    MainWindow.ShowToast(ASILang.Get("CustomItemBlueprintAdded"), BackgroundColor.SUCCESS);
                 }
             }
             else if (isStructureBP)
@@ -399,11 +399,11 @@ namespace ASA_Save_Inspector.Pages
                         foreach (string str in SettingsPage._customBlueprints.Structures)
                             if (string.Compare(str, tb_BlueprintClass.Text, StringComparison.InvariantCulture) == 0)
                             {
-                                MainWindow.ShowToast("Custom structure blueprint already registered.", BackgroundColor.WARNING);
+                                MainWindow.ShowToast(ASILang.Get("CustomStructureBlueprintAlreadyRegistered"), BackgroundColor.WARNING);
                                 return;
                             }
                     SettingsPage._customBlueprints.Structures.Add(tb_BlueprintClass.Text);
-                    MainWindow.ShowToast("Custom structure blueprint has been added.", BackgroundColor.SUCCESS);
+                    MainWindow.ShowToast(ASILang.Get("CustomStructureBlueprintAdded"), BackgroundColor.SUCCESS);
                 }
             }
             SettingsPage.SaveCustomBlueprints();
@@ -426,11 +426,11 @@ namespace ASA_Save_Inspector.Pages
 
             tb_RegisteredBlueprintsType.Text = blueprintType;
 
-            if (string.Compare(blueprintType, "Dino blueprints", StringComparison.InvariantCulture) == 0)
+            if (string.Compare(blueprintType, ASILang.Get("DinoBlueprints"), StringComparison.InvariantCulture) == 0)
                 sp_RegisteredDinoBlueprintsBlock.Visibility = Visibility.Visible;
-            else if (string.Compare(blueprintType, "Item blueprints", StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(blueprintType, ASILang.Get("ItemBlueprints"), StringComparison.InvariantCulture) == 0)
                 sp_RegisteredItemBlueprintsBlock.Visibility = Visibility.Visible;
-            else if (string.Compare(blueprintType, "Structure blueprints", StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(blueprintType, ASILang.Get("StructureBlueprints"), StringComparison.InvariantCulture) == 0)
                 sp_RegisteredStructureBlueprintsBlock.Visibility = Visibility.Visible;
         }
 
@@ -442,12 +442,12 @@ namespace ASA_Save_Inspector.Pages
 
         private void SwitchAppTheme(bool darkTheme, bool showToast)
         {
-            string themeLabel = (darkTheme ? "Dark" : "Light");
+            string themeLabel = (darkTheme ? ASILang.Get("ApplicationTheme_Dark") : ASILang.Get("ApplicationTheme_Light"));
             cb_AppTheme.Content = themeLabel;
             SettingsPage._darkTheme = darkTheme;
             SettingsPage.SaveSettings();
             if (showToast)
-                MainWindow.ShowToast($"{themeLabel} theme enabled. Restart app to see changes.", BackgroundColor.SUCCESS, 4000);
+                MainWindow.ShowToast($"{ASILang.Get("ThemeSwitched_RestartAppToApplyChanges").Replace("#THEME_NAME#", $"{themeLabel}", StringComparison.InvariantCulture)}", BackgroundColor.SUCCESS, 4000);
         }
 
         private void cb_AppTheme_Checked(object sender, RoutedEventArgs e) => SwitchAppTheme(true, _initialized);

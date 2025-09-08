@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ASA_Save_Inspector.Pages"
+    xmlns:asi="using:ASA_Save_Inspector"
     xmlns:styling="using:ASA_Save_Inspector.Styling"
     xmlns:primitives="using:CommunityToolkit.WinUI.UI.Controls.Primitives"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -113,11 +114,11 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="PlayerPawns" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Pawns'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_PlayerPawns, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
-            <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right">Map name: X</TextBlock>
-            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right">Save datetime: Y</TextBlock>
-            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right">In-game datetime: Z</TextBlock>
+            <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>: <Run x:Name="run_MapName" Text="{x:Bind local:PlayerPawnsPage.MapName, Mode=OneWay}"/></TextBlock>
+            <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:PlayerPawnsPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
+            <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('InGameDatetime'), Mode=OneWay}"/>: <Run x:Name="run_InGameDatetime" Text="{x:Bind local:PlayerPawnsPage.InGameDatetime, Mode=OneWay}"/></TextBlock>
         </StackPanel>
         <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
             <Grid.ColumnDefinitions>
@@ -132,31 +133,31 @@
             </Grid.RowDefinitions>
             <StackPanel x:Name="sp_EditFilters" Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock FontSize="14" VerticalAlignment="Center">Filters:</TextBlock>
-                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add filter" Width="85" Height="32" Click="btn_AddFilter_Click"/>
-                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit filters" Width="90" Height="32" Click="btn_EditFilters_Click"/>
-                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_FiltersPresets_Click"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Filters'), Mode=OneWay}"/>:</TextBlock>
+                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddFilter'), Mode=OneWay}" Height="32" Click="btn_AddFilter_Click"/>
+                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditFilters'), Mode=OneWay}" Height="32" Click="btn_EditFilters_Click"/>
+                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_FiltersPresets_Click"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_EditFiltersGroup" Grid.Row="1" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock FontSize="14" VerticalAlignment="Center">Filters groups:</TextBlock>
-                    <Button x:Name="btn_AddFiltersGroup" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Add to group" Width="110" Height="32" Click="btn_AddFiltersGroup_Click"/>
-                    <Button x:Name="btn_EditFiltersGroup" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Edit group" Width="95" Height="32" Click="btn_EditFiltersGroup_Click"/>
-                    <Button x:Name="btn_FiltersGroupPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_GroupPresets_Click"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('FiltersGroups'), Mode=OneWay}"/>:</TextBlock>
+                    <Button x:Name="btn_AddFiltersGroup" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddToGroup'), Mode=OneWay}" Height="32" Click="btn_AddFiltersGroup_Click"/>
+                    <Button x:Name="btn_EditFiltersGroup" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditGroup'), Mode=OneWay}" Height="32" Click="btn_EditFiltersGroup_Click"/>
+                    <Button x:Name="btn_FiltersGroupPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_GroupPresets_Click"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_EditColumns" Grid.Row="0" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock FontSize="14" VerticalAlignment="Center">Columns:</TextBlock>
-                    <Button x:Name="btn_ChangeColumns" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Modify" Width="70" Height="32" Click="btn_ChangeColumns_Click"/>
-                    <Button x:Name="btn_ColumnsPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="Presets" Width="70" Height="32" Click="btn_ColumnsPresets_Click"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Columns'), Mode=OneWay}"/>:</TextBlock>
+                    <Button x:Name="btn_ChangeColumns" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Modify'), Mode=OneWay}" Height="32" Click="btn_ChangeColumns_Click"/>
+                    <Button x:Name="btn_ColumnsPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_ColumnsPresets_Click"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_CurrentSort" Grid.Row="1" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,5,0,0">
-                <TextBlock x:Name="tb_NbLinesSelected" FontSize="14">Nb lines selected: 0</TextBlock>
-                <TextBlock x:Name="tb_PrimarySort" FontSize="14" Visibility="Collapsed">Primary sort: None</TextBlock>
-                <TextBlock x:Name="tb_SecondarySort" FontSize="14" Visibility="Collapsed">Secondary sort: None</TextBlock>
+                <TextBlock x:Name="tb_NbLinesSelected" FontSize="14"><Run Text="{x:Bind asi:ASILang.Get('NbLinesSelected'), Mode=OneWay}"/>: <Run x:Name="run_NbLinesSelected" Text="0"/></TextBlock>
+                <TextBlock x:Name="tb_PrimarySort" FontSize="14" Visibility="Collapsed"><Run Text="{x:Bind asi:ASILang.Get('PrimarySort'), Mode=OneWay}"/>: <Run x:Name="run_PrimarySort" Text="None"/></TextBlock>
+                <TextBlock x:Name="tb_SecondarySort" FontSize="14" Visibility="Collapsed"><Run Text="{x:Bind asi:ASILang.Get('SecondarySort'), Mode=OneWay}"/>: <Run x:Name="run_SecondarySort" Text="None"/></TextBlock>
             </StackPanel>
         </Grid>
         <controls:DataGrid x:Name="dg_PlayerPawns"
@@ -191,13 +192,13 @@
                 </Style>
                 <MenuFlyout x:Key="RowMenu">
                     <MenuFlyout.Items>
-                        <MenuFlyoutItem Text="Copy current pawn ID to clipboard" Click="mfi_contextMenuGetID_Click" />
-                        <MenuFlyoutItem Text="Copy current pawn JSON to clipboard" Click="mfi_contextMenuGetJson_Click" />
-                        <MenuFlyoutItem x:Name="mfi_contextMenuGetCoords" Text="Copy current pawn UE coords to clipboard" Click="mfi_contextMenuGetCoords_Click" />
-                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToPlayerData" Text="Go to associated player data" Click="mfi_contextMenuGoToPlayerData_Click" />
-                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToInventoryItems" Text="Go to inventory items" Click="mfi_contextMenuGoToInventoryItems_Click" Visibility="Collapsed" />
+                        <MenuFlyoutItem Text="{x:Bind asi:ASILang.Get('CopyIdToClipboard'), Mode=OneWay}" Click="mfi_contextMenuGetID_Click" />
+                        <MenuFlyoutItem Text="{x:Bind asi:ASILang.Get('CopyJsonToClipboard'), Mode=OneWay}" Click="mfi_contextMenuGetJson_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetCoords" Text="{x:Bind asi:ASILang.Get('CopyUECoordsToClipboard'), Mode=OneWay}" Click="mfi_contextMenuGetCoords_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToPlayerData" Text="{x:Bind asi:ASILang.Get('GoToPlayerData'), Mode=OneWay}" Click="mfi_contextMenuGoToPlayerData_Click" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGoToInventoryItems" Text="{x:Bind asi:ASILang.Get('GoToInventoryItems'), Mode=OneWay}" Click="mfi_contextMenuGoToInventoryItems_Click" Visibility="Collapsed" />
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="mfi_contextMenuGetAllJson" Text="Copy selected pawns JSON to clipboard" Click="mfi_contextMenuGetAllJson_Click" Visibility="Collapsed" />
+                        <MenuFlyoutItem x:Name="mfi_contextMenuGetAllJson" Text="{x:Bind asi:ASILang.Get('CopySelectedLinesJsonToClipboard'), Mode=OneWay}" Click="mfi_contextMenuGetAllJson_Click" Visibility="Collapsed" />
                     </MenuFlyout.Items>
                 </MenuFlyout>
             </controls:DataGrid.Resources>
@@ -215,23 +216,23 @@
                         BorderThickness="2" CornerRadius="4" Margin="20" 
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="Include variables with more than 1000 values (not recommended)." IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="{x:Bind asi:ASILang.Get('IncludeVariablesWithMoreThanNValues'), Mode=OneWay}" IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Operator:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_PlayerPawnFilterOperator" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock x:Name="tb_PlayerPawnFilterOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFilterOperator" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorAnd" Text="AND" Click="mfi_FilterOperatorAnd_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorOr" Text="OR" Click="mfi_FilterOperatorOr_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorAnd" Text="{x:Bind asi:ASILang.Get('OperatorAND'), Mode=OneWay}" Click="mfi_FilterOperatorAnd_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorOr" Text="{x:Bind asi:ASILang.Get('OperatorOR'), Mode=OneWay}" Click="mfi_FilterOperatorOr_Click"/>
                                     </MenuFlyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter by:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterBy'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_PlayerPawnFilterName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock x:Name="tb_PlayerPawnFilterName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFilterName" Placement="BottomEdgeAlignedLeft">
                                     </MenuFlyout>
@@ -239,26 +240,26 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter type:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterType'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_PlayerPawnFilterType" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock x:Name="tb_PlayerPawnFilterType" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFilterType" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FilterByExactMatch" Text="Exact match" Click="mfi_FilterByExactMatch_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByStartingWith" Text="Starting with" Click="mfi_FilterByStartingWith_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByEndingWith" Text="Ending with" Click="mfi_FilterByEndingWith_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByContaining" Text="Containing" Click="mfi_FilterByContaining_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByNotContaining" Text="Not containing" Click="mfi_FilterByNotContaining_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByLowerThan" Text="Lower than" Click="mfi_FilterByLowerThan_Click"></MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByGreaterThan" Text="Greater than" Click="mfi_FilterByGreaterThan_Click"></MenuFlyoutItem>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByExactMatch" Text="{x:Bind asi:ASILang.Get('FilterType_ExactMatch'), Mode=OneWay}" Click="mfi_FilterByExactMatch_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByStartingWith" Text="{x:Bind asi:ASILang.Get('FilterType_StartingWith'), Mode=OneWay}" Click="mfi_FilterByStartingWith_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByEndingWith" Text="{x:Bind asi:ASILang.Get('FilterType_EndingWith'), Mode=OneWay}" Click="mfi_FilterByEndingWith_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByContaining" Text="{x:Bind asi:ASILang.Get('FilterType_Containing'), Mode=OneWay}" Click="mfi_FilterByContaining_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByNotContaining" Text="{x:Bind asi:ASILang.Get('FilterType_NotContaining'), Mode=OneWay}" Click="mfi_FilterByNotContaining_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByLowerThan" Text="{x:Bind asi:ASILang.Get('FilterType_LowerThan'), Mode=OneWay}" Click="mfi_FilterByLowerThan_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FilterByGreaterThan" Text="{x:Bind asi:ASILang.Get('FilterType_GreaterThan'), Mode=OneWay}" Click="mfi_FilterByGreaterThan_Click"/>
                                     </MenuFlyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel x:Name="sp_FilterByExactMatch" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter value:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120"  HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFilterValue" Placement="BottomEdgeAlignedLeft">
                                     </MenuFlyout>
@@ -266,7 +267,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel x:Name="sp_FilterByExactMatchSelection" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,10,0,0" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Selected values:" TextWrapping="Wrap"/>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SelectedValues'), Mode=OneWay}"/>:</TextBlock>
                             <Border x:Name="b_playerpawnFilterValues" Visibility="Collapsed" BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" BorderThickness="1" Margin="0,5,0,0">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Width="480" MaxHeight="85">
                                     <TextBlock x:Name="tb_playerpawnFilterValues" FontSize="14" VerticalAlignment="Center" Text="" MaxWidth="480" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
@@ -274,12 +275,12 @@
                             </Border>
                         </StackPanel>
                         <StackPanel x:Name="sp_FilterByOther" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filter value:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_FilterByOther" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,5,0,0" Text="" TextChanged="tb_FilterByOther_TextChanged"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToPlayerPawnFilters" Content="Add" Width="90" Click="btn_AddToPlayerPawnFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="Cancel" Width="90" Click="btn_ClosePlayerPawnFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                            <Button x:Name="btn_AddToPlayerPawnFilters" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToPlayerPawnFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_ClosePlayerPawnFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -299,8 +300,8 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Remove all filters" Width="170" Click="btn_RemoveAllPlayerPawnFilters_Click" FontSize="18" />
-                            <Button Content="Close" Width="80" Click="btn_CloseEditPlayerPawnFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
+                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFilters'), Mode=OneWay}" Click="btn_RemoveAllPlayerPawnFilters_Click" FontSize="18" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditPlayerPawnFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -320,7 +321,7 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Close" Width="80" Click="btn_CloseModifyColumnsPopup_Click" FontSize="18" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseModifyColumnsPopup_Click" FontSize="18" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -334,27 +335,27 @@
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current filters into preset:" TextWrapping="Wrap"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SaveFiltersIntoPreset'), Mode=OneWay}"/>:</TextBlock>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentFilters" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentFilters" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                             <DropDownButton.Flyout>
                                 <MenuFlyout x:Name="mf_ExistingFiltersPresets" Placement="BottomEdgeAlignedLeft">
-                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset" Text="Default preset" Click="mfi_DefaultFiltersPreset_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset" Text="{x:Bind asi:ASILang.Get('DefaultPreset'), Mode=OneWay}" Click="mfi_DefaultFiltersPreset_Click"/>
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadFiltersPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveFiltersPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadFiltersPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveFiltersPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Close" Width="80" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -368,27 +369,27 @@
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current columns into preset:" TextWrapping="Wrap"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SaveColumnsIntoPreset'), Mode=OneWay}"/>:</TextBlock>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_ColumnsPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_ColumnsPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentColumns" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentColumns" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_ExistingColumnsPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <TextBlock x:Name="tb_ExistingColumnsPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                             <DropDownButton.Flyout>
                                 <MenuFlyout x:Name="mf_ExistingColumnsPresets" Placement="BottomEdgeAlignedLeft">
-                                    <MenuFlyoutItem x:Name="mfi_DefaultColumnsPreset" Text="Default preset" Click="mfi_DefaultColumnsPreset_Click"/>
+                                    <MenuFlyoutItem x:Name="mfi_DefaultColumnsPreset" Text="{x:Bind asi:ASILang.Get('DefaultPreset'), Mode=OneWay}" Click="mfi_DefaultColumnsPreset_Click"/>
                                 </MenuFlyout>
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadColumnsPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveColumnsPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Close" Width="80" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -403,21 +404,21 @@
                 VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Operator:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_PlayerPawnFiltersGroupOperator" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock x:Name="tb_PlayerPawnFiltersGroupOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFiltersGroupOperator" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorAnd" Text="AND" Click="mfi_FiltersGroupOperatorAnd_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorOr" Text="OR" Click="mfi_FiltersGroupOperatorOr_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorAnd" Text="{x:Bind asi:ASILang.Get('OperatorAND'), Mode=OneWay}" Click="mfi_FiltersGroupOperatorAnd_Click"/>
+                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorOr" Text="{x:Bind asi:ASILang.Get('OperatorOR'), Mode=OneWay}" Click="mfi_FiltersGroupOperatorOr_Click"/>
                                     </MenuFlyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100">Filters preset:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FiltersPreset'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_PlayerPawnFiltersGroupName" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                <TextBlock x:Name="tb_PlayerPawnFiltersGroupName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout x:Name="mf_PlayerPawnFiltersGroupNames" Placement="BottomEdgeAlignedLeft">
                                     </MenuFlyout>
@@ -425,8 +426,8 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToPlayerPawnFiltersGroup" Content="Add" Width="90" Click="btn_AddToPlayerPawnFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="Cancel" Width="90" Click="btn_ClosePlayerPawnFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                            <Button x:Name="btn_AddToPlayerPawnFiltersGroup" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToPlayerPawnFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_ClosePlayerPawnFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -446,8 +447,8 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Remove all filters presets from group" Width="290" Click="btn_RemoveAllPlayerPawnFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
-                            <Button Content="Close" Width="80" Click="btn_CloseEditPlayerPawnFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
+                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFiltersPresetsFromGroup'), Mode=OneWay}" Click="btn_RemoveAllPlayerPawnFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditPlayerPawnFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -461,15 +462,15 @@
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Save current group into preset:" TextWrapping="Wrap"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SaveGroupIntoPreset'), Mode=OneWay}"/>:</TextBlock>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="Preset name:" TextWrapping="Wrap"/>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_GroupPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_GroupPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentGroup" Content="Save" IsEnabled="False" Width="80" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentGroup" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_ExistingGroupPreset" FontSize="14" Text="Click here..." HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                            <TextBlock x:Name="tb_ExistingGroupPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                             <DropDownButton.Flyout>
                                 <MenuFlyout x:Name="mf_ExistingGroupPresets" Placement="BottomEdgeAlignedLeft">
 
@@ -477,11 +478,11 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadGroupPreset" Content="Load" IsEnabled="False" Width="80" Click="btn_LoadGroupPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveGroupPreset" Content="Remove" IsEnabled="False" Width="80" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadGroupPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadGroupPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveGroupPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="Close" Width="80" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

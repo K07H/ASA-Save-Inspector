@@ -30,7 +30,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 500;
+        private const int MAX_PROPERTY_VALUES = 1000;
 
         #endregion
 
@@ -53,37 +53,38 @@ namespace ASA_Save_Inspector.Pages
 
         private static List<KeyValuePair<FilterOperator, JsonFiltersPreset>> _group = new List<KeyValuePair<FilterOperator, JsonFiltersPreset>>();
 
-        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset()
-        {
-            Name = "Default preset",
-            Columns = new List<string>()
-        };
+        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset() { Name = "Default preset", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_OilVeins = new JsonFiltersPreset() { Name = "Oil Veins", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_OilVeins = new JsonFiltersPreset() { Name = ASILang.Get("OilVeins"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_WaterVeins = new JsonFiltersPreset() { Name = "Water Veins", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_WaterVeins = new JsonFiltersPreset() { Name = ASILang.Get("WaterVeins"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_GasVeins = new JsonFiltersPreset() { Name = "Gas Veins", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_GasVeins = new JsonFiltersPreset() { Name = ASILang.Get("GasVeins"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_PowerNodes = new JsonFiltersPreset() { Name = "Power Nodes", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_PowerNodes = new JsonFiltersPreset() { Name = ASILang.Get("PowerNodes"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_BeaverDams = new JsonFiltersPreset() { Name = "Beaver Dams", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_BeaverDams = new JsonFiltersPreset() { Name = ASILang.Get("BeaverDams"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_ZPlants = new JsonFiltersPreset() { Name = "Z Plants", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_ZPlants = new JsonFiltersPreset() { Name = ASILang.Get("ZPlants"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_WyvernNests = new JsonFiltersPreset() { Name = "Wyvern Nests", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_WyvernNests = new JsonFiltersPreset() { Name = ASILang.Get("WyvernNests"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_GigantoraptorNests = new JsonFiltersPreset() { Name = "Gigantoraptor Nests", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_GigantoraptorNests = new JsonFiltersPreset() { Name = ASILang.Get("GigantoraptorNests"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_ArtifactCrates = new JsonFiltersPreset() { Name = "Artifact Crates", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_ArtifactCrates = new JsonFiltersPreset() { Name = ASILang.Get("ArtifactCrates"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_HordeCrates = new JsonFiltersPreset() { Name = "Horde Crates", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_HordeCrates = new JsonFiltersPreset() { Name = ASILang.Get("HordeCrates"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = "Tribute Terminals", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = ASILang.Get("TributeTerminals"), Filters = new List<JsonFilter>() };
 
-        private static JsonFiltersPreset _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = "City Terminals", Filters = new List<JsonFilter>() };
+        private static JsonFiltersPreset _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = ASILang.Get("CityTerminals"), Filters = new List<JsonFilter>() };
+
+        // Map name, save file datetime and in-game datetime.
+        public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
+        public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
+        public static string InGameDatetime => Utils.GetInGameDateTimeStr();
 
         #endregion
 
@@ -175,6 +176,7 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
+            InitDefaultFilters();
             // Add default filters.
             AddDefaultFilters();
 
@@ -188,7 +190,7 @@ namespace ASA_Save_Inspector.Pages
             }
 
             // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = $"Include variables with more than {MAX_PROPERTY_VALUES} values (not recommended).";
+            cb_IncludePropertiesWithManyValues.Content = ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
 
             // Grab structures data from settings if not set.
             if (_lastDisplayed == null)
@@ -200,11 +202,6 @@ namespace ASA_Save_Inspector.Pages
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
             });
-
-            // Set save file datetime et in-game datetime.
-            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
-            tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
-            tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
 
         private void DestroyPage()
@@ -254,8 +251,27 @@ namespace ASA_Save_Inspector.Pages
         public void OnPropertyChanged([CallerMemberName] string name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 #pragma warning restore CS8625
 
-        private void RefreshPrimarySortLabel() => tb_PrimarySort.Text = $"Primary sort: {_currentSort} {(AscendingSort ? "Ascending" : "Descending")}";
-        private void RefreshSecondarySortLabel() => tb_SecondarySort.Text = $"Secondary sort: {_secondaryCurrentSort} {(SecondaryAscendingSort ? "Ascending" : "Descending")}";
+        private void RefreshPrimarySortLabel() => run_PrimarySort.Text = $"{_currentSort} {(AscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
+        private void RefreshSecondarySortLabel() => run_SecondarySort.Text = $"{_secondaryCurrentSort} {(SecondaryAscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
+
+        public void InitDefaultFilters()
+        {
+            _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
+
+            _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_OilVeins = new JsonFiltersPreset() { Name = ASILang.Get("OilVeins"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_WaterVeins = new JsonFiltersPreset() { Name = ASILang.Get("WaterVeins"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_GasVeins = new JsonFiltersPreset() { Name = ASILang.Get("GasVeins"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_PowerNodes = new JsonFiltersPreset() { Name = ASILang.Get("PowerNodes"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_BeaverDams = new JsonFiltersPreset() { Name = ASILang.Get("BeaverDams"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_ZPlants = new JsonFiltersPreset() { Name = ASILang.Get("ZPlants"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_WyvernNests = new JsonFiltersPreset() { Name = ASILang.Get("WyvernNests"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_GigantoraptorNests = new JsonFiltersPreset() { Name = ASILang.Get("GigantoraptorNests"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_ArtifactCrates = new JsonFiltersPreset() { Name = ASILang.Get("ArtifactCrates"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_HordeCrates = new JsonFiltersPreset() { Name = ASILang.Get("HordeCrates"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = ASILang.Get("TributeTerminals"), Filters = new List<JsonFilter>() };
+            _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = ASILang.Get("CityTerminals"), Filters = new List<JsonFilter>() };
+        }
 
         public bool GoToStructure(int? structureID)
         {
@@ -275,7 +291,6 @@ namespace ASA_Save_Inspector.Pages
 
         private bool LastStructureDoubleTap(MapPoint? point)
         {
-            Debug.WriteLine($"Structure \"{(point?.Name ?? string.Empty)}\" has been double clicked.");
             if (point == null || _lastDisplayedVM == null || string.IsNullOrWhiteSpace(point.ID) || point.ID == "00")
                 return false;
 
@@ -318,7 +333,7 @@ namespace ASA_Save_Inspector.Pages
                     {
                         ID = structureIDStr,
                         Name = d.ShortName,
-                        Description = $"{(structureIDStr != "0" ? $"ID: {structureIDStr}\n" : string.Empty)}{(d.TargetingTeam != null && d.TargetingTeam.HasValue ? $"Tribe ID: {d.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture)}" : string.Empty)}",
+                        Description = $"{(structureIDStr != "0" ? $"{ASILang.Get("ID")}: {structureIDStr}\n" : string.Empty)}{(d.TargetingTeam != null && d.TargetingTeam.HasValue ? $"{ASILang.Get("TribeID")}: {d.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture)}" : string.Empty)}",
                         X = minimapCoords.Value,
                         Y = minimapCoords.Key
                     };
@@ -438,7 +453,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void dg_Structures_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Structures.SelectedItems != null ? dg_Structures.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
+            run_NbLinesSelected.Text = (dg_Structures.SelectedItems != null ? dg_Structures.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0");
 
             Visibility goToInventoryItemsVisibility = Visibility.Collapsed;
             DataGridRow? row = Utils.FindParent<DataGridRow>((UIElement)e.OriginalSource);
@@ -455,7 +470,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void dg_Structures_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Structures.SelectedItems != null ? dg_Structures.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
+            run_NbLinesSelected.Text = (dg_Structures.SelectedItems != null ? dg_Structures.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0");
         }
 
         private void dg_Structures_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
@@ -690,7 +705,7 @@ namespace ASA_Save_Inspector.Pages
                 _selectedStructureFilter_Name = propName;
                 tb_StructureFilterName.Text = StructureUtils.GetCleanNameFromPropertyName(_selectedStructureFilter_Name);
 
-                tb_StructureFilterType.Text = "Click here...";
+                tb_StructureFilterType.Text = ASILang.Get("ClickHere");
                 sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
                 sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
                 sp_FilterByOther.Visibility = Visibility.Collapsed;
@@ -750,9 +765,9 @@ namespace ASA_Save_Inspector.Pages
         {
             mf_StructureFilterName.Items.Clear();
             _selectedStructureFilter_Name = null;
-            tb_StructureFilterOperator.Text = "Click here...";
-            tb_StructureFilterName.Text = "Click here...";
-            tb_StructureFilterType.Text = "Click here...";
+            tb_StructureFilterOperator.Text = ASILang.Get("ClickHere");
+            tb_StructureFilterName.Text = ASILang.Get("ClickHere");
+            tb_StructureFilterType.Text = ASILang.Get("ClickHere");
 
             ResetFiltersValues();
         }
@@ -1074,7 +1089,7 @@ namespace ASA_Save_Inspector.Pages
                     {
                         FontSize = 16.0d,
                         TextWrapping = TextWrapping.Wrap,
-                        Text = "Filter by",
+                        Text = ASILang.Get("FilterBy"),
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -1105,28 +1120,28 @@ namespace ASA_Save_Inspector.Pages
                         VerticalScrollBarVisibility = ScrollBarVisibility.Auto
                     };
 
-                    string tbFilterTypeStr = "with value";
+                    string tbFilterTypeStr = ASILang.Get("WithValue");
                     string tbValueStr = "";
                     if (filter.Value.FilterType == FilterType.EXACT_MATCH)
                     {
-                        tbFilterTypeStr = "with value(s)";
+                        tbFilterTypeStr = ASILang.Get("WithValues");
                         if (filter.Value.FilterValues != null)
                             tbValueStr = string.Join(", ", filter.Value.FilterValues);
                     }
                     else
                     {
                         if (filter.Value.FilterType == FilterType.STARTING_WITH)
-                            tbFilterTypeStr = "starting with";
+                            tbFilterTypeStr = ASILang.Get("FilterType_StartingWith").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.ENDING_WITH)
-                            tbFilterTypeStr = "ending with";
+                            tbFilterTypeStr = ASILang.Get("FilterType_EndingWith").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.CONTAINING)
-                            tbFilterTypeStr = "containing";
-                        else if (filter.Value.FilterType == FilterType.NOT_CONTAINING)
-                            tbFilterTypeStr = "not containing";
+                            tbFilterTypeStr = ASILang.Get("FilterType_Containing").ToLowerInvariant();
+                        else if (filter.Value.FilterType == FilterType.CONTAINING)
+                            tbFilterTypeStr = ASILang.Get("FilterType_NotContaining").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.LOWER_THAN)
-                            tbFilterTypeStr = "lower than";
+                            tbFilterTypeStr = ASILang.Get("FilterType_LowerThan").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.GREATER_THAN)
-                            tbFilterTypeStr = "greater than";
+                            tbFilterTypeStr = ASILang.Get("FilterType_GreaterThan").ToLowerInvariant();
                         if (filter.Value.FilterValue != null)
                             tbValueStr = filter.Value.FilterValue;
                     }
@@ -1149,8 +1164,8 @@ namespace ASA_Save_Inspector.Pages
                     };
                     Button btn = new Button()
                     {
-                        Width = 90.0d,
-                        Content = "Remove",
+                        Width = 120.0d,
+                        Content = ASILang.Get("Remove"),
                         FontSize = 18.0d,
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Right
@@ -1198,13 +1213,13 @@ namespace ASA_Save_Inspector.Pages
         private void btn_AddToStructureFilters_Click(object sender, RoutedEventArgs e)
         {
             FilterOperator filterOperator = FilterOperator.NONE;
-            if (string.Compare("AND", tb_StructureFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+            if (string.Compare(ASILang.Get("OperatorAND"), tb_StructureFilterOperator.Text, StringComparison.InvariantCulture) == 0)
                 filterOperator = FilterOperator.AND;
-            else if (string.Compare("OR", tb_StructureFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(ASILang.Get("OperatorOR"), tb_StructureFilterOperator.Text, StringComparison.InvariantCulture) == 0)
                 filterOperator = FilterOperator.OR;
             if (filterOperator == FilterOperator.NONE)
             {
-                MainWindow.ShowToast("Missing operator, cannot add filter.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("MissingOperatorCannotAddFilter"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1216,7 +1231,7 @@ namespace ASA_Save_Inspector.Pages
                     PropertyInfo? prop = Utils.GetProperty(typeof(Structure), _selectedStructureFilter_Name);
                     if (prop != null)
                     {
-                        if (tb_StructureFilterType.Text == "Exact match" &&
+                        if (tb_StructureFilterType.Text == ASILang.Get("FilterType_ExactMatch") &&
                             _selectedStructureFilter_Values != null &&
                             _selectedStructureFilter_Values.Count > 0)
                         {
@@ -1230,17 +1245,17 @@ namespace ASA_Save_Inspector.Pages
                         else if (tb_FilterByOther.Text != null)
                         {
                             FilterType ft = FilterType.NONE;
-                            if (tb_StructureFilterType.Text == "Starting with")
+                            if (tb_StructureFilterType.Text == ASILang.Get("FilterType_StartingWith"))
                                 ft = FilterType.STARTING_WITH;
-                            else if (tb_StructureFilterType.Text == "Ending with")
+                            else if (tb_StructureFilterType.Text == ASILang.Get("FilterType_EndingWith"))
                                 ft = FilterType.ENDING_WITH;
-                            else if (tb_StructureFilterType.Text == "Containing")
+                            else if (tb_StructureFilterType.Text == ASILang.Get("FilterType_Containing"))
                                 ft = FilterType.CONTAINING;
-                            else if (tb_StructureFilterType.Text == "Not containing")
+                            else if (tb_StructureFilterType.Text == ASILang.Get("FilterType_NotContaining"))
                                 ft = FilterType.NOT_CONTAINING;
-                            else if (tb_StructureFilterType.Text == "Lower than")
+                            else if (tb_StructureFilterType.Text == ASILang.Get("FilterType_LowerThan"))
                                 ft = FilterType.LOWER_THAN;
-                            else if (tb_StructureFilterType.Text == "Greater than")
+                            else if (tb_StructureFilterType.Text == ASILang.Get("FilterType_GreaterThan"))
                                 ft = FilterType.GREATER_THAN;
                             if (ft != FilterType.NONE)
                             {
@@ -1342,7 +1357,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void mfi_FilterByExactMatch_Click(object sender, RoutedEventArgs e)
         {
-            tb_StructureFilterType.Text = "Exact match";
+            tb_StructureFilterType.Text = ASILang.Get("FilterType_ExactMatch");
 
             ResetFiltersValues();
 
@@ -1383,35 +1398,35 @@ namespace ASA_Save_Inspector.Pages
             sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
         }
 
-        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Starting with");
+        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_StartingWith"));
 
-        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Ending with");
+        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_EndingWith"));
 
-        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Containing");
+        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_Containing"));
 
-        private void mfi_FilterByNotContaining_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Not containing");
+        private void mfi_FilterByNotContaining_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_NotContaining"));
 
-        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Lower than");
+        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_LowerThan"));
 
-        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e) => SetStructureFilterType("Greater than");
+        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e) => SetStructureFilterType(ASILang.Get("FilterType_GreaterThan"));
 
         private void tb_FilterByOther_TextChanged(object sender, TextChangedEventArgs e)
         {
             btn_AddToStructureFilters.IsEnabled = (tb_FilterByOther.Text.Length > 0);
         }
 
-        private void mfi_FilterOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_StructureFilterOperator.Text = "AND";
+        private void mfi_FilterOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_StructureFilterOperator.Text = ASILang.Get("OperatorAND");
 
-        private void mfi_FilterOperatorOr_Click(object sender, RoutedEventArgs e) => tb_StructureFilterOperator.Text = "OR";
+        private void mfi_FilterOperatorOr_Click(object sender, RoutedEventArgs e) => tb_StructureFilterOperator.Text = ASILang.Get("OperatorOR");
 
         [RelayCommand]
         private void FiltersPresetGroupSelect(JsonFiltersPreset? preset)
         {
-            tb_StructureFiltersGroupName.Text = "Click here...";
+            tb_StructureFiltersGroupName.Text = ASILang.Get("ClickHere");
             btn_AddToStructureFiltersGroup.IsEnabled = false;
             if (preset == null || string.IsNullOrEmpty(preset.Name))
             {
-                MainWindow.ShowToast("Incorrect filters preset selected (preset is empty or has bad name).", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("IncorrectFiltersPreset"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1505,7 +1520,7 @@ namespace ASA_Save_Inspector.Pages
                         {
                             FontSize = 16.0d,
                             TextWrapping = TextWrapping.Wrap,
-                            Text = $"{(filter.Key == FilterOperator.OR ? "OR" : "AND")} filters preset",
+                            Text = $"{(filter.Key == FilterOperator.OR ? ASILang.Get("ORFiltersPreset") : ASILang.Get("ANDFiltersPreset"))}",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Left,
                             Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -1521,8 +1536,8 @@ namespace ASA_Save_Inspector.Pages
                         };
                         Button btn = new Button()
                         {
-                            Width = 90.0d,
-                            Content = "Remove",
+                            Width = 120.0d,
+                            Content = ASILang.Get("Remove"),
                             FontSize = 18.0d,
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Right
@@ -1549,20 +1564,20 @@ namespace ASA_Save_Inspector.Pages
             EditStructureFiltersGroupPopup.IsOpen = true;
         }
 
-        private void mfi_FiltersGroupOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_StructureFiltersGroupOperator.Text = "AND";
+        private void mfi_FiltersGroupOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_StructureFiltersGroupOperator.Text = ASILang.Get("OperatorAND");
 
-        private void mfi_FiltersGroupOperatorOr_Click(object sender, RoutedEventArgs e) => tb_StructureFiltersGroupOperator.Text = "OR";
+        private void mfi_FiltersGroupOperatorOr_Click(object sender, RoutedEventArgs e) => tb_StructureFiltersGroupOperator.Text = ASILang.Get("OperatorOR");
 
         private void btn_AddToStructureFiltersGroup_Click(object sender, RoutedEventArgs e)
         {
             FilterOperator groupOperator = FilterOperator.NONE;
-            if (string.Compare(tb_StructureFiltersGroupOperator.Text, "AND", StringComparison.InvariantCulture) == 0)
+            if (string.Compare(tb_StructureFiltersGroupOperator.Text, ASILang.Get("OperatorAND"), StringComparison.InvariantCulture) == 0)
                 groupOperator = FilterOperator.AND;
-            else if (string.Compare(tb_StructureFiltersGroupOperator.Text, "OR", StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(tb_StructureFiltersGroupOperator.Text, ASILang.Get("OperatorOR"), StringComparison.InvariantCulture) == 0)
                 groupOperator = FilterOperator.OR;
             if (groupOperator == FilterOperator.NONE)
             {
-                MainWindow.ShowToast("Missing operator, cannot add group.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("MissingOperatorCannotAddGroup"), BackgroundColor.WARNING);
                 AddStructureFiltersGroupPopup.IsOpen = false;
                 return;
             }
@@ -1574,13 +1589,13 @@ namespace ASA_Save_Inspector.Pages
                         string.Compare(preset.Name, tb_StructureFiltersGroupName.Text, StringComparison.InvariantCulture) == 0)
                     {
                         _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(groupOperator, preset));
-                        MainWindow.ShowToast($"Filters preset \"{tb_StructureFiltersGroupName.Text}\" added to group.", BackgroundColor.SUCCESS);
+                        MainWindow.ShowToast($"{(ASILang.Get("FiltersPresetAddedToGroup").Replace("#PRESET_NAME#", $"\"{tb_StructureFiltersGroupName.Text}\"", StringComparison.InvariantCulture))}", BackgroundColor.SUCCESS);
                         ApplyFiltersAndSort();
                         AddStructureFiltersGroupPopup.IsOpen = false;
                         return;
                     }
 
-            MainWindow.ShowToast($"Failed to find filters preset \"{tb_StructureFiltersGroupName.Text}\".", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{(ASILang.Get("CannotFindFiltersPreset").Replace("#PRESET_NAME#", $"\"{tb_StructureFiltersGroupName.Text}\"", StringComparison.InvariantCulture))}", BackgroundColor.WARNING);
             AddStructureFiltersGroupPopup.IsOpen = false;
         }
 
@@ -1742,7 +1757,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1761,7 +1776,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1770,7 +1785,7 @@ namespace ASA_Save_Inspector.Pages
         private void FiltersPresetSelect(JsonFiltersPreset? preset)
         {
             _selectedFiltersPreset = null;
-            tb_ExistingFiltersPreset.Text = "Click here...";
+            tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1780,37 +1795,37 @@ namespace ASA_Save_Inspector.Pages
             _selectedFiltersPreset = preset;
             tb_ExistingFiltersPreset.Text = preset.Name;
             btn_LoadFiltersPreset.IsEnabled = true;
-            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Oil Veins", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Water Veins", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Gas Veins", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Power Nodes", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Beaver Dams", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Z Plants", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Wyvern Nests", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Gigantoraptor Nests", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Artifact Crates", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Horde Crates", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "Tribute Terminals", StringComparison.InvariantCulture) != 0 &&
-                string.Compare(preset.Name, "City Terminals", StringComparison.InvariantCulture) != 0);
+            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, ASILang.Get("DefaultPreset"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("OilVeins"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("WaterVeins"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("GasVeins"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("PowerNodes"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("BeaverDams"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("ZPlants"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("WyvernNests"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("GigantoraptorNests"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("ArtifactCrates"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("HordeCrates"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("TributeTerminals"), StringComparison.InvariantCulture) != 0 &&
+                string.Compare(preset.Name, ASILang.Get("CityTerminals"), StringComparison.InvariantCulture) != 0);
         }
 
         private void FillFiltersPresetsDropDown()
         {
             mf_ExistingFiltersPresets.Items.Clear();
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Default preset", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Oil Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_OilVeins });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Water Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WaterVeins });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Gas Veins", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GasVeins });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Power Nodes", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_PowerNodes });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Beaver Dams", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_BeaverDams });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Z Plants", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ZPlants });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Wyvern Nests", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WyvernNests });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Gigantoraptor Nests", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GigantoraptorNests });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Artifact Crates", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ArtifactCrates });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Horde Crates", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_HordeCrates });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "Tribute Terminals", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_TributeTerminals });
-            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = "City Terminals", Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_CityTerminals });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("DefaultPreset"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("OilVeins"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_OilVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("WaterVeins"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WaterVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("GasVeins"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GasVeins });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("PowerNodes"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_PowerNodes });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("BeaverDams"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_BeaverDams });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("ZPlants"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ZPlants });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("WyvernNests"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_WyvernNests });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("GigantoraptorNests"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_GigantoraptorNests });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("ArtifactCrates"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_ArtifactCrates });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("HordeCrates"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_HordeCrates });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("TributeTerminals"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_TributeTerminals });
+            mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem { Text = ASILang.Get("CityTerminals"), Command = FiltersPresetSelectCommand, CommandParameter = _defaultFiltersPreset_CityTerminals });
             foreach (var preset in _filtersPresets)
                 if (preset != null && !string.IsNullOrEmpty(preset.Name) && preset.Filters != null && preset.Filters.Count > 0)
                 {
@@ -1830,7 +1845,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_FiltersPresetName.Text = "";
             _selectedFiltersPreset = null;
-            tb_ExistingFiltersPreset.Text = "Click here...";
+            tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1850,19 +1865,32 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_FiltersPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
-            if (string.Compare(tb_FiltersPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
+
+            if (string.Compare(tb_FiltersPresetName.Text, ASILang.Get("DefaultPreset"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("OilVeins"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("WaterVeins"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("GasVeins"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("PowerNodes"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("BeaverDams"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("ZPlants"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("WyvernNests"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("GigantoraptorNests"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("ArtifactCrates"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("HordeCrates"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("TributeTerminals"), StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                string.Compare(tb_FiltersPresetName.Text, ASILang.Get("CityTerminals"), StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _filtersPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_FiltersPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -1879,7 +1907,7 @@ namespace ASA_Save_Inspector.Pages
                 if (filters.Count > 0)
                 {
                     _selectedFiltersPreset = null;
-                    tb_ExistingFiltersPreset.Text = "Click here...";
+                    tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1897,11 +1925,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveFiltersPresets();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentFilters_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1910,7 +1938,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedFiltersPreset == null || _selectedFiltersPreset.Filters == null || _selectedFiltersPreset.Filters.Count <= 0)
             {
-                MainWindow.ShowToast("Filters preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("FiltersPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1923,7 +1951,7 @@ namespace ASA_Save_Inspector.Pages
                     if (prop != null)
                         _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, filter.Filter));
                 }
-            MainWindow.ShowToast("Filters preset has been loaded.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("FiltersPresetLoaded"), BackgroundColor.SUCCESS);
             ApplyFiltersAndSort();
         }
 
@@ -1931,7 +1959,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedFiltersPreset == null || string.IsNullOrEmpty(_selectedFiltersPreset.Name))
             {
-                MainWindow.ShowToast("No filters preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoFiltersPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1948,7 +1976,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedFiltersPreset = null;
-                    tb_ExistingFiltersPreset.Text = "Click here...";
+                    tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1957,7 +1985,7 @@ namespace ASA_Save_Inspector.Pages
                     FillFiltersPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedFiltersPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedFiltersPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -1974,31 +2002,31 @@ namespace ASA_Save_Inspector.Pages
             _selectedFiltersPreset = preset;
         }
 
-        private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Default preset", _defaultFiltersPreset);
+        private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("DefaultPreset"), _defaultFiltersPreset);
 
-        private void mfi_DefaultFiltersPreset_OilVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Oil Veins", _defaultFiltersPreset_OilVeins);
+        private void mfi_DefaultFiltersPreset_OilVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("OilVeins"), _defaultFiltersPreset_OilVeins);
         
-        private void mfi_DefaultFiltersPreset_WaterVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Water Veins", _defaultFiltersPreset_WaterVeins);
+        private void mfi_DefaultFiltersPreset_WaterVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("WaterVeins"), _defaultFiltersPreset_WaterVeins);
         
-        private void mfi_DefaultFiltersPreset_GasVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Gas Veins", _defaultFiltersPreset_GasVeins);
+        private void mfi_DefaultFiltersPreset_GasVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("GasVeins"), _defaultFiltersPreset_GasVeins);
         
-        private void mfi_DefaultFiltersPreset_PowerNodes_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Power Nodes", _defaultFiltersPreset_PowerNodes);
+        private void mfi_DefaultFiltersPreset_PowerNodes_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("PowerNodes"), _defaultFiltersPreset_PowerNodes);
 
-        private void mfi_DefaultFiltersPreset_BeaverDams_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Beaver Dams", _defaultFiltersPreset_BeaverDams);
+        private void mfi_DefaultFiltersPreset_BeaverDams_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("BeaverDams"), _defaultFiltersPreset_BeaverDams);
         
-        private void mfi_DefaultFiltersPreset_ZPlants_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Z Plants", _defaultFiltersPreset_ZPlants);
+        private void mfi_DefaultFiltersPreset_ZPlants_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("ZPlants"), _defaultFiltersPreset_ZPlants);
 
-        private void mfi_DefaultFiltersPreset_WyvernNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Wyvern Nests", _defaultFiltersPreset_WyvernNests);
+        private void mfi_DefaultFiltersPreset_WyvernNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("WyvernNests"), _defaultFiltersPreset_WyvernNests);
 
-        private void mfi_DefaultFiltersPreset_GigantoraptorNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Gigantoraptor Nests", _defaultFiltersPreset_GigantoraptorNests);
+        private void mfi_DefaultFiltersPreset_GigantoraptorNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("GigantoraptorNests"), _defaultFiltersPreset_GigantoraptorNests);
 
-        private void mfi_DefaultFiltersPreset_ArtifactCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Artifact Crates", _defaultFiltersPreset_ArtifactCrates);
+        private void mfi_DefaultFiltersPreset_ArtifactCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("ArtifactCrates"), _defaultFiltersPreset_ArtifactCrates);
         
-        private void mfi_DefaultFiltersPreset_HordeCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Horde Crates", _defaultFiltersPreset_HordeCrates);
+        private void mfi_DefaultFiltersPreset_HordeCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("HordeCrates"), _defaultFiltersPreset_HordeCrates);
 
-        private void mfi_DefaultFiltersPreset_TributeTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("Tribute Terminals", _defaultFiltersPreset_TributeTerminals);
+        private void mfi_DefaultFiltersPreset_TributeTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("TributeTerminals"), _defaultFiltersPreset_TributeTerminals);
         
-        private void mfi_DefaultFiltersPreset_CityTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected("City Terminals", _defaultFiltersPreset_CityTerminals);
+        private void mfi_DefaultFiltersPreset_CityTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("CityTerminals"), _defaultFiltersPreset_CityTerminals);
 
         #endregion
 
@@ -2024,7 +2052,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2043,7 +2071,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2052,7 +2080,7 @@ namespace ASA_Save_Inspector.Pages
         private void ColumnsPresetSelect(JsonColumnsPreset? preset)
         {
             _selectedColumnsPreset = null;
-            tb_ExistingColumnsPreset.Text = "Click here...";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2062,7 +2090,7 @@ namespace ASA_Save_Inspector.Pages
             _selectedColumnsPreset = preset;
             tb_ExistingColumnsPreset.Text = preset.Name;
             btn_LoadColumnsPreset.IsEnabled = true;
-            btn_RemoveColumnsPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0);
+            btn_RemoveColumnsPreset.IsEnabled = (string.Compare(preset.Name, ASILang.Get("DefaultPreset"), StringComparison.InvariantCulture) != 0);
         }
 
         private void FillColumnsPresetsDropDown()
@@ -2070,7 +2098,7 @@ namespace ASA_Save_Inspector.Pages
             mf_ExistingColumnsPresets.Items.Clear();
             mf_ExistingColumnsPresets.Items.Add(new MenuFlyoutItem
             {
-                Text = "Default preset",
+                Text = ASILang.Get("DefaultPreset"),
                 Command = ColumnsPresetSelectCommand,
                 CommandParameter = _defaultColumnsPreset
             });
@@ -2093,7 +2121,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_ColumnsPresetName.Text = "";
             _selectedColumnsPreset = null;
-            tb_ExistingColumnsPreset.Text = "Click here...";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2116,19 +2144,19 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_ColumnsPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
-            if (string.Compare(tb_ColumnsPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(tb_ColumnsPresetName.Text, ASILang.Get("DefaultPreset"), StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _columnsPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_ColumnsPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -2141,7 +2169,7 @@ namespace ASA_Save_Inspector.Pages
                 if (columns.Count > 0)
                 {
                     _selectedColumnsPreset = null;
-                    tb_ExistingColumnsPreset.Text = "Click here...";
+                    tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2159,11 +2187,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveColumnsPresets();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentColumns_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2172,7 +2200,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedColumnsPreset == null || _selectedColumnsPreset.Columns == null || _selectedColumnsPreset.Columns.Count <= 0)
             {
-                MainWindow.ShowToast("Columns preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ColumnsPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2180,14 +2208,14 @@ namespace ASA_Save_Inspector.Pages
             foreach (var column in _selectedColumnsPreset.Columns)
                 if (column != null)
                     _selectedColumns.Add(column);
-            MainWindow.ShowToast("Preset has been loaded.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("ColumnsPresetLoaded"), BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedColumnsPreset == null || string.IsNullOrEmpty(_selectedColumnsPreset.Name))
             {
-                MainWindow.ShowToast("No columns preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoColumnsPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2204,7 +2232,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedColumnsPreset = null;
-                    tb_ExistingColumnsPreset.Text = "Click here...";
+                    tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2213,7 +2241,7 @@ namespace ASA_Save_Inspector.Pages
                     FillColumnsPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedColumnsPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedColumnsPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -2224,7 +2252,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void mfi_DefaultColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
-            tb_ExistingColumnsPreset.Text = "Default preset";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("DefaultPreset");
             btn_LoadColumnsPreset.IsEnabled = true;
             btn_RemoveColumnsPreset.IsEnabled = false;
             _selectedColumnsPreset = _defaultColumnsPreset;
@@ -2254,7 +2282,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2268,7 +2296,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2277,7 +2305,7 @@ namespace ASA_Save_Inspector.Pages
         private void GroupPresetSelect(JsonGroupPreset? preset)
         {
             _selectedGroupPreset = null;
-            tb_ExistingGroupPreset.Text = "Click here...";
+            tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
             btn_LoadGroupPreset.IsEnabled = false;
             btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2309,14 +2337,14 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_GroupPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _groupPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_GroupPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -2329,7 +2357,7 @@ namespace ASA_Save_Inspector.Pages
                 if (group.Count > 0)
                 {
                     _selectedGroupPreset = null;
-                    tb_ExistingGroupPreset.Text = "Click here...";
+                    tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadGroupPreset.IsEnabled = false;
                     btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2348,11 +2376,11 @@ namespace ASA_Save_Inspector.Pages
                 }
                 SaveGroupPresets();
                 FillGroupPresetsDropDown();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentGroup_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2364,7 +2392,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_GroupPresetName.Text = "";
             _selectedGroupPreset = null;
-            tb_ExistingGroupPreset.Text = "Click here...";
+            tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
             btn_LoadGroupPreset.IsEnabled = false;
             btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2379,7 +2407,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedGroupPreset == null || _selectedGroupPreset.FiltersPresets == null || _selectedGroupPreset.FiltersPresets.Count <= 0)
             {
-                MainWindow.ShowToast("Group preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("GroupPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2393,7 +2421,7 @@ namespace ASA_Save_Inspector.Pages
                             _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(filter.Key, filtersPreset));
                             break;
                         }
-            MainWindow.ShowToast("Group preset has been loaded.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("GroupPresetLoaded"), BackgroundColor.SUCCESS);
             ApplyFiltersAndSort();
         }
 
@@ -2401,7 +2429,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedGroupPreset == null || string.IsNullOrEmpty(_selectedGroupPreset.Name))
             {
-                MainWindow.ShowToast("No group preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoGroupPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2418,7 +2446,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedGroupPreset = null;
-                    tb_ExistingGroupPreset.Text = "Click here...";
+                    tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadGroupPreset.IsEnabled = false;
                     btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2427,7 +2455,7 @@ namespace ASA_Save_Inspector.Pages
                     FillGroupPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedGroupPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedGroupPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -2463,7 +2491,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetID_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2486,7 +2514,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetCoords_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2518,19 +2546,19 @@ namespace ASA_Save_Inspector.Pages
                                     ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                                     {
                                         if (!ItemsPage._page.FilterByInventoryUUID(structure.InventoryUUID))
-                                            MainWindow.ShowToast("Filter by inventory UUID failed.", BackgroundColor.WARNING);
+                                            MainWindow.ShowToast(ASILang.Get("FilteringByInventoryIDFailed"), BackgroundColor.WARNING);
                                     });
                             });
                         }
 #pragma warning restore CS1998
                     }
                     else
-                        MainWindow.ShowToast("Inventory UUID not found.", BackgroundColor.WARNING);
+                        MainWindow.ShowToast(ASILang.Get("InventoryIDNotFound"), BackgroundColor.WARNING);
                 }
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToInventoryItems_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2552,7 +2580,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2585,7 +2613,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }

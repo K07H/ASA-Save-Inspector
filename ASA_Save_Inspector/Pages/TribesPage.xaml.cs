@@ -29,7 +29,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 500;
+        private const int MAX_PROPERTY_VALUES = 1000;
 
         #endregion
 
@@ -52,17 +52,14 @@ namespace ASA_Save_Inspector.Pages
 
         private static List<KeyValuePair<FilterOperator, JsonFiltersPreset>> _group = new List<KeyValuePair<FilterOperator, JsonFiltersPreset>>();
 
-        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset()
-        {
-            Name = "Default preset",
-            Filters = new List<JsonFilter>()
-        };
+        private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
 
-        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset()
-        {
-            Name = "Default preset",
-            Columns = new List<string>()
-        };
+        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
+
+        // Map name, save file datetime and in-game datetime.
+        public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
+        public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
+        public static string InGameDatetime => Utils.GetInGameDateTimeStr();
 
         #endregion
 
@@ -154,6 +151,7 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
+            InitDefaultFilters();
             // Add default filters.
             AddDefaultFilters();
 
@@ -167,7 +165,7 @@ namespace ASA_Save_Inspector.Pages
             }
 
             // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = $"Include variables with more than {MAX_PROPERTY_VALUES} values (not recommended).";
+            cb_IncludePropertiesWithManyValues.Content = ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
 
             // Grab tribes data from settings if not set.
             if (_lastDisplayed == null)
@@ -179,11 +177,6 @@ namespace ASA_Save_Inspector.Pages
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
             });
-
-            // Set save file datetime et in-game datetime.
-            tb_CurrentMapName.Text = $"Map name: {(SettingsPage._currentlyLoadedMapName ?? "Unknown")}";
-            tb_SaveGameDateTime.Text = $"Save datetime: {Utils.GetSaveFileDateTimeStr()}";
-            tb_InGameDateTime.Text = $"In-game datetime: {Utils.GetInGameDateTimeStr()}";
         }
 
         private void DestroyPage()
@@ -233,8 +226,15 @@ namespace ASA_Save_Inspector.Pages
         public void OnPropertyChanged([CallerMemberName] string name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 #pragma warning restore CS8625
 
-        private void RefreshPrimarySortLabel() => tb_PrimarySort.Text = $"Primary sort: {_currentSort} {(AscendingSort ? "Ascending" : "Descending")}";
-        private void RefreshSecondarySortLabel() => tb_SecondarySort.Text = $"Secondary sort: {_secondaryCurrentSort} {(SecondaryAscendingSort ? "Ascending" : "Descending")}";
+        private void RefreshPrimarySortLabel() => run_PrimarySort.Text = $"{_currentSort} {(AscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
+        private void RefreshSecondarySortLabel() => run_SecondarySort.Text = $"{_secondaryCurrentSort} {(SecondaryAscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
+
+        private void InitDefaultFilters()
+        {
+            _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
+
+            _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
+        }
 
         public bool GoToTribe(int? tribeID)
         {
@@ -393,13 +393,13 @@ namespace ASA_Save_Inspector.Pages
 
         private void dg_Tribes_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
-            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Tribes.SelectedItems != null ? dg_Tribes.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
+            run_NbLinesSelected.Text = (dg_Tribes.SelectedItems != null ? dg_Tribes.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0");
             mfi_contextMenuGetAllJson.Visibility = (dg_Tribes.SelectedItems != null && dg_Tribes.SelectedItems.Count > 1 ? Visibility.Visible : Visibility.Collapsed);
         }
 
         private void dg_Tribes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            tb_NbLinesSelected.Text = $"Nb lines selected: {(dg_Tribes.SelectedItems != null ? dg_Tribes.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0")}";
+            run_NbLinesSelected.Text = (dg_Tribes.SelectedItems != null ? dg_Tribes.SelectedItems.Count.ToString(CultureInfo.InvariantCulture) : "0");
         }
 
         private void dg_Tribes_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
@@ -524,24 +524,6 @@ namespace ASA_Save_Inspector.Pages
             if (!_addedDefaultFilters)
             {
                 _addedDefaultFilters = true;
-                /*
-                if (_filters != null)
-                {
-                    // Add "IsTamed => True".
-                    PropertyInfo? isTamedProp = typeof(Tribe).GetProperty("IsTamed", BindingFlags.Instance | BindingFlags.Public);
-                    if (isTamedProp != null)
-                    {
-                        Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.EXACT_MATCH, FilterValues = new List<string>() { "True" } };
-                        _filters.Add(new KeyValuePair<PropertyInfo, Filter>(isTamedProp, defaultFilter));
-                        if (_defaultFiltersPreset?.Filters != null)
-                            _defaultFiltersPreset.Filters.Add(new JsonFilter()
-                            {
-                                PropertyName = isTamedProp.Name,
-                                Filter = defaultFilter
-                            });
-                    }
-                }
-                */
             }
         }
 
@@ -573,7 +555,7 @@ namespace ASA_Save_Inspector.Pages
                 _selectedTribeFilter_Name = propName;
                 tb_TribeFilterName.Text = TribeUtils.GetCleanNameFromPropertyName(_selectedTribeFilter_Name);
 
-                tb_TribeFilterType.Text = "Click here...";
+                tb_TribeFilterType.Text = ASILang.Get("ClickHere");
                 sp_FilterByExactMatch.Visibility = Visibility.Collapsed;
                 sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
                 sp_FilterByOther.Visibility = Visibility.Collapsed;
@@ -633,9 +615,9 @@ namespace ASA_Save_Inspector.Pages
         {
             mf_TribeFilterName.Items.Clear();
             _selectedTribeFilter_Name = null;
-            tb_TribeFilterOperator.Text = "Click here...";
-            tb_TribeFilterName.Text = "Click here...";
-            tb_TribeFilterType.Text = "Click here...";
+            tb_TribeFilterOperator.Text = ASILang.Get("ClickHere");
+            tb_TribeFilterName.Text = ASILang.Get("ClickHere");
+            tb_TribeFilterType.Text = ASILang.Get("ClickHere");
 
             ResetFiltersValues();
         }
@@ -957,7 +939,7 @@ namespace ASA_Save_Inspector.Pages
                     {
                         FontSize = 16.0d,
                         TextWrapping = TextWrapping.Wrap,
-                        Text = "Filter by",
+                        Text = ASILang.Get("FilterBy"),
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -988,28 +970,28 @@ namespace ASA_Save_Inspector.Pages
                         VerticalScrollBarVisibility = ScrollBarVisibility.Auto
                     };
 
-                    string tbFilterTypeStr = "with value";
+                    string tbFilterTypeStr = ASILang.Get("WithValue");
                     string tbValueStr = "";
                     if (filter.Value.FilterType == FilterType.EXACT_MATCH)
                     {
-                        tbFilterTypeStr = "with value(s)";
+                        tbFilterTypeStr = ASILang.Get("WithValues");
                         if (filter.Value.FilterValues != null)
                             tbValueStr = string.Join(", ", filter.Value.FilterValues);
                     }
                     else
                     {
                         if (filter.Value.FilterType == FilterType.STARTING_WITH)
-                            tbFilterTypeStr = "starting with";
+                            tbFilterTypeStr = ASILang.Get("FilterType_StartingWith").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.ENDING_WITH)
-                            tbFilterTypeStr = "ending with";
+                            tbFilterTypeStr = ASILang.Get("FilterType_EndingWith").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.CONTAINING)
-                            tbFilterTypeStr = "containing";
-                        else if (filter.Value.FilterType == FilterType.NOT_CONTAINING)
-                            tbFilterTypeStr = "not containing";
+                            tbFilterTypeStr = ASILang.Get("FilterType_Containing").ToLowerInvariant();
+                        else if (filter.Value.FilterType == FilterType.CONTAINING)
+                            tbFilterTypeStr = ASILang.Get("FilterType_NotContaining").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.LOWER_THAN)
-                            tbFilterTypeStr = "lower than";
+                            tbFilterTypeStr = ASILang.Get("FilterType_LowerThan").ToLowerInvariant();
                         else if (filter.Value.FilterType == FilterType.GREATER_THAN)
-                            tbFilterTypeStr = "greater than";
+                            tbFilterTypeStr = ASILang.Get("FilterType_GreaterThan").ToLowerInvariant();
                         if (filter.Value.FilterValue != null)
                             tbValueStr = filter.Value.FilterValue;
                     }
@@ -1032,8 +1014,8 @@ namespace ASA_Save_Inspector.Pages
                     };
                     Button btn = new Button()
                     {
-                        Width = 90.0d,
-                        Content = "Remove",
+                        Width = 120.0d,
+                        Content = ASILang.Get("Remove"),
                         FontSize = 18.0d,
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Right
@@ -1081,13 +1063,13 @@ namespace ASA_Save_Inspector.Pages
         private void btn_AddToTribeFilters_Click(object sender, RoutedEventArgs e)
         {
             FilterOperator filterOperator = FilterOperator.NONE;
-            if (string.Compare("AND", tb_TribeFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+            if (string.Compare(ASILang.Get("OperatorAND"), tb_TribeFilterOperator.Text, StringComparison.InvariantCulture) == 0)
                 filterOperator = FilterOperator.AND;
-            else if (string.Compare("OR", tb_TribeFilterOperator.Text, StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(ASILang.Get("OperatorOR"), tb_TribeFilterOperator.Text, StringComparison.InvariantCulture) == 0)
                 filterOperator = FilterOperator.OR;
             if (filterOperator == FilterOperator.NONE)
             {
-                MainWindow.ShowToast("Missing operator, cannot add filter.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("MissingOperatorCannotAddFilter"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1099,7 +1081,7 @@ namespace ASA_Save_Inspector.Pages
                     PropertyInfo? prop = Utils.GetProperty(typeof(Tribe), _selectedTribeFilter_Name);
                     if (prop != null)
                     {
-                        if (tb_TribeFilterType.Text == "Exact match" &&
+                        if (tb_TribeFilterType.Text == ASILang.Get("FilterType_ExactMatch") &&
                             _selectedTribeFilter_Values != null &&
                             _selectedTribeFilter_Values.Count > 0)
                         {
@@ -1109,29 +1091,21 @@ namespace ASA_Save_Inspector.Pages
                                 FilterType = FilterType.EXACT_MATCH,
                                 FilterValues = new List<string>(_selectedTribeFilter_Values)
                             }));
-                            /*
-                            _filters[prop] = new Filter()
-                            {
-                                FilterOperator = filterOperator,
-                                FilterType = FilterType.EXACT_MATCH,
-                                FilterValues = new List<string>(_selectedTribeFilter_Values)
-                            };
-                            */
                         }
                         else if (tb_FilterByOther.Text != null)
                         {
                             FilterType ft = FilterType.NONE;
-                            if (tb_TribeFilterType.Text == "Starting with")
+                            if (tb_TribeFilterType.Text == ASILang.Get("FilterType_StartingWith"))
                                 ft = FilterType.STARTING_WITH;
-                            else if (tb_TribeFilterType.Text == "Ending with")
+                            else if (tb_TribeFilterType.Text == ASILang.Get("FilterType_EndingWith"))
                                 ft = FilterType.ENDING_WITH;
-                            else if (tb_TribeFilterType.Text == "Containing")
+                            else if (tb_TribeFilterType.Text == ASILang.Get("FilterType_Containing"))
                                 ft = FilterType.CONTAINING;
-                            else if (tb_TribeFilterType.Text == "Not containing")
+                            else if (tb_TribeFilterType.Text == ASILang.Get("FilterType_NotContaining"))
                                 ft = FilterType.NOT_CONTAINING;
-                            else if (tb_TribeFilterType.Text == "Lower than")
+                            else if (tb_TribeFilterType.Text == ASILang.Get("FilterType_LowerThan"))
                                 ft = FilterType.LOWER_THAN;
-                            else if (tb_TribeFilterType.Text == "Greater than")
+                            else if (tb_TribeFilterType.Text == ASILang.Get("FilterType_GreaterThan"))
                                 ft = FilterType.GREATER_THAN;
                             if (ft != FilterType.NONE)
                             {
@@ -1141,14 +1115,6 @@ namespace ASA_Save_Inspector.Pages
                                     FilterType = ft,
                                     FilterValue = tb_FilterByOther.Text
                                 }));
-                                /*
-                                _filters[prop] = new Filter()
-                                {
-                                    FilterOperator = filterOperator,
-                                    FilterType = ft,
-                                    FilterValue = tb_FilterByOther.Text
-                                };
-                                */
                             }
                         }
                         ApplyFiltersAndSort();
@@ -1241,7 +1207,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void mfi_FilterByExactMatch_Click(object sender, RoutedEventArgs e)
         {
-            tb_TribeFilterType.Text = "Exact match";
+            tb_TribeFilterType.Text = ASILang.Get("FilterType_ExactMatch");
 
             ResetFiltersValues();
 
@@ -1282,35 +1248,35 @@ namespace ASA_Save_Inspector.Pages
             sp_FilterByExactMatchSelection.Visibility = Visibility.Collapsed;
         }
 
-        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Starting with");
+        private void mfi_FilterByStartingWith_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_StartingWith"));
 
-        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Ending with");
+        private void mfi_FilterByEndingWith_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_EndingWith"));
 
-        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Containing");
+        private void mfi_FilterByContaining_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_Containing"));
 
-        private void mfi_FilterByNotContaining_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Not containing");
+        private void mfi_FilterByNotContaining_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_NotContaining"));
 
-        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Lower than");
+        private void mfi_FilterByLowerThan_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_LowerThan"));
 
-        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e) => SetTribeFilterType("Greater than");
+        private void mfi_FilterByGreaterThan_Click(object sender, RoutedEventArgs e) => SetTribeFilterType(ASILang.Get("FilterType_GreaterThan"));
 
         private void tb_FilterByOther_TextChanged(object sender, TextChangedEventArgs e)
         {
             btn_AddToTribeFilters.IsEnabled = (tb_FilterByOther.Text.Length > 0);
         }
 
-        private void mfi_FilterOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_TribeFilterOperator.Text = "AND";
+        private void mfi_FilterOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_TribeFilterOperator.Text = ASILang.Get("OperatorAND");
 
-        private void mfi_FilterOperatorOr_Click(object sender, RoutedEventArgs e) => tb_TribeFilterOperator.Text = "OR";
+        private void mfi_FilterOperatorOr_Click(object sender, RoutedEventArgs e) => tb_TribeFilterOperator.Text = ASILang.Get("OperatorOR");
 
         [RelayCommand]
         private void FiltersPresetGroupSelect(JsonFiltersPreset? preset)
         {
-            tb_TribeFiltersGroupName.Text = "Click here...";
+            tb_TribeFiltersGroupName.Text = ASILang.Get("ClickHere");
             btn_AddToTribeFiltersGroup.IsEnabled = false;
             if (preset == null || string.IsNullOrEmpty(preset.Name))
             {
-                MainWindow.ShowToast("Incorrect filters preset selected (preset is empty or has bad name).", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("IncorrectFiltersPreset"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1404,7 +1370,7 @@ namespace ASA_Save_Inspector.Pages
                         {
                             FontSize = 16.0d,
                             TextWrapping = TextWrapping.Wrap,
-                            Text = $"{(filter.Key == FilterOperator.OR ? "OR" : "AND")} filters preset",
+                            Text = $"{(filter.Key == FilterOperator.OR ? ASILang.Get("ORFiltersPreset") : ASILang.Get("ANDFiltersPreset"))}",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Left,
                             Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -1420,8 +1386,8 @@ namespace ASA_Save_Inspector.Pages
                         };
                         Button btn = new Button()
                         {
-                            Width = 90.0d,
-                            Content = "Remove",
+                            Width = 120.0d,
+                            Content = ASILang.Get("Remove"),
                             FontSize = 18.0d,
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Right
@@ -1448,20 +1414,20 @@ namespace ASA_Save_Inspector.Pages
             EditTribeFiltersGroupPopup.IsOpen = true;
         }
 
-        private void mfi_FiltersGroupOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_TribeFiltersGroupOperator.Text = "AND";
+        private void mfi_FiltersGroupOperatorAnd_Click(object sender, RoutedEventArgs e) => tb_TribeFiltersGroupOperator.Text = ASILang.Get("OperatorAND");
 
-        private void mfi_FiltersGroupOperatorOr_Click(object sender, RoutedEventArgs e) => tb_TribeFiltersGroupOperator.Text = "OR";
+        private void mfi_FiltersGroupOperatorOr_Click(object sender, RoutedEventArgs e) => tb_TribeFiltersGroupOperator.Text = ASILang.Get("OperatorOR");
 
         private void btn_AddToTribeFiltersGroup_Click(object sender, RoutedEventArgs e)
         {
             FilterOperator groupOperator = FilterOperator.NONE;
-            if (string.Compare(tb_TribeFiltersGroupOperator.Text, "AND", StringComparison.InvariantCulture) == 0)
+            if (string.Compare(tb_TribeFiltersGroupOperator.Text, ASILang.Get("OperatorAND"), StringComparison.InvariantCulture) == 0)
                 groupOperator = FilterOperator.AND;
-            else if (string.Compare(tb_TribeFiltersGroupOperator.Text, "OR", StringComparison.InvariantCulture) == 0)
+            else if (string.Compare(tb_TribeFiltersGroupOperator.Text, ASILang.Get("OperatorOR"), StringComparison.InvariantCulture) == 0)
                 groupOperator = FilterOperator.OR;
             if (groupOperator == FilterOperator.NONE)
             {
-                MainWindow.ShowToast("Missing operator, cannot add group.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("MissingOperatorCannotAddGroup"), BackgroundColor.WARNING);
                 AddTribeFiltersGroupPopup.IsOpen = false;
                 return;
             }
@@ -1473,13 +1439,13 @@ namespace ASA_Save_Inspector.Pages
                         string.Compare(preset.Name, tb_TribeFiltersGroupName.Text, StringComparison.InvariantCulture) == 0)
                     {
                         _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(groupOperator, preset));
-                        MainWindow.ShowToast($"Filters preset \"{tb_TribeFiltersGroupName.Text}\" added to group.", BackgroundColor.SUCCESS);
+                        MainWindow.ShowToast($"{(ASILang.Get("FiltersPresetAddedToGroup").Replace("#PRESET_NAME#", $"\"{tb_TribeFiltersGroupName.Text}\"", StringComparison.InvariantCulture))}", BackgroundColor.SUCCESS);
                         ApplyFiltersAndSort();
                         AddTribeFiltersGroupPopup.IsOpen = false;
                         return;
                     }
 
-            MainWindow.ShowToast($"Failed to find filters preset \"{tb_TribeFiltersGroupName.Text}\".", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{(ASILang.Get("CannotFindFiltersPreset").Replace("#PRESET_NAME#", $"\"{tb_TribeFiltersGroupName.Text}\"", StringComparison.InvariantCulture))}", BackgroundColor.WARNING);
             AddTribeFiltersGroupPopup.IsOpen = false;
         }
 
@@ -1641,7 +1607,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1660,7 +1626,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1669,7 +1635,7 @@ namespace ASA_Save_Inspector.Pages
         private void FiltersPresetSelect(JsonFiltersPreset? preset)
         {
             _selectedFiltersPreset = null;
-            tb_ExistingFiltersPreset.Text = "Click here...";
+            tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1679,7 +1645,7 @@ namespace ASA_Save_Inspector.Pages
             _selectedFiltersPreset = preset;
             tb_ExistingFiltersPreset.Text = preset.Name;
             btn_LoadFiltersPreset.IsEnabled = true;
-            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0);
+            btn_RemoveFiltersPreset.IsEnabled = (string.Compare(preset.Name, ASILang.Get("DefaultPreset"), StringComparison.InvariantCulture) != 0);
         }
 
         private void FillFiltersPresetsDropDown()
@@ -1687,7 +1653,7 @@ namespace ASA_Save_Inspector.Pages
             mf_ExistingFiltersPresets.Items.Clear();
             mf_ExistingFiltersPresets.Items.Add(new MenuFlyoutItem
             {
-                Text = "Default preset",
+                Text = ASILang.Get("DefaultPreset"),
                 Command = FiltersPresetSelectCommand,
                 CommandParameter = _defaultFiltersPreset
             });
@@ -1710,7 +1676,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_FiltersPresetName.Text = "";
             _selectedFiltersPreset = null;
-            tb_ExistingFiltersPreset.Text = "Click here...";
+            tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
             btn_LoadFiltersPreset.IsEnabled = false;
             btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1730,19 +1696,19 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_FiltersPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
-            if (string.Compare(tb_FiltersPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(tb_FiltersPresetName.Text, ASILang.Get("DefaultPreset"), StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _filtersPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_FiltersPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -1759,7 +1725,7 @@ namespace ASA_Save_Inspector.Pages
                 if (filters.Count > 0)
                 {
                     _selectedFiltersPreset = null;
-                    tb_ExistingFiltersPreset.Text = "Click here...";
+                    tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1777,11 +1743,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveFiltersPresets();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentFilters_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1790,7 +1756,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedFiltersPreset == null || _selectedFiltersPreset.Filters == null || _selectedFiltersPreset.Filters.Count <= 0)
             {
-                MainWindow.ShowToast("Filters preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("FiltersPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1803,15 +1769,15 @@ namespace ASA_Save_Inspector.Pages
                     if (prop != null)
                         _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, filter.Filter));
                 }
-            MainWindow.ShowToast("Filters preset has been loaded.", BackgroundColor.SUCCESS);
             ApplyFiltersAndSort();
+            MainWindow.ShowToast(ASILang.Get("FiltersPresetLoaded"), BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveFiltersPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedFiltersPreset == null || string.IsNullOrEmpty(_selectedFiltersPreset.Name))
             {
-                MainWindow.ShowToast("No filters preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoFiltersPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -1828,7 +1794,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedFiltersPreset = null;
-                    tb_ExistingFiltersPreset.Text = "Click here...";
+                    tb_ExistingFiltersPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadFiltersPreset.IsEnabled = false;
                     btn_RemoveFiltersPreset.IsEnabled = false;
 
@@ -1837,7 +1803,7 @@ namespace ASA_Save_Inspector.Pages
                     FillFiltersPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedFiltersPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedFiltersPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -1848,7 +1814,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e)
         {
-            tb_ExistingFiltersPreset.Text = "Default preset";
+            tb_ExistingFiltersPreset.Text = ASILang.Get("DefaultPreset");
             btn_LoadFiltersPreset.IsEnabled = true;
             btn_RemoveFiltersPreset.IsEnabled = false;
             _selectedFiltersPreset = _defaultFiltersPreset;
@@ -1878,7 +1844,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1897,7 +1863,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1906,7 +1872,7 @@ namespace ASA_Save_Inspector.Pages
         private void ColumnsPresetSelect(JsonColumnsPreset? preset)
         {
             _selectedColumnsPreset = null;
-            tb_ExistingColumnsPreset.Text = "Click here...";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -1916,7 +1882,7 @@ namespace ASA_Save_Inspector.Pages
             _selectedColumnsPreset = preset;
             tb_ExistingColumnsPreset.Text = preset.Name;
             btn_LoadColumnsPreset.IsEnabled = true;
-            btn_RemoveColumnsPreset.IsEnabled = (string.Compare(preset.Name, "Default preset", StringComparison.InvariantCulture) != 0);
+            btn_RemoveColumnsPreset.IsEnabled = (string.Compare(preset.Name, ASILang.Get("DefaultPreset"), StringComparison.InvariantCulture) != 0);
         }
 
         private void FillColumnsPresetsDropDown()
@@ -1924,7 +1890,7 @@ namespace ASA_Save_Inspector.Pages
             mf_ExistingColumnsPresets.Items.Clear();
             mf_ExistingColumnsPresets.Items.Add(new MenuFlyoutItem
             {
-                Text = "Default preset",
+                Text = ASILang.Get("DefaultPreset"),
                 Command = ColumnsPresetSelectCommand,
                 CommandParameter = _defaultColumnsPreset
             });
@@ -1947,7 +1913,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_ColumnsPresetName.Text = "";
             _selectedColumnsPreset = null;
-            tb_ExistingColumnsPreset.Text = "Click here...";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -1970,19 +1936,19 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_ColumnsPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
-            if (string.Compare(tb_ColumnsPresetName.Text, "Default preset", StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(tb_ColumnsPresetName.Text, ASILang.Get("DefaultPreset"), StringComparison.InvariantCultureIgnoreCase) == 0)
             {
-                MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _columnsPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_ColumnsPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -1995,7 +1961,7 @@ namespace ASA_Save_Inspector.Pages
                 if (columns.Count > 0)
                 {
                     _selectedColumnsPreset = null;
-                    tb_ExistingColumnsPreset.Text = "Click here...";
+                    tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2013,11 +1979,11 @@ namespace ASA_Save_Inspector.Pages
                     });
                 }
                 SaveColumnsPresets();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentColumns_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2026,7 +1992,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedColumnsPreset == null || _selectedColumnsPreset.Columns == null || _selectedColumnsPreset.Columns.Count <= 0)
             {
-                MainWindow.ShowToast("Columns preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ColumnsPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2034,14 +2000,14 @@ namespace ASA_Save_Inspector.Pages
             foreach (var column in _selectedColumnsPreset.Columns)
                 if (column != null)
                     _selectedColumns.Add(column);
-            MainWindow.ShowToast("Preset has been loaded.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("ColumnsPresetLoaded"), BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedColumnsPreset == null || string.IsNullOrEmpty(_selectedColumnsPreset.Name))
             {
-                MainWindow.ShowToast("No columns preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoColumnsPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2058,7 +2024,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedColumnsPreset = null;
-                    tb_ExistingColumnsPreset.Text = "Click here...";
+                    tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
 
@@ -2067,7 +2033,7 @@ namespace ASA_Save_Inspector.Pages
                     FillColumnsPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedColumnsPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedColumnsPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -2078,7 +2044,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void mfi_DefaultColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
-            tb_ExistingColumnsPreset.Text = "Default preset";
+            tb_ExistingColumnsPreset.Text = ASILang.Get("DefaultPreset");
             btn_LoadColumnsPreset.IsEnabled = true;
             btn_RemoveColumnsPreset.IsEnabled = false;
             _selectedColumnsPreset = _defaultColumnsPreset;
@@ -2108,7 +2074,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2122,7 +2088,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2131,7 +2097,7 @@ namespace ASA_Save_Inspector.Pages
         private void GroupPresetSelect(JsonGroupPreset? preset)
         {
             _selectedGroupPreset = null;
-            tb_ExistingGroupPreset.Text = "Click here...";
+            tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
             btn_LoadGroupPreset.IsEnabled = false;
             btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2163,14 +2129,14 @@ namespace ASA_Save_Inspector.Pages
         {
             if (string.IsNullOrWhiteSpace(tb_GroupPresetName.Text))
             {
-                MainWindow.ShowToast("A preset needs a name.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("PresetNeedsName"), BackgroundColor.ERROR);
                 return;
             }
 
             foreach (var preset in _groupPresets)
                 if (preset != null && preset.Name != null && string.Compare(preset.Name, tb_GroupPresetName.Text, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
-                    MainWindow.ShowToast("This preset name already exists.", BackgroundColor.ERROR);
+                    MainWindow.ShowToast(ASILang.Get("PresetNameAlreadyExists"), BackgroundColor.ERROR);
                     return;
                 }
 
@@ -2183,7 +2149,7 @@ namespace ASA_Save_Inspector.Pages
                 if (group.Count > 0)
                 {
                     _selectedGroupPreset = null;
-                    tb_ExistingGroupPreset.Text = "Click here...";
+                    tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadGroupPreset.IsEnabled = false;
                     btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2202,11 +2168,11 @@ namespace ASA_Save_Inspector.Pages
                 }
                 SaveGroupPresets();
                 FillGroupPresetsDropDown();
-                MainWindow.ShowToast("Preset saved.", BackgroundColor.SUCCESS);
+                MainWindow.ShowToast(ASILang.Get("PresetSaved"), BackgroundColor.SUCCESS);
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.ERROR);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentGroup_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2218,7 +2184,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_GroupPresetName.Text = "";
             _selectedGroupPreset = null;
-            tb_ExistingGroupPreset.Text = "Click here...";
+            tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
             btn_LoadGroupPreset.IsEnabled = false;
             btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2233,7 +2199,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedGroupPreset == null || _selectedGroupPreset.FiltersPresets == null || _selectedGroupPreset.FiltersPresets.Count <= 0)
             {
-                MainWindow.ShowToast("Group preset is empty.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("GroupPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2247,7 +2213,7 @@ namespace ASA_Save_Inspector.Pages
                             _group.Add(new KeyValuePair<FilterOperator, JsonFiltersPreset>(filter.Key, filtersPreset));
                             break;
                         }
-            MainWindow.ShowToast("Group preset has been loaded.", BackgroundColor.SUCCESS);
+            MainWindow.ShowToast(ASILang.Get("GroupPresetLoaded"), BackgroundColor.SUCCESS);
             ApplyFiltersAndSort();
         }
 
@@ -2255,7 +2221,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_selectedGroupPreset == null || string.IsNullOrEmpty(_selectedGroupPreset.Name))
             {
-                MainWindow.ShowToast("No group preset is currently selected.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("NoGroupPresetSelected"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2272,7 +2238,7 @@ namespace ASA_Save_Inspector.Pages
                 if (toDel >= 0)
                 {
                     _selectedGroupPreset = null;
-                    tb_ExistingGroupPreset.Text = "Click here...";
+                    tb_ExistingGroupPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadGroupPreset.IsEnabled = false;
                     btn_RemoveGroupPreset.IsEnabled = false;
 
@@ -2281,7 +2247,7 @@ namespace ASA_Save_Inspector.Pages
                     FillGroupPresetsDropDown();
                 }
                 else
-                    MainWindow.ShowToast($"Preset \"{_selectedGroupPreset.Name}\" not found.", BackgroundColor.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedGroupPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
         }
 
@@ -2317,7 +2283,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetID_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2340,7 +2306,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2373,7 +2339,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2396,7 +2362,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast("An error happened, see logs for details.", BackgroundColor.WARNING);
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetLogs_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
