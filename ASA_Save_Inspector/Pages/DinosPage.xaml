@@ -218,9 +218,9 @@
                         BorderThickness="2" CornerRadius="4" Margin="20" 
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="{x:Bind asi:ASILang.Get('IncludeVariablesWithMoreThanNValues'), Mode=OneWay}" IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="{x:Bind local:DinosPage.IncludeVariablesWithMoreThanNValues, Mode=OneWay}" IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_DinoFilterOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
@@ -232,7 +232,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterBy'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterBy'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_DinoFilterName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
@@ -242,7 +242,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterType'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterType'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_DinoFilterType" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
@@ -259,7 +259,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel x:Name="sp_FilterByExactMatch" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120"  HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
@@ -277,7 +277,7 @@
                             </Border>
                         </StackPanel>
                         <StackPanel x:Name="sp_FilterByOther" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_FilterByOther" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,5,0,0" Text="" TextChanged="tb_FilterByOther_TextChanged"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
@@ -406,7 +406,7 @@
                 VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_DinoFiltersGroupOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
@@ -418,7 +418,7 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="100"><Run Text="{x:Bind asi:ASILang.Get('FiltersPreset'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FiltersPreset'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_DinoFiltersGroupName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>

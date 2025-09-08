@@ -56,6 +56,8 @@ namespace ASA_Save_Inspector.Pages
 
         private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
+        public static string IncludeVariablesWithMoreThanNValues => ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
+
         // Map name, save file datetime and in-game datetime.
         public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
         public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
@@ -151,9 +153,8 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
-            InitDefaultFilters();
-            // Add default filters.
-            AddDefaultFilters();
+            // Init default presets.
+            InitDefaultPresets();
 
             // Set default selected columns.
             if (!_setDefaultSelectedColumns)
@@ -165,7 +166,7 @@ namespace ASA_Save_Inspector.Pages
             }
 
             // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
+            cb_IncludePropertiesWithManyValues.Content = IncludeVariablesWithMoreThanNValues;
 
             // Grab tribes data from settings if not set.
             if (_lastDisplayed == null)
@@ -229,7 +230,7 @@ namespace ASA_Save_Inspector.Pages
         private void RefreshPrimarySortLabel() => run_PrimarySort.Text = $"{_currentSort} {(AscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
         private void RefreshSecondarySortLabel() => run_SecondarySort.Text = $"{_secondaryCurrentSort} {(SecondaryAscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
 
-        private void InitDefaultFilters()
+        private static void InitDefaultPresets()
         {
             _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
@@ -518,14 +519,6 @@ namespace ASA_Save_Inspector.Pages
         #endregion
 
         #region Filtering
-
-        private static void AddDefaultFilters()
-        {
-            if (!_addedDefaultFilters)
-            {
-                _addedDefaultFilters = true;
-            }
-        }
 
         private void RefreshSelectedTribeFilterValues()
         {
@@ -909,7 +902,7 @@ namespace ASA_Save_Inspector.Pages
             _group.Clear();
             _filters.Clear();
             _addedDefaultFilters = false;
-            AddDefaultFilters();
+            InitDefaultPresets();
         }
 
         private void FillEditTribeFiltersPopup()

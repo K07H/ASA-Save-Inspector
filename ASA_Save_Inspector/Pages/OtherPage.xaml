@@ -56,7 +56,7 @@
                             <StackPanel x:Name="sp_BlueprintClass" Orientation="Vertical" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,10,10,0" Visibility="Collapsed">
                                 <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('BlueprintClassName'), Mode=OneWay}"/>:</TextBlock>
                                 <TextBox x:Name="tb_BlueprintClass" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}" Text="" ToolTipService.ToolTip="{x:Bind asi:ASILang.Get('BlueprintClassNameExample'), Mode=OneWay}" Margin="0,5,0,0" TextChanged="tb_BlueprintClass_TextChanged"/>
-                                <Button x:Name="btn_AddCustomBlueprint" Content="Register custom blueprint" IsEnabled="False" Click="btn_AddCustomBlueprint_Click" FontSize="16" Margin="0,5,0,0"/>
+                                <Button x:Name="btn_AddCustomBlueprint" Content="{x:Bind asi:ASILang.Get('RegisterCustomBlueprint'), Mode=OneWay}" IsEnabled="False" Click="btn_AddCustomBlueprint_Click" FontSize="16" Margin="0,5,0,0"/>
                             </StackPanel>
 
                             <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('CustomBlueprintsRegistered'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>

@@ -81,6 +81,8 @@ namespace ASA_Save_Inspector.Pages
 
         private static JsonFiltersPreset _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = ASILang.Get("CityTerminals"), Filters = new List<JsonFilter>() };
 
+        public static string IncludeVariablesWithMoreThanNValues => ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
+
         // Map name, save file datetime and in-game datetime.
         public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
         public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
@@ -176,9 +178,8 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
-            InitDefaultFilters();
-            // Add default filters.
-            AddDefaultFilters();
+            // Init default presets.
+            InitDefaultPresets();
 
             // Set default selected columns.
             if (!_setDefaultSelectedColumns)
@@ -190,7 +191,7 @@ namespace ASA_Save_Inspector.Pages
             }
 
             // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
+            cb_IncludePropertiesWithManyValues.Content = IncludeVariablesWithMoreThanNValues;
 
             // Grab structures data from settings if not set.
             if (_lastDisplayed == null)
@@ -254,7 +255,7 @@ namespace ASA_Save_Inspector.Pages
         private void RefreshPrimarySortLabel() => run_PrimarySort.Text = $"{_currentSort} {(AscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
         private void RefreshSecondarySortLabel() => run_SecondarySort.Text = $"{_secondaryCurrentSort} {(SecondaryAscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
 
-        public void InitDefaultFilters()
+        private static void InitDefaultPresets()
         {
             _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
@@ -271,6 +272,79 @@ namespace ASA_Save_Inspector.Pages
             _defaultFiltersPreset_HordeCrates = new JsonFiltersPreset() { Name = ASILang.Get("HordeCrates"), Filters = new List<JsonFilter>() };
             _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = ASILang.Get("TributeTerminals"), Filters = new List<JsonFilter>() };
             _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = ASILang.Get("CityTerminals"), Filters = new List<JsonFilter>() };
+
+            // Add "TribeID >= 50000" to default filters preset.
+            PropertyInfo? targetingTeam = typeof(Structure).GetProperty("TargetingTeam", BindingFlags.Instance | BindingFlags.Public);
+            Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.GREATER_THAN, FilterValue = "49999" };
+            if (targetingTeam != null && _defaultFiltersPreset?.Filters != null)
+            {
+                _defaultFiltersPreset.Filters.Add(new JsonFilter()
+                {
+                    PropertyName = targetingTeam.Name,
+                    Filter = defaultFilter
+                });
+            }
+
+            // Add special structures to their respective default filters preset.
+            PropertyInfo? itemArchetype = typeof(Structure).GetProperty("ItemArchetype", BindingFlags.Instance | BindingFlags.Public);
+            if (itemArchetype != null)
+            {
+                // Add "Oil Veins".
+                Filter defaultFilter_OilVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "OilVein" };
+                if (_defaultFiltersPreset_OilVeins?.Filters != null)
+                    _defaultFiltersPreset_OilVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_OilVeins });
+                // Add "Water Veins".
+                Filter defaultFilter_WaterVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WaterVein" };
+                if (_defaultFiltersPreset_WaterVeins?.Filters != null)
+                    _defaultFiltersPreset_WaterVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WaterVeins });
+                // Add "Gas Veins".
+                Filter defaultFilter_GasVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GasVein" };
+                if (_defaultFiltersPreset_GasVeins?.Filters != null)
+                    _defaultFiltersPreset_GasVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GasVeins });
+                // Add "Power Nodes".
+                Filter defaultFilter_PowerNodes = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "PrimalStructurePowerNode" };
+                if (_defaultFiltersPreset_PowerNodes?.Filters != null)
+                    _defaultFiltersPreset_PowerNodes.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_PowerNodes });
+                // Add "Beaver Dams".
+                Filter defaultFilter_BeaverDams = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "BeaverDam" };
+                if (_defaultFiltersPreset_BeaverDams?.Filters != null)
+                    _defaultFiltersPreset_BeaverDams.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_BeaverDams });
+                // Add "Z Plants".
+                Filter defaultFilter_ZPlants = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "Structure_PlantSpeciesZ_Wild" };
+                if (_defaultFiltersPreset_ZPlants?.Filters != null)
+                    _defaultFiltersPreset_ZPlants.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ZPlants });
+                // Add "Wyvern Nests".
+                Filter defaultFilter_WyvernNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WyvernNest" };
+                if (_defaultFiltersPreset_WyvernNests?.Filters != null)
+                    _defaultFiltersPreset_WyvernNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WyvernNests });
+                // Add "Gigantoraptor Nests".
+                Filter defaultFilter_GigantoraptorNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GigantoraptorNest" };
+                if (_defaultFiltersPreset_GigantoraptorNests?.Filters != null)
+                    _defaultFiltersPreset_GigantoraptorNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GigantoraptorNests });
+                // Add "Artifact Crates".
+                Filter defaultFilter_ArtifactCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "ArtifactCrate" };
+                if (_defaultFiltersPreset_ArtifactCrates?.Filters != null)
+                    _defaultFiltersPreset_ArtifactCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ArtifactCrates });
+                // Add "Horde Crates".
+                Filter defaultFilter_HordeCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "HordeCrates" };
+                if (_defaultFiltersPreset_HordeCrates?.Filters != null)
+                    _defaultFiltersPreset_HordeCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_HordeCrates });
+                // Add "Tribute Terminals".
+                Filter defaultFilter_TributeTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "TributeTerminal" };
+                if (_defaultFiltersPreset_TributeTerminals?.Filters != null)
+                    _defaultFiltersPreset_TributeTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_TributeTerminals });
+                // Add "City Terminals".
+                Filter defaultFilter_CityTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "CityTerminal" };
+                if (_defaultFiltersPreset_CityTerminals?.Filters != null)
+                    _defaultFiltersPreset_CityTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_CityTerminals });
+            }
+
+            // Add "TribeID >= 50000" to current filters.
+            if (!_addedDefaultFilters && _filters != null && targetingTeam != null)
+            {
+                _addedDefaultFilters = true;
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(targetingTeam, defaultFilter));
+            }
         }
 
         public bool GoToStructure(int? structureID)
@@ -589,93 +663,6 @@ namespace ASA_Save_Inspector.Pages
         #endregion
 
         #region Filtering
-
-        private static void AddDefaultFilters()
-        {
-            if (!_addedDefaultFilters)
-            {
-                _addedDefaultFilters = true;
-                if (_filters != null)
-                {
-                    // Add "TribeID >= 50000".
-                    PropertyInfo? targetingTeam = typeof(Structure).GetProperty("TargetingTeam", BindingFlags.Instance | BindingFlags.Public);
-                    if (targetingTeam != null)
-                    {
-                        bool found = false;
-                        foreach (var filter in _filters)
-                            if (filter.Key == targetingTeam)
-                            {
-                                found = true;
-                                break;
-                            }
-                        if (!found)
-                        {
-                            Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.GREATER_THAN, FilterValue = "49999" };
-                            _filters.Add(new KeyValuePair<PropertyInfo, Filter>(targetingTeam, defaultFilter));
-                            if (_defaultFiltersPreset?.Filters != null)
-                                _defaultFiltersPreset.Filters.Add(new JsonFilter()
-                                {
-                                    PropertyName = targetingTeam.Name,
-                                    Filter = defaultFilter
-                                });
-                        }
-                    }
-
-                    PropertyInfo? itemArchetype = typeof(Structure).GetProperty("ItemArchetype", BindingFlags.Instance | BindingFlags.Public);
-                    if (itemArchetype != null)
-                    {
-                        // Add "Oil Veins".
-                        Filter defaultFilter_OilVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "OilVein" };
-                        if (_defaultFiltersPreset_OilVeins?.Filters != null)
-                            _defaultFiltersPreset_OilVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_OilVeins });
-                        // Add "Water Veins".
-                        Filter defaultFilter_WaterVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WaterVein" };
-                        if (_defaultFiltersPreset_WaterVeins?.Filters != null)
-                            _defaultFiltersPreset_WaterVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WaterVeins });
-                        // Add "Gas Veins".
-                        Filter defaultFilter_GasVeins = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GasVein" };
-                        if (_defaultFiltersPreset_GasVeins?.Filters != null)
-                            _defaultFiltersPreset_GasVeins.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GasVeins });
-                        // Add "Power Nodes".
-                        Filter defaultFilter_PowerNodes = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "PrimalStructurePowerNode" };
-                        if (_defaultFiltersPreset_PowerNodes?.Filters != null)
-                            _defaultFiltersPreset_PowerNodes.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_PowerNodes });
-                        // Add "Beaver Dams".
-                        Filter defaultFilter_BeaverDams = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "BeaverDam" };
-                        if (_defaultFiltersPreset_BeaverDams?.Filters != null)
-                            _defaultFiltersPreset_BeaverDams.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_BeaverDams });
-                        // Add "Z Plants".
-                        Filter defaultFilter_ZPlants = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "Structure_PlantSpeciesZ_Wild" };
-                        if (_defaultFiltersPreset_ZPlants?.Filters != null)
-                            _defaultFiltersPreset_ZPlants.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ZPlants });
-                        // Add "Wyvern Nests".
-                        Filter defaultFilter_WyvernNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "WyvernNest" };
-                        if (_defaultFiltersPreset_WyvernNests?.Filters != null)
-                            _defaultFiltersPreset_WyvernNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_WyvernNests });
-                        // Add "Gigantoraptor Nests".
-                        Filter defaultFilter_GigantoraptorNests = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "GigantoraptorNest" };
-                        if (_defaultFiltersPreset_GigantoraptorNests?.Filters != null)
-                            _defaultFiltersPreset_GigantoraptorNests.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_GigantoraptorNests });
-                        // Add "Artifact Crates".
-                        Filter defaultFilter_ArtifactCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "ArtifactCrate" };
-                        if (_defaultFiltersPreset_ArtifactCrates?.Filters != null)
-                            _defaultFiltersPreset_ArtifactCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_ArtifactCrates });
-                        // Add "Horde Crates".
-                        Filter defaultFilter_HordeCrates = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "HordeCrates" };
-                        if (_defaultFiltersPreset_HordeCrates?.Filters != null)
-                            _defaultFiltersPreset_HordeCrates.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_HordeCrates });
-                        // Add "Tribute Terminals".
-                        Filter defaultFilter_TributeTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "TributeTerminal" };
-                        if (_defaultFiltersPreset_TributeTerminals?.Filters != null)
-                            _defaultFiltersPreset_TributeTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_TributeTerminals });
-                        // Add "City Terminals".
-                        Filter defaultFilter_CityTerminals = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = "CityTerminal" };
-                        if (_defaultFiltersPreset_CityTerminals?.Filters != null)
-                            _defaultFiltersPreset_CityTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_CityTerminals });
-                    }
-                }
-            }
-        }
 
         private void RefreshSelectedStructureFilterValues()
         {
@@ -1059,7 +1046,7 @@ namespace ASA_Save_Inspector.Pages
             _group.Clear();
             _filters.Clear();
             _addedDefaultFilters = false;
-            AddDefaultFilters();
+            InitDefaultPresets();
         }
 
         private void FillEditStructureFiltersPopup()
