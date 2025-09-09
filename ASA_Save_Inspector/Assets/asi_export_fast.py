@@ -21,20 +21,11 @@ from arkparse.player.ark_player import ArkPlayer
 from arkparse.saves.save_connection import SaveConnection
 from arkparse.utils.json_utils import DefaultJsonEncoder
 
-BLUEPRINTS_TO_SKIP: list[str] = [ "/AI/",
-                                  "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C",
+BLUEPRINTS_TO_SKIP: list[str] = [ "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C",
                                   "/ByteArrayObject",
-                                  "/DinoCharacterStatus_BP",
-                                  "/DinoDeathHarvestingComponent_",
-                                  "/DinoDropInventoryComponent_",
-                                  "/DinoInventoryComponent_",
-                                  "/DinoTamedInventoryComponent_",
-                                  "/DinoWildInventoryComponent_",
                                   "/Doorsystem/ButtonSystem",
                                   "/Foliage",
-                                  "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
                                   "/NPCZoneManagerBlueprint_",
-                                  "/PlayerCharacterStatusComponent_BP",
                                   "/PlayerControllerBlueprint",
                                   "/Script/ShooterGame.ShooterMatineeActor",
                                   "/Script/ShooterGame.StructurePaintingComponent",
@@ -44,21 +35,40 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/AI/",
                                   "/Weapons/Weap",
                                   "AnimSequence",
                                   "BossArenaManager",
-                                  "DinoCharacterStatusComponent_",
-                                  "DinoCharacterStatusComponent_BP",
                                   "Engine.BlockingVolume",
                                   "Engine.MaterialInstanceConstant",
                                   "InstancedFoliageActor",
                                   "NPCZoneManager",
                                   "NPCZoneVolume",
                                   "PrimalPersistentWorldData",
-                                  "_AIController" ]
+                                  "PrimalInventory",
+                                  "/DinoDeathHarvestingComponent_",
+                                  "/DinoDropInventoryComponent_",
+                                  "/DinoInventoryComponent_",
+                                  "/DinoTamedInventoryComponent_",
+                                  "/DinoWildInventoryComponent_", ]
 
-BLUEPRINTS_NO_PARSE: list[str] = [ "PrimalInventory",
+BLUEPRINTS_NO_PARSE: list[str] = [ "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
+                                   "/AI/",
+                                   "_AIController",
+                                   "/DinoCharacterStatus_BP",
+                                   "DinoCharacterStatusComponent_",
+                                   "DinoCharacterStatusComponent_BP",
+                                   "/PlayerCharacterStatusComponent_BP",
                                    "/Buffs/",
                                    "DayCycle" ]
 
+def is_in_str(search_for: list[str], search_in: str) -> bool:
+    if search_in is None or len(search_in) <= 0 or search_for is None or len(search_for) <= 0:
+        return False
+    for s in search_for:
+        if s is not None and len(s) > 0 and s in search_in:
+            return True
+    return False
+
 def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
+    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+        return False
     if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dinos/" in blueprint or "Creature" in blueprint):
         return True
     if "/Raft_BP.Raft_BP" in blueprint \
@@ -75,6 +85,8 @@ def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
     return False
 
 def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
+    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+        return False
     if "/Structures" in blueprint \
             or "/GigantoraptorNest" in blueprint \
             or "Rug_Shag" in blueprint \
@@ -98,6 +110,8 @@ def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> 
     return False
 
 def is_item_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
+    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+        return False
     if "/DroppedItemGeneric" in blueprint or \
             "Egg_Wyvern_Fertilized" in blueprint or \
             "Items/Raft/Tireme_BP_" in blueprint or \
@@ -132,14 +146,6 @@ def is_item_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
             if additional_blueprint is not None and len(additional_blueprints) > 0:
                 if additional_blueprint in blueprint:
                     return True
-    return False
-
-def is_in_str(search_for: list[str], search_in: str) -> bool:
-    if search_in is None or len(search_in) <= 0 or search_for is None or len(search_for) <= 0:
-        return False
-    for s in search_for:
-        if s is not None and len(s) > 0 and s in search_in:
-            return True
     return False
 
 def human_readable_time(time_in_sec : float):
@@ -335,15 +341,23 @@ def update_files(parsing_data: PlayersAndTribesParsing):
         parsing_data.tribes[parsed_tribe.tribe_id] = parsed_tribe
         parsing_data.tribe_to_player_map[parsed_tribe.tribe_id] = tribe_players
 
+def get_obj_for_uuid(obj_uuid: uuid.UUID, save: AsaSave):
+    if obj_uuid in save.parsed_objects:
+        return save.parsed_objects[obj_uuid]
+    elif obj_uuid in save.game_obj_binaries:
+        reader = ArkBinaryParser(save.game_obj_binaries[obj_uuid], save.save_context)
+        try:
+            return ArkGameObject(obj_uuid, reader.read_name(), reader)
+        except Exception:
+            pass
+    return None
+
 def parse_single_structure(obj: ArkGameObject, save: AsaSave, bypass_inventory: bool = True) -> Optional[Structure | StructureWithInventory]:
     try:
-        game_bin: Optional[ArkBinaryParser] = None
-        if obj.uuid in save.game_obj_binaries:
-            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
         if obj.get_property_value("MaxItemCount") is not None or (obj.get_property_value("MyInventoryComponent") is not None and obj.get_property_value("CurrentItemCount") is not None):
-            structure = StructureWithInventory(obj.uuid, save, bypass_inventory=bypass_inventory, game_bin=game_bin, game_obj=obj)
+            structure = StructureWithInventory(obj.uuid, save, bypass_inventory=bypass_inventory)
         else:
-            structure = Structure(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+            structure = Structure(obj.uuid, save)
         if obj.uuid in save.save_context.actor_transforms:
             structure.set_actor_transform(save.save_context.actor_transforms[obj.uuid])
         return structure
@@ -353,10 +367,7 @@ def parse_single_structure(obj: ArkGameObject, save: AsaSave, bypass_inventory: 
 
 def parse_single_cryopod(obj: ArkGameObject, save: AsaSave) -> Optional[Cryopod]:
     try:
-        game_bin: Optional[ArkBinaryParser] = None
-        if obj.uuid in save.game_obj_binaries:
-            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
-        return Cryopod(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+        return Cryopod(obj.uuid, save)
     except Exception as e:
         if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
             print(f"Exception caught when parsing cryopod {obj.uuid}: {e}", flush=True)
@@ -364,21 +375,19 @@ def parse_single_cryopod(obj: ArkGameObject, save: AsaSave) -> Optional[Cryopod]
 
 def parse_single_dino(obj: ArkGameObject, save: AsaSave):
     try:
-        game_bin: Optional[ArkBinaryParser] = None
-        if obj.uuid in save.game_obj_binaries:
-            game_bin = ArkBinaryParser(save.game_obj_binaries[obj.uuid], save.save_context)
         is_tamed = obj.get_property_value("TamedTimeStamp") is not None
         is_baby = obj.get_property_value("bIsBaby", False)
+
         if is_tamed:
             if is_baby:
-                return TamedBaby(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+                return TamedBaby(obj.uuid, save)
             else:
-                return TamedDino(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+                return TamedDino(obj.uuid, save)
         else:
             if is_baby:
-                return Baby(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+                return Baby(obj.uuid, save)
             else:
-                return Dino(obj.uuid, save, game_bin=game_bin, game_obj=obj)
+                return Dino(obj.uuid, save)
     except Exception as e:
         print(f"Exception caught when parsing dino {obj.uuid}: {e}", flush=True)
         return None
@@ -443,17 +452,13 @@ def asi_export_process(arg_obj):
                 game_obj = None
                 print(f"Exception caught when parsing object of class {class_name}: {e}", flush=True)
             if game_obj is not None:
-                if game_obj.has_property("bIsEngram") and game_obj.get_property_value("bIsEngram", False):
-                    continue
-                all_objs.append({ "UUID": obj_uuid, "class": class_name, "object": game_obj, "bytes": value })
+                # if game_obj.has_property("bIsEngram") and game_obj.get_property_value("bIsEngram", False):
+                #     continue
+                all_objs.append({ "UUID": obj_uuid, "class": class_name, "game_obj": game_obj, "bytes": value })
 
     arg_obj["queue"].put(all_objs)
 
-def asi_parse_process(arg_obj):
-    # objects: list = arg_obj["objects"]
-    # save: AsaSave = arg_obj["save"]
-    # the_queue: Queue = arg_obj["queue"]
-
+def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], structure_bps: list[str]):
     all_dinos = []
     all_pawns_objects = []
     all_items = []
@@ -461,7 +466,7 @@ def asi_parse_process(arg_obj):
     skipped_bps: list[str] = []
     unknown_bps: list[str] = []
     failed_parsing: list[str] = []
-    for obj in arg_obj["objects"]:
+    for obj in save.parsed_objects.values():
         if obj is not None:
             try:
                 if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint): # or (obj.has_property("bIsEngram") and obj.get_property_value("bIsEngram", False)):
@@ -469,14 +474,14 @@ def asi_parse_process(arg_obj):
                         skipped_bps.append(obj.blueprint)
                     continue
 
-                if is_dino_blueprint(obj.blueprint, arg_obj["dino_bps"]):
-                    dino = parse_single_dino(obj, arg_obj["save"])
+                if is_dino_blueprint(obj.blueprint, dino_bps):
+                    dino = parse_single_dino(obj, save)
                     if dino is not None:
                         all_dinos.append(dino)
                     elif __debug__:
                         failed_parsing.append(f"Dino {obj.uuid} with class {obj.blueprint}.")
                 elif "PrimalItem_WeaponEmptyCryopod_C" in obj.blueprint:
-                    cryopod = parse_single_cryopod(obj, arg_obj["save"])
+                    cryopod = parse_single_cryopod(obj, save)
                     if cryopod is not None:
                         if cryopod.dino is not None:
                             cryopod.dino.is_cryopodded = True
@@ -486,10 +491,10 @@ def asi_parse_process(arg_obj):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 elif "/PlayerPawnTest_Female.PlayerPawnTest_Female_C" in obj.blueprint or "/PlayerPawnTest_Male.PlayerPawnTest_Male_C" in obj.blueprint:
                     all_pawns_objects.append(obj)
-                elif is_item_blueprint(obj.blueprint, arg_obj["item_bps"]):
+                elif is_item_blueprint(obj.blueprint, item_bps):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
-                elif is_structure_blueprint(obj.blueprint, arg_obj["structure_bps"]) and obj.get_property_value("StructureID") is not None:
-                    structure = parse_single_structure(obj, arg_obj["save"], True)
+                elif is_structure_blueprint(obj.blueprint, structure_bps) and obj.get_property_value("StructureID") is not None:
+                    structure = parse_single_structure(obj, save, True)
                     if structure is not None:
                         all_structures.append(structure)
                     elif __debug__:
@@ -502,7 +507,7 @@ def asi_parse_process(arg_obj):
                 if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
                     print(f"Exception caught during parsing: {e}", flush=True)
 
-    arg_obj["queue"].put({ "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures, "skipped_blueprints": skipped_bps, "unknown_blueprints": unknown_bps, "failed_parsing": failed_parsing })
+    return { "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures, "skipped_blueprints": skipped_bps, "unknown_blueprints": unknown_bps, "failed_parsing": failed_parsing }
 
 def parse_players_and_tribes_for_process(players_data: dict[uuid.UUID, bytes], tribes_data: dict[uuid.UUID, bytes]):
     parsed_players: dict[int, ArkPlayer] = {}
@@ -835,9 +840,9 @@ if __name__ == '__main__':
             custom_bps_structures = parsed_custom_bps[2]
         except Exception:
             print(f"Failed to decode custom blueprints: {sys.argv[9]}", flush=True)
-
+    
     '''
-    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps\\Ragnarok\\Ragnarok_WP.ark")
+    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps2\\TheIsland\\TheIsland_WP.ark")
     export_path: Path = Path.cwd() / "json_exports" / "Ragnarok"
     export_dinos: bool = True
     export_pawns: bool = True
@@ -845,6 +850,9 @@ if __name__ == '__main__':
     export_structures: bool = True
     export_players: bool = True
     export_tribes: bool = True
+    custom_bps_dinos: list[str] = []
+    custom_bps_items: list[str] = []
+    custom_bps_structures: list[str] = []
     '''
 
     if not export_dinos and not export_pawns and not export_items and not export_structures and not export_players and not export_tribes:
@@ -927,7 +935,7 @@ if __name__ == '__main__':
     if arkparse_save.all_classes is None:
         arkparse_save.all_classes = []
     for parsed in merged_results:
-        arkparse_save.parsed_objects[parsed["UUID"]] = parsed["object"]
+        arkparse_save.parsed_objects[parsed["UUID"]] = parsed["game_obj"]
         arkparse_save.game_obj_binaries[parsed["UUID"]] = parsed["bytes"]
         arkparse_save.all_classes.append(parsed["class"])
 
@@ -937,42 +945,25 @@ if __name__ == '__main__':
                   "CurrentDay": arkparse_save.save_context.current_day,
                   "CurrentTime": arkparse_save.save_context.current_time }
 
-    queues_b: list[Queue] = []
-    processes_b: list[Process] = []
-    for i in range(nb_processes):
-        queue_b = Queue()
-        queues_b.append(queue_b)
-        processes_b.append(Process(target=asi_parse_process, args=({ "objects": [item["object"] for item in processes_results[i]], "save": arkparse_save, "queue": queue_b, "dino_bps": custom_bps_dinos, "item_bps": custom_bps_items, "structure_bps": custom_bps_structures },)))
+    parsed_result = asi_parse_classic(arkparse_save, custom_bps_dinos, custom_bps_items, custom_bps_structures)
 
-    for i in range(nb_processes):
-        processes_b[i].start()
-
-    processes_results_b: list[dict] = []
-    for i in range(nb_processes):
-        processes_results_b.append(queues_b[i].get(timeout=300))
-        queues_b[i].close()
-
-    pawn_objects: list = []
-    dinos: list = []
-    pawns: list = []
-    items: list = []
-    structures: list = []
+    pawn_objects: list = parsed_result["pawns"]
+    dinos: list = parsed_result["dinos"]
+    items: list = parsed_result["items"]
+    structures: list = parsed_result["structures"]
     skipped_blueprints: list[str] = []
     unknown_blueprints: list[str] = []
     failed_to_parse: list[str] = []
 
-    for i in range(nb_processes):
-        if __debug__:
-            skipped_blueprints += processes_results_b[i]["skipped_blueprints"]
-            unknown_blueprints += processes_results_b[i]["unknown_blueprints"]
-            failed_to_parse += processes_results_b[i]["failed_parsing"]
-        dinos += processes_results_b[i]["dinos"]
-        items += processes_results_b[i]["items"]
-        structures += processes_results_b[i]["structures"]
-        pawn_objects += processes_results_b[i]["pawns"]
-        for pawn_object in processes_results_b[i]["pawns"]:
-            if not pawn_object is None:
-                pawns.append(pawn_to_json(pawn_object))
+    if __debug__:
+        skipped_blueprints = parsed_result["skipped_blueprints"]
+        unknown_blueprints = parsed_result["unknown_blueprints"]
+        failed_to_parse = parsed_result["failed_parsing"]
+
+    pawns: list = []
+    for pawn_object in pawn_objects:
+        if not pawn_object is None:
+            pawns.append(pawn_to_json(pawn_object))
 
     if __debug__:
         skipped_blueprints = list(dict.fromkeys(skipped_blueprints))
@@ -1054,5 +1045,3 @@ if __name__ == '__main__':
 
     for i in range(nb_processes):
         processes[i].join(timeout=5)
-    for i in range(nb_processes):
-        processes_b[i].join(timeout=5)
