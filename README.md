@@ -124,6 +124,7 @@ This will produce the following result:<br>
 Some default filters are enabled by default on Dinos and Structures pages:
 * Dinos page: Only displays tamed dinos by default (IsTamed is True).
 * Structures page: Only displays structures belonging to a tribe (Tribe ID is greater than 49999).
+
 You can remove these default filters if you want to see wild dinos and structures.
 
 ## 6) Feature requests and bug reports
