@@ -5,15 +5,30 @@ ASI uses [ArkParse](https://github.com/VincentHenauGithub/ark-save-parser) to ex
 
 This application is still under development, more features will be added in the future.
 
-## Features
+## Table of content
+1. [Features](#1-features)
+2. [Demonstration video](#2-demonstration-video)
+3. [Installation](#3-installation)
+4. [Quick start](#4-quick-start)
+5. [Filters and groups](#5-filters-and-groups)
+   - 5.a [Filters](#5a-filters)
+   - 5.b [Groups](#5b-groups)
+   - 5.c [Good practices when using Filters and Groups](#5c-good-practices-when-using-filters-and-groups)
+   - 5.d [Default filters](#5d-default-filters)
+6. [Feature requests and bug reports](#6-feature-requests-and-bug-reports)
+7. [Contributing](#7-contributing)
+8. [Donations](#8-donations)
+9. [Discord](#9-discord)
+
+## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
 - Visualize game objects on a map (double clicking on a map marker will select the associated game object in the app's main window).
 - Quickly export some game objects to JSON (using right click on the game object lines).
 
-## Demonstration video
+## 2) Demonstration video
 https://www.youtube.com/watch?v=LOZbUW5rd0A
 
-## Installation
+## 3) Installation
 1. Download and install the following two requirements:<br>
 [.NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)<br>
 [Python 3](https://www.python.org/downloads/)<br>
@@ -22,14 +37,14 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 3. Once the archive is downloaded, extract it. This will give you a folder containing the executable.
 4. Double click on the executable to launch ASA Save Inspector.
 
-## Quickstart
+## 4) Quick start
 1. Launch ASA Save Inspector, then click on "Settings" in the left menu.
 2. Configure "Python Setup".
 3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
-## Filtering and grouping tutorial
-### A) Filters
+## 5) Filters and groups
+### 5.a) Filters
 Filters are divided into 2 categories: "OR" and "AND".<br>
 When filtering happens, ASI will:
 1. filter the items using the "OR" filters, this gives the first subset.
@@ -48,7 +63,7 @@ The filters order does not matter. The result would be exactly the same if I had
 
 Currently set filters can be saved into a preset if you plan to use them later, or if you want to use groups (see below).
 
-### B) Groups
+### 5.b) Groups
 Groups are divided into 2 categories: "OR" and "AND".<br>
 A group is composed of 1 or more filters preset.<br>
 When grouping happens, ASI will:
@@ -71,7 +86,7 @@ The filters presets order in the group does not matter. The result would be exac
 - OR "Filters preset 3".
 - AND "Filters preset 1".
 
-### C) Good practices when using Filters and Groups
+### 5.c) Good practices when using Filters and Groups
 When you create a filters preset, it's a good practice to make sure all filters inside your preset have the same operator (either "OR", or "AND").<br>
 This will help you later on when using groups, because having different operators inside filters presets can quickly produce ambiguous results when you start combining your filters presets in a group (unless you understand exactly what's happening during filtering and grouping phases).
 
@@ -105,20 +120,20 @@ OR  FiltersPreset1  OR  FiltersPreset2  OR  FiltersPreset3<br>
 This will produce the following result:<br>
 (a AND b AND c) OR (j AND k) OR (x)<br>
 
-### Default filters
+### 5.d) Default filters
 Some default filters are enabled by default on Dinos and Structures pages:
 * Dinos page: Only displays tamed dinos by default (IsTamed is True).
 * Structures page: Only displays structures belonging to a tribe (Tribe ID is greater than 49999).
 You can remove these default filters if you want to see wild dinos and structures.
 
-## Feature requests and bug reports
+## 6) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## Contributing
+## 7) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## Donating
+## 8) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## Discord
+## 9) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
