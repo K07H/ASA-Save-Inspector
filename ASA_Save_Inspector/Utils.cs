@@ -28,6 +28,38 @@ namespace ASA_Save_Inspector
         public static readonly string ArkParseProjectUrl = "https://github.com/K07H/ark-save-parser/raw/refs/heads/main/pyproject.toml";
 
         public static string GetBaseDir() => AppDomain.CurrentDomain.BaseDirectory; //AppContext.BaseDirectory
+        public static string GetBaseDirParent()
+        {
+            try { return Path.GetFullPath(Path.Combine(GetBaseDir(), "..")); }
+            catch { return string.Empty; }
+        }
+
+        public static readonly Dictionary<string, string> ConfigFiles = new Dictionary<string, string>()
+        {
+            { "settings.json", "ASISettings" },
+            { "export_profiles.json", "ExportProfiles" },
+            { "export_presets.json", "ExportPresets" },
+            { "custom_blueprints.json", "CustomBlueprints" },
+            { "dino_filters.json", "DinoFilters" },
+            { "dino_groups.json", "DinoGroups" },
+            { "dino_columns.json", "DinoColumns" },
+            { "pawn_filters.json", "PawnFilters" },
+            { "pawn_groups.json", "PawnGroups" },
+            { "pawn_columns.json", "PawnColumns" },
+            { "structure_filters.json", "StructureFilters" },
+            { "structure_groups.json", "StructureGroups" },
+            { "structure_columns.json", "StructureColumns" },
+            { "item_filters.json", "ItemFilters" },
+            { "item_groups.json", "ItemGroups" },
+            { "item_columns.json", "ItemColumns" },
+            { "player_filters.json", "PlayerFilters" },
+            { "player_groups.json", "PlayerGroups" },
+            { "player_columns.json", "PlayerColumns" },
+            { "tribe_filters.json", "TribeFilters" },
+            { "tribe_groups.json", "TribeGroups" },
+            { "tribe_columns.json", "TribeColumns" }
+        };
+
         public static string GetDataDir() => Path.Combine(GetBaseDir(), "data");
         public static string GetAssetsDir() => Path.Combine(GetBaseDir(), "Assets");
         public static string GetLangDir() => Path.Combine(GetAssetsDir(), "lang");
@@ -64,6 +96,8 @@ namespace ASA_Save_Inspector
         public static string TribeColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_columns.json");
         public static string ExportProfilesFilePath() => Path.Combine(GetDataDir(), "export_profiles.json");
         public static string ExportPresetsFilePath() => Path.Combine(GetDataDir(), "export_presets.json");
+        public static string DontCheckForUpdateFilePath() => Path.Combine(GetDataDir(), "skip_update_check.txt");
+        public static string DontReimportPreviousDataFilePath() => Path.Combine(GetDataDir(), "skip_reimport_previous_data.txt");
         public static string ArkParseProjectFilePath() => Path.Combine(ArkParseFolder(), "pyproject.toml");
         public static string ArkParseJsonApiFilePath() => Path.Combine(ArkParseFolder(), "src", "arkparse", "api", "json_api.py");
         public static string ArkParseArchiveFilePath() => Path.Combine(GetDataDir(), "ark-save-parser-main.zip");
@@ -764,6 +798,82 @@ namespace ASA_Save_Inspector
             ItemsPage.ClearPageFiltersAndGroups();
             PlayersPage.ClearPageFiltersAndGroups();
             TribesPage.ClearPageFiltersAndGroups();
+        }
+
+        public static bool MoveDirectory(string source, string target)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
+                return false;
+
+            bool hasErrors = false;
+            var sourcePath = source.TrimEnd('/', '\\', ' ');
+            var targetPath = target.TrimEnd('/', '\\', ' ');
+
+            if (sourcePath.Length < 4 || targetPath.Length < 4 || !Directory.Exists(sourcePath))
+                return false;
+
+            IEnumerable<IGrouping<string?, string>>? files = null;
+            try { files = Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories).GroupBy(s => Path.GetDirectoryName(s)); }
+            catch (Exception ex1)
+            {
+                files = null;
+                hasErrors = true;
+                Logger.Instance.Log($"Exception caught in MoveDirectory. Could not enumerate filtes in \"{sourcePath}\". Exception=[{ex1}]", Logger.LogLevel.ERROR);
+            }
+            if (files != null && files.Count() > 0)
+                foreach (var folder in files)
+                    if (folder != null && !string.IsNullOrEmpty(folder.Key))
+                    {
+                        string targetFolder = folder.Key.Replace(sourcePath, targetPath);
+                        if (!string.IsNullOrEmpty(targetFolder))
+                        {
+                            if (!Directory.Exists(targetFolder))
+                                try { Directory.CreateDirectory(targetFolder); }
+                                catch (Exception ex2)
+                                {
+                                    hasErrors = true;
+                                    Logger.Instance.Log($"Exception caught in MoveDirectory. Could not create directory at \"{targetFolder}\". Exception=[{ex2}]", Logger.LogLevel.ERROR);
+                                }
+                            if (Directory.Exists(targetFolder))
+                                foreach (var file in folder)
+                                    if (!string.IsNullOrEmpty(file))
+                                    {
+                                        string? targetFile = null;
+                                        try { targetFile = Path.Combine(targetFolder, Path.GetFileName(file)); }
+                                        catch (Exception ex3)
+                                        {
+                                            targetFile = null;
+                                            hasErrors = true;
+                                            Logger.Instance.Log($"Exception caught in MoveDirectory. Could not determine target file path for \"{file}\" with folder \"{targetFolder}\". Exception=[{ex3}]", Logger.LogLevel.ERROR);
+                                        }
+                                        if (targetFile != null)
+                                        {
+                                            bool attemptCopy = false;
+                                            try { File.Move(file, targetFile, true); }
+                                            catch (Exception ex4)
+                                            {
+                                                attemptCopy = true;
+                                                Logger.Instance.Log($"Exception caught in MoveDirectory. Could not move file \"{file}\" to \"{targetFile}\". Attempting copy. Exception=[{ex4}]", Logger.LogLevel.ERROR);
+                                            }
+                                            if (attemptCopy)
+                                                try { File.Copy(file, targetFile, true); }
+                                                catch (Exception ex5)
+                                                {
+                                                    hasErrors = true;
+                                                    Logger.Instance.Log($"Exception caught in MoveDirectory. Could not copy file \"{file}\" to \"{targetFile}\". Exception=[{ex5}]", Logger.LogLevel.ERROR);
+                                                }
+                                        }
+                                    }
+                        }
+                    }
+            if (!hasErrors)
+                try { Directory.Delete(source, true); }
+                catch (Exception ex6)
+                {
+                    hasErrors = true;
+                    Logger.Instance.Log($"Exception caught in MoveDirectory. Could not delete origin directory at \"{source}\". Exception=[{ex6}]", Logger.LogLevel.ERROR);
+                }
+            return !hasErrors;
         }
     }
 

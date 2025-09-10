@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppLifecycle;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,6 +18,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.Core;
 using WinUIEx;
 
 namespace ASA_Save_Inspector
@@ -38,6 +41,7 @@ namespace ASA_Save_Inspector
         public NavigationViewItem? _navBtnAbout = null;
         public static Minimap? _minimap = null;
         private static List<MapPoint> _emptyPoints = new List<MapPoint>();
+        private KeyValuePair<string?, List<string>?>? _previousData = null;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -104,7 +108,16 @@ namespace ASA_Save_Inspector
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
             //PythonManager.InstallArkParse();
 
+            CheckForUpdateAndPreviousData();
+            /*
             CheckForUpdate();
+
+            _ = DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+            {
+                await Task.Delay(1000);
+                CheckPreviousData();
+            });
+            */
 
             /*
             AcrylicBrush myBrush = new AcrylicBrush();
@@ -438,25 +451,25 @@ namespace ASA_Save_Inspector
 
         private string? _latestVersion = null;
 
-        private async void CheckForUpdate()
+        private async Task<bool> CheckForUpdate()
         {
             string projectFileContent = await PythonManager._client.GetStringAsync(Utils.ASIVersionFileUrl);
             if (string.IsNullOrWhiteSpace(projectFileContent))
             {
                 Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
-                return;
+                return false;
             }
             string latestVersion = projectFileContent.Replace("\r\n", "", StringComparison.InvariantCulture).Replace("\n", "", StringComparison.InvariantCulture);
             if (latestVersion.Length < 3 || latestVersion.Length > 7 || !latestVersion.Contains('.', StringComparison.InvariantCulture))
             {
                 Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{latestVersion}]", Logger.LogLevel.WARNING);
-                return;
+                return false;
             }
             string currentVersion = Utils.GetVersionStr();
             if (string.Compare(latestVersion, currentVersion, StringComparison.InvariantCulture) == 0)
             {
                 Logger.Instance.Log(ASILang.Get("ASIIsUpToDate"), Logger.LogLevel.INFO);
-                return;
+                return false;
             }
             _latestVersion = latestVersion;
             if (!UpdateAvailablePopup.IsOpen)
@@ -464,6 +477,109 @@ namespace ASA_Save_Inspector
                 tb_updateAvailableDescription.Text = $"{ASILang.Get("UpdateAvailableDescription").Replace("#NEW_VERSION#", $"{latestVersion}", StringComparison.InvariantCulture).Replace("#MY_VERSION#", $"{currentVersion}", StringComparison.InvariantCulture)}";
                 UpdateAvailablePopup.IsOpen = true;
             }
+            return true;
+        }
+
+        private async Task CheckForUpdateAndPreviousData()
+        {
+            if (!File.Exists(Utils.DontCheckForUpdateFilePath()))
+                await CheckForUpdate();
+            if (!File.Exists(Utils.DontReimportPreviousDataFilePath()))
+                CheckPreviousData();
+        }
+
+        private KeyValuePair<string?, List<string>?> HasASIData(string dir)
+        {
+            bool foundExports = false;
+            string jsonExportsPath = Path.Combine(dir, "data", "json_exports");
+            try
+            {
+                if (Directory.Exists(jsonExportsPath))
+                {
+                    var subDirs = Directory.GetDirectories(jsonExportsPath);
+                    if (subDirs != null && subDirs.Length > 0)
+                        foundExports = true;
+                }
+            }
+            catch { foundExports = false; }
+
+            List<string> configFilesFound = new List<string>();
+            foreach (var configElem in Utils.ConfigFiles)
+                try
+                {
+                    string configFilePath = Path.Combine(dir, "data", configElem.Key);
+                    if (File.Exists(configFilePath))
+                        configFilesFound.Add(configFilePath);
+                }
+                catch { }
+
+            return new KeyValuePair<string?, List<string>?>((foundExports ? jsonExportsPath : null), (configFilesFound.Count > 0 ? configFilesFound : null));
+        }
+
+        private KeyValuePair<string?, List<string>?> SearchPreviousData()
+        {
+            KeyValuePair<string?, List<string>?> emptyResult = new KeyValuePair<string?, List<string>?>(null, null);
+            string? actualDirName = null;
+            string[]? directories = null;
+
+            try
+            {
+                string actualDir = Utils.GetBaseDir();
+                if (string.IsNullOrEmpty(actualDir) || !Directory.Exists(actualDir))
+                    return emptyResult;
+                actualDirName = Path.GetFileName(Path.GetDirectoryName(actualDir));
+                if (string.IsNullOrEmpty(actualDirName))
+                    return emptyResult;
+
+                string parentDir = Utils.GetBaseDirParent();
+                if (string.IsNullOrEmpty(parentDir) || !Directory.Exists(parentDir))
+                    return emptyResult;
+                directories = Directory.GetDirectories(parentDir);
+                if (directories == null || directories.Length <= 0)
+                    return emptyResult;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in CheckForPreviousData. Exception=[{ex}]", Logger.LogLevel.WARNING);
+                return emptyResult;
+            }
+
+            if (string.IsNullOrEmpty(actualDirName) || directories == null || directories.Length <= 0)
+                return emptyResult;
+
+            Dictionary<string, DateTime> foundDirs = new Dictionary<string, DateTime>();
+            foreach (var dir in directories)
+                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                {
+                    string? dirName = null;
+                    try
+                    {
+                        if (dir.EndsWith("/", StringComparison.InvariantCulture) || dir.EndsWith("\\", StringComparison.InvariantCulture))
+                            dirName = Path.GetFileName(Path.GetDirectoryName(dir));
+                        else
+                            dirName = Path.GetFileName(dir);
+                    }
+                    catch { dirName = null; }
+                    if (string.IsNullOrEmpty(dirName) || string.Compare(actualDirName, dirName, StringComparison.InvariantCulture) == 0)
+                        continue;
+
+                    DateTime? dt = null;
+                    try { dt = Directory.GetLastWriteTimeUtc(dir); }
+                    catch { dt = null; }
+                    if (dt != null && dt.HasValue)
+                        foundDirs[dir] = dt.Value;
+                }
+
+            var sortedDirs = from dir in foundDirs orderby dir.Value descending select dir.Key;
+            foreach (string? sortedDir in sortedDirs)
+                if (!string.IsNullOrEmpty(sortedDir))
+                {
+                    KeyValuePair<string?, List<string>?> ASIData = HasASIData(sortedDir);
+                    if (!string.IsNullOrEmpty(ASIData.Key) || (ASIData.Value != null && ASIData.Value.Count > 0))
+                        return ASIData;
+                }
+
+            return emptyResult;
         }
 
         /*
@@ -493,6 +609,80 @@ namespace ASA_Save_Inspector
         }
         */
 
+        private void OpenRestorePreviousDataPopup()
+        {
+            tb_PreviousDataFolderPath.Text = string.Empty;
+            sp_restorePreviousData.Children.Clear();
+            if (_previousData != null && _previousData.HasValue)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(_previousData.Value.Key))
+                        tb_PreviousDataFolderPath.Text = Path.GetFullPath(Path.Combine(_previousData.Value.Key, ".."));
+                    else if (_previousData.Value.Value != null && _previousData.Value.Value.Count > 0)
+                    {
+                        string? prevConfigFile = _previousData.Value.Value.FirstOrDefault(string.Empty);
+                        if (!string.IsNullOrEmpty(prevConfigFile))
+                        {
+                            string? prevDataDir = Path.GetDirectoryName(prevConfigFile);
+                            if (!string.IsNullOrEmpty(prevDataDir))
+                                tb_PreviousDataFolderPath.Text = prevDataDir;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    tb_PreviousDataFolderPath.Text = string.Empty;
+                    Logger.Instance.Log($"Exception caught in OpenRestorePreviousDataPopup. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                }
+                if (_previousData.Value.Value != null && _previousData.Value.Value.Count > 0)
+                    foreach (string configFile in _previousData.Value.Value)
+                        if (!string.IsNullOrEmpty(configFile))
+                        {
+                            string? fileName = null;
+                            try { fileName = Path.GetFileName(configFile); }
+                            catch { fileName = null; }
+                            if (!string.IsNullOrEmpty(fileName))
+                            {
+                                TextBlock tb = new TextBlock()
+                                {
+                                    FontSize = 14.0d,
+                                    TextWrapping = TextWrapping.Wrap,
+                                    Text = (Utils.ConfigFiles.ContainsKey(fileName) ? ASILang.Get(Utils.ConfigFiles[fileName]) : fileName),
+                                    VerticalAlignment = VerticalAlignment.Top,
+                                    HorizontalAlignment = HorizontalAlignment.Left
+                                };
+                                sp_restorePreviousData.Children.Add(tb);
+                            }
+                        }
+                if (!string.IsNullOrEmpty(_previousData.Value.Key))
+                {
+                    TextBlock tb = new TextBlock()
+                    {
+                        FontSize = 14.0d,
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = ASILang.Get("JsonData"),
+                        VerticalAlignment = VerticalAlignment.Top,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
+                    sp_restorePreviousData.Children.Add(tb);
+                }
+            }
+            RestorePreviousDataPopup.IsOpen = true;
+        }
+
+        private void CheckPreviousData()
+        {
+            KeyValuePair<string?, List<string>?> previousData = SearchPreviousData();
+            if (!string.IsNullOrEmpty(previousData.Key) || (previousData.Value != null && previousData.Value.Count > 0))
+            {
+                _previousData = previousData;
+                if (!UpdateAvailablePopup.IsOpen) // Don't open "Update available" and "Restore previous data" popups at the same time.
+                    if (!RestorePreviousDataPopup.IsOpen)
+                        OpenRestorePreviousDataPopup();
+            }
+        }
+
         private async void btn_InstallUpdate_Click(object sender, RoutedEventArgs e)
         {
             if (UpdateAvailablePopup.IsOpen)
@@ -505,12 +695,183 @@ namespace ASA_Save_Inspector
             {
                 Logger.Instance.Log($"{ASILang.Get("OpenURLFailed").Replace("#URL#", $"{Utils.ASILatestVersionUrl}", StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
+
+            if (_previousData != null)
+                if (!RestorePreviousDataPopup.IsOpen)
+                    OpenRestorePreviousDataPopup();
         }
 
-        private void btn_CloseUpdateAvailablePopup_Click(object sender, RoutedEventArgs e)
+        private void CloseUpdateAvailablePopup()
         {
             if (UpdateAvailablePopup.IsOpen)
                 UpdateAvailablePopup.IsOpen = false;
+
+            if (_previousData != null)
+                if (!RestorePreviousDataPopup.IsOpen)
+                    OpenRestorePreviousDataPopup();
+        }
+
+        private void btn_CloseUpdateAvailablePopup_Click(object sender, RoutedEventArgs e) => CloseUpdateAvailablePopup();
+
+        private void btn_NeverUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            try { File.WriteAllText(Utils.DontCheckForUpdateFilePath(), "1", Encoding.UTF8); }
+            catch { }
+            CloseUpdateAvailablePopup();
+        }
+
+        private void CloseReimportPreviousDataPopup()
+        {
+            _previousData = null;
+            if (RestorePreviousDataPopup.IsOpen)
+                RestorePreviousDataPopup.IsOpen = false;
+        }
+
+        private string GetRestartArgs()
+        {
+            /*
+            // Using Environment.GetCommandLineArgs() to retrieve the command line arguments
+            string[] commandLineArguments = Environment.GetCommandLineArgs();
+            if (commandLineArguments.Length > 1)
+            {
+                commandLineArguments = commandLineArguments.Skip(1).ToArray();
+                return String.Join(",", commandLineArguments);
+            }
+            */
+
+            // Using AppInstance.GetActivatedEventArgs() to retrieve the command line arguments
+            AppActivationArguments activatedArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+            ExtendedActivationKind kind = activatedArgs.Kind;
+
+            if (kind == ExtendedActivationKind.Launch)
+            {
+                if (activatedArgs.Data is ILaunchActivatedEventArgs launchArgs)
+                {
+                    string argString = launchArgs.Arguments;
+                    string[] argStrings = argString.Split();
+
+                    if (argStrings.Length > 1)
+                    {
+                        argStrings = argStrings.Skip(1).ToArray();
+                        return String.Join(",", argStrings.Where(s => !string.IsNullOrEmpty(s)));
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private bool RestartASI()
+        {
+            string restartArgs = GetRestartArgs();
+            AppRestartFailureReason restartError = AppInstance.Restart(restartArgs);
+
+            bool restartFailed = false;
+            switch (restartError)
+            {
+                case AppRestartFailureReason.RestartPending:
+                    restartFailed = true;
+                    break;
+                case AppRestartFailureReason.NotInForeground:
+                    restartFailed = true;
+                    break;
+                case AppRestartFailureReason.InvalidUser:
+                    restartFailed = true;
+                    break;
+                case AppRestartFailureReason.Other:
+                    restartFailed = true;
+                    break;
+            }
+            return restartFailed;
+        }
+
+        private void ReplaceFolderPathInExportProfilesFile(string sourceFilePath, string destFilePath)
+        {
+            if (string.IsNullOrEmpty(sourceFilePath) || string.IsNullOrEmpty(destFilePath))
+                return;
+
+            string? fileContent = null;
+            try { fileContent = File.ReadAllText(destFilePath, Encoding.UTF8); }
+            catch { fileContent = null; }
+            if (!string.IsNullOrEmpty(fileContent))
+            {
+                string? sourceDir = null;
+                string? destDir = null;
+                try
+                {
+                    sourceDir = Path.GetDirectoryName(sourceFilePath);
+                    destDir = Path.GetDirectoryName(destFilePath);
+                    sourceDir = JsonSerializer.Serialize(sourceDir);
+                    destDir = JsonSerializer.Serialize(destDir);
+                    // Remove quotes
+                    if (sourceDir.Length > 2)
+                        sourceDir = sourceDir.Substring(1, sourceDir.Length - 2);
+                    if (destDir.Length > 2)
+                        destDir = destDir.Substring(1, destDir.Length - 2);
+                }
+                catch
+                {
+                    sourceDir = null;
+                    destDir = null;
+                }
+                if (!string.IsNullOrEmpty(sourceDir) && !string.IsNullOrEmpty(destDir))
+                {
+
+                    fileContent = fileContent.Replace(sourceDir, destDir, StringComparison.InvariantCulture);
+                    try { File.WriteAllText(destFilePath, fileContent, Encoding.UTF8); }
+                    catch { }
+                }
+            }
+        }
+
+        private void btn_ReimportPreviousData_Click(object sender, RoutedEventArgs e)
+        {
+            if (_previousData != null && _previousData.HasValue)
+            {
+                if (!string.IsNullOrEmpty(_previousData.Value.Key) && Directory.Exists(_previousData.Value.Key))
+                    Utils.MoveDirectory(_previousData.Value.Key, Utils.JsonExportsFolder());
+                if (_previousData.Value.Value != null && _previousData.Value.Value.Count > 0)
+                    foreach (string configFile in  _previousData.Value.Value)
+                        if (!string.IsNullOrEmpty(configFile) && File.Exists(configFile))
+                        {
+                            string? destFilePath = null;
+                            try { destFilePath = Path.Combine(Utils.GetDataDir(), Path.GetFileName(configFile)); }
+                            catch (Exception ex1)
+                            {
+                                destFilePath = null;
+                                Logger.Instance.Log($"Exception caught in btn_ReimportPreviousData_Click. Could not determine path for file \"{configFile}\" with directory \"{Utils.GetDataDir()}\". Exception=[{ex1}]", Logger.LogLevel.ERROR);
+                            }
+                            if (destFilePath != null)
+                            {
+                                try { File.Copy(configFile, destFilePath, true); }
+                                catch (Exception ex2) { Logger.Instance.Log($"Exception caught in btn_ReimportPreviousData_Click. Could not copy file \"{configFile}\" to \"{destFilePath}\". Exception=[{ex2}]", Logger.LogLevel.ERROR); }
+                                if (File.Exists(destFilePath) && string.Compare(Path.GetFileName(destFilePath).ToLowerInvariant(), "export_profiles.json", StringComparison.InvariantCulture) == 0)
+                                    ReplaceFolderPathInExportProfilesFile(configFile, destFilePath);
+                            }
+                        }
+
+                bool restartFailed = false;
+                try { restartFailed = RestartASI(); }
+                catch { restartFailed = true; }
+                if (restartFailed)
+                {
+                    // Try shutdown app if restart failed.
+                    try { App.Current.Exit(); }
+                    catch { MainWindow.ShowToast($"{ASILang.Get("UnableToRestartASI")} {ASILang.Get("PleaseRestartASIManually")}", BackgroundColor.ERROR, 6000); }
+                }
+            }
+            try { File.WriteAllText(Utils.DontReimportPreviousDataFilePath(), "1", Encoding.UTF8); }
+            catch { }
+            CloseReimportPreviousDataPopup();
+        }
+
+        private void btn_DontReimportPreviousData_Click(object sender, RoutedEventArgs e) => CloseReimportPreviousDataPopup();
+
+        private void btn_NeverReimportPreviousData_Click(object sender, RoutedEventArgs e)
+        {
+            try { File.WriteAllText(Utils.DontReimportPreviousDataFilePath(), "1", Encoding.UTF8); }
+            catch { }
+            CloseReimportPreviousDataPopup();
         }
     }
 

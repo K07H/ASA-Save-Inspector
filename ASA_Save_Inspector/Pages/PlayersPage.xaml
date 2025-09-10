@@ -278,8 +278,8 @@
                             <TextBox x:Name="tb_FilterByOther" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,5,0,0" Text="" TextChanged="tb_FilterByOther_TextChanged"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToPlayerFilters" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Width="90" Click="btn_AddToPlayerFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Width="90" Click="btn_ClosePlayerFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                            <Button x:Name="btn_AddToPlayerFilters" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToPlayerFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_ClosePlayerFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -299,8 +299,8 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFilters'), Mode=OneWay}" Width="170" Click="btn_RemoveAllPlayerFilters_Click" FontSize="18" />
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseEditPlayerFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
+                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFilters'), Mode=OneWay}" Click="btn_RemoveAllPlayerFilters_Click" FontSize="18" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditPlayerFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -320,7 +320,7 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseModifyColumnsPopup_Click" FontSize="18" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseModifyColumnsPopup_Click" FontSize="18" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -338,7 +338,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                             <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentFilters" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentFilters" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
@@ -350,11 +350,11 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadFiltersPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveFiltersPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadFiltersPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveFiltersPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -372,7 +372,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                             <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_ColumnsPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_ColumnsPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentColumns" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentColumns" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
@@ -384,11 +384,11 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -425,8 +425,8 @@
                             </DropDownButton>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToPlayerFiltersGroup" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Width="90" Click="btn_AddToPlayerFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Width="90" Click="btn_ClosePlayerFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
+                            <Button x:Name="btn_AddToPlayerFiltersGroup" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToPlayerFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
+                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_ClosePlayerFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -446,8 +446,8 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFiltersPresetsFromGroup'), Mode=OneWay}" Width="290" Click="btn_RemoveAllPlayerFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseEditPlayerFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
+                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFiltersPresetsFromGroup'), Mode=OneWay}" Click="btn_RemoveAllPlayerFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditPlayerFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -465,7 +465,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                             <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_GroupPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_GroupPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentGroup" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SaveCurrentGroup" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
@@ -477,11 +477,11 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadGroupPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_LoadGroupPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveGroupPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Width="80" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_LoadGroupPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadGroupPreset_Click" FontSize="16" />
+                            <Button x:Name="btn_RemoveGroupPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Width="80" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
+                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
