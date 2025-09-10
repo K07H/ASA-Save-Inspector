@@ -25,6 +25,7 @@ namespace ASA_Save_Inspector.Pages
         public int ID { get; set; } = -1;
         public string SaveFilePath { get; set; } = string.Empty;
         public string MapName { get; set; } = string.Empty;
+        public string ExtractName { get; set; } = string.Empty;
         public DateTime CreationDate { get; set; } = DateTime.Now;
         public bool ExtractedDinos { get; set; } = false;
         public bool ExtractedPlayerPawns { get; set; } = false;
@@ -34,9 +35,9 @@ namespace ASA_Save_Inspector.Pages
         public bool ExtractedTribes { get; set; } = false;
         public bool FastExtract { get; set; } = false;
 
-        public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
+        public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)}{(string.IsNullOrWhiteSpace(ExtractName) ? string.Empty : $" - {ExtractName}")} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
         public string GetExportFolderName() => (Directory.Exists(SaveFilePath) ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
-        public override string ToString() => $"{ASILang.Get("Map")}: {(MapName ?? "")}, {ASILang.Get("Path")}: \"{(SaveFilePath ?? "")}\", {ASILang.Get("FilePath")}: {(ExtractedDinos ? $"{ASILang.Get("Dinos")}," : "")}{(ExtractedPlayerPawns ? $"{ASILang.Get("Pawns")}," : "")}{(ExtractedItems ? $"{ASILang.Get("Items")}," : "")}{(ExtractedStructures ? $"{ASILang.Get("Structures")}," : "")}{(ExtractedPlayers ? $"{ASILang.Get("Players")}," : "")}{(ExtractedTribes ? $"{ASILang.Get("Tribes")}," : "")}";
+        public override string ToString() => $"{ASILang.Get("Name")}:{(ExtractName ?? "")}, {ASILang.Get("Map")}: {(MapName ?? "")}, {ASILang.Get("Path")}: \"{(SaveFilePath ?? "")}\", {ASILang.Get("FilePath")}: {(ExtractedDinos ? $"{ASILang.Get("Dinos")}," : "")}{(ExtractedPlayerPawns ? $"{ASILang.Get("Pawns")}," : "")}{(ExtractedItems ? $"{ASILang.Get("Items")}," : "")}{(ExtractedStructures ? $"{ASILang.Get("Structures")}," : "")}{(ExtractedPlayers ? $"{ASILang.Get("Players")}," : "")}{(ExtractedTribes ? $"{ASILang.Get("Tribes")}," : "")}";
     }
 
     public class JsonExportPreset
@@ -504,6 +505,7 @@ namespace ASA_Save_Inspector.Pages
             AsaSaveFilePathChanged();
             MapNameChanged();
             DataTypesSelectionChanged(_selectedJsonExportProfile);
+            tb_ExtractionName.Text = _selectedJsonExportProfile.ExtractName;
             tb_JsonDataSelect.Text = _selectedJsonExportProfile.GetLabel();
 
             btn_RemoveJsonData.Visibility = Visibility.Visible;
@@ -558,7 +560,7 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public static JsonExportProfile? FormatNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
+        public static JsonExportProfile? FormatNewJsonExportProfile(string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
             if (string.IsNullOrWhiteSpace(saveFilePath) || string.IsNullOrWhiteSpace(mapName))
                 return null;
@@ -574,6 +576,7 @@ namespace ASA_Save_Inspector.Pages
                 ID = (highestId + 1),
                 SaveFilePath = saveFilePath,
                 MapName = mapName,
+                ExtractName = (string.IsNullOrWhiteSpace(extractName) ? string.Empty :  extractName),
                 CreationDate = DateTime.Now,
                 ExtractedDinos = extractDinos,
                 ExtractedPlayerPawns = extractPlayerPawns,
@@ -585,9 +588,9 @@ namespace ASA_Save_Inspector.Pages
             };
         }
 
-        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
+        public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
-            JsonExportProfile? p = FormatNewJsonExportProfile(saveFilePath, mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+            JsonExportProfile? p = FormatNewJsonExportProfile(saveFilePath, mapName, extractName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
             if (p == null)
                 return null;
 
@@ -779,14 +782,15 @@ namespace ASA_Save_Inspector.Pages
                     else if (found.Key == "tribes.json")
                         cb_foundTribes.IsChecked = true;
                 }
-            tb_FolderMapNameSelect.Text = ASILang.Get("Click here...");
+            tb_FolderExtractionName.Text = string.Empty;
+            tb_FolderMapNameSelect.Text = ASILang.Get("ClickHere");
             if (!JsonFolderSelectedPopup.IsOpen)
                 JsonFolderSelectedPopup.IsOpen = true;
         }
 
         private void ValidateJsonFolderSelectedClicked(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_mapName) || tb_FolderMapNameSelect.Text == ASILang.Get("Click here..."))
+            if (string.IsNullOrWhiteSpace(_mapName) || tb_FolderMapNameSelect.Text == ASILang.Get("ClickHere"))
             {
                 Logger.Instance.Log(ASILang.Get("CannotGetJsonData_IncorrectMapName"), Logger.LogLevel.WARNING);
                 MainWindow.ShowToast(ASILang.Get("CannotGetJsonData_IncorrectMapName"), BackgroundColor.WARNING);
@@ -807,7 +811,7 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            JsonExportProfile? jep = AddNewJsonExportProfile(_jsonDataFolderPath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
+            JsonExportProfile? jep = AddNewJsonExportProfile(_jsonDataFolderPath, _mapName, tb_FolderExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
             if (jep == null)
             {
                 Logger.Instance.Log(ASILang.Get("CannotGetJsonData_JsonExportProfileCreationFailed"), Logger.LogLevel.ERROR);
@@ -900,7 +904,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS4014
 
         private bool _isExtracting = false;
-        private async Task DoExtract(bool useJsonResultTb, string? saveFilePath, string? mapName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
+        private async Task DoExtract(bool useJsonResultTb, string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
         {
             if (string.IsNullOrWhiteSpace(saveFilePath) || !File.Exists(saveFilePath))
             {
@@ -952,6 +956,7 @@ namespace ASA_Save_Inspector.Pages
                 _isExtracting = true;
                 ret = await PythonManager.RunArkParse(saveFilePath,
                     mapName,
+                    extractName,
                     extractDinos,
                     extractPlayerPawns,
                     extractItems,
@@ -988,7 +993,7 @@ namespace ASA_Save_Inspector.Pages
 
             bool fastExtract = string.Compare(tb_ExtractionType.Text, ASILang.Get("ExtractType_Legacy"), StringComparison.InvariantCulture) != 0;
 
-            await DoExtract(true, _asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+            await DoExtract(true, _asaSaveFilePath, _mapName, tb_ExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
         }
 
         public void CloseArkParserPopupClicked(object sender, RoutedEventArgs e)
@@ -1531,7 +1536,7 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            JsonExportProfile? p = FormatNewJsonExportProfile(_asaSaveFilePath, _mapName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
+            JsonExportProfile? p = FormatNewJsonExportProfile(_asaSaveFilePath, _mapName, tb_ExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, true);
             if (p == null)
             {
                 MainWindow.ShowToast(ASILang.Get("ExtractPreset_FailedToFormatExtractProfile"), BackgroundColor.WARNING);
@@ -1698,6 +1703,7 @@ namespace ASA_Save_Inspector.Pages
                     await DoExtract(false,
                         extractions[i].Key.SaveFilePath,
                         extractions[i].Key.MapName,
+                        extractions[i].Key.ExtractName,
                         extractions[i].Key.ExtractedDinos,
                         extractions[i].Key.ExtractedPlayerPawns,
                         extractions[i].Key.ExtractedItems,
@@ -1758,7 +1764,11 @@ namespace ASA_Save_Inspector.Pages
                                         break;
                                     }
                                 if (doAdd)
+                                {
+                                    if (string.IsNullOrWhiteSpace(jep.ExtractName) && !string.IsNullOrWhiteSpace(preset.Name))
+                                        jep.ExtractName = preset.Name;
                                     toExtract.Add(new KeyValuePair<JsonExportProfile, bool>(jep, false));
+                                }
                             }
                         if (toExtract.Count > 0)
                         {

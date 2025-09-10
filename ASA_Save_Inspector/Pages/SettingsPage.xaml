@@ -218,6 +218,8 @@
                                 </DropDownButton.Flyout>
                             </DropDownButton>
                             <TextBlock Text="{x:Bind asi:ASILang.Get('ExtractType_Description'), Mode=OneWay}" TextWrapping="WrapWholeWords" FontSize="14" FontStyle="Italic" Margin="0,5,0,0"/>
+                            <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExtractName'), Mode=OneWay}"/>:</TextBlock>
+                            <TextBox x:Name="tb_ExtractionName" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" MinWidth="250" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="0,5,0,0"/>
                             <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('JsonDataSelection'), Mode=OneWay}"/>:</TextBlock>
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -282,6 +284,8 @@
                             <CheckBox x:Name="cb_foundPlayers" Grid.Row="2" Grid.Column="0" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Players'), Mode=OneWay}"/>
                             <CheckBox x:Name="cb_foundTribes" Grid.Row="2" Grid.Column="1" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Tribes'), Mode=OneWay}"/>
                         </Grid>
+                        <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExtractName'), Mode=OneWay}"/>:</TextBlock>
+                        <TextBox x:Name="tb_FolderExtractionName" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" MinWidth="250" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="0,5,0,0"/>
                         <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton x:Name="ddb_FolderMapName" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                             <TextBlock x:Name="tb_FolderMapNameSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
