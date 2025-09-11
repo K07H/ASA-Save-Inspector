@@ -29,7 +29,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 1000;
+        private const int MAX_PROPERTY_VALUES = 75;
 
         #endregion
 
@@ -56,8 +56,6 @@ namespace ASA_Save_Inspector.Pages
 
         private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
-        public static string IncludeVariablesWithMoreThanNValues => ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
-
         // Map name, save file datetime and in-game datetime.
         public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
         public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
@@ -80,6 +78,8 @@ namespace ASA_Save_Inspector.Pages
 
         private List<JsonGroupPreset> _groupPresets = new List<JsonGroupPreset>();
         private JsonGroupPreset? _selectedGroupPreset = null;
+
+        private List<string> _propertiesWithManyValues = new List<string>(DinoUtils.DoNotCheckPropertyValuesAmount);
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -164,9 +164,6 @@ namespace ASA_Save_Inspector.Pages
                         _selectedColumns.Add(c);
                 _setDefaultSelectedColumns = true;
             }
-
-            // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = IncludeVariablesWithMoreThanNValues;
 
             // Grab dinos data from settings if not set.
             if (_lastDisplayed == null)
@@ -659,6 +656,8 @@ namespace ASA_Save_Inspector.Pages
                         mfi_FilterByLowerThan.Visibility = Visibility.Collapsed;
                         mfi_FilterByGreaterThan.Visibility = Visibility.Collapsed;
                     }
+                    if (_propertiesWithManyValues.Contains(propName))
+                        mfi_FilterByExactMatch.Visibility = Visibility.Collapsed;
                 }
             }
         }
@@ -687,7 +686,6 @@ namespace ASA_Save_Inspector.Pages
 
         private void FillPropertiesDropDown()
         {
-            bool includePropertiesWithManyValues = (cb_IncludePropertiesWithManyValues.IsChecked != null && cb_IncludePropertiesWithManyValues.IsChecked.HasValue && cb_IncludePropertiesWithManyValues.IsChecked.Value);
             var dinoProperties = typeof(Dino).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             if (dinoProperties != null && dinoProperties.Count() > 0)
             {
@@ -695,17 +693,28 @@ namespace ASA_Save_Inspector.Pages
                 List<string> toAdd = new List<string>();
                 foreach (var dinoProperty in dinoProperties)
                 {
-                    if (includePropertiesWithManyValues || !Utils.PropertyHasMoreValuesThan(SettingsPage._dinosData, dinoProperty, MAX_PROPERTY_VALUES))
-                    {
-                        string propName = dinoProperty.Name;
-                        if (propName != null)
+                    // Check amount of values for current property (to know if ExactMatch filter can be used or not).
+                    if (Utils.DoCheckForPropertyValuesAmount)
+                        if (!DinoUtils.DoNotCheckPropertyValuesAmount.Contains(dinoProperty.Name))
                         {
-                            string? cleanName = DinoUtils.GetCleanNameFromPropertyName(propName);
-                            if (cleanName != null)
+                            if (Utils.PropertyHasMoreValuesThan(SettingsPage._dinosData, dinoProperty, MAX_PROPERTY_VALUES))
                             {
-                                toAdd.Add(cleanName);
-                                propNames[cleanName] = propName;
+                                Logger.Instance.Log($"Found property with many values: {dinoProperty.Name}", Logger.LogLevel.DEBUG);
+                                if (!_propertiesWithManyValues.Contains(dinoProperty.Name))
+                                    _propertiesWithManyValues.Add(dinoProperty.Name);
                             }
+                            else if (dinoProperty.Name.Contains("Time", StringComparison.InvariantCultureIgnoreCase))
+                                Logger.Instance.Log($"Found property with \"time\": {dinoProperty.Name}", Logger.LogLevel.DEBUG);
+                        }
+                    // Add current property.
+                    string propName = dinoProperty.Name;
+                    if (propName != null)
+                    {
+                        string? cleanName = DinoUtils.GetCleanNameFromPropertyName(propName);
+                        if (cleanName != null)
+                        {
+                            toAdd.Add(cleanName);
+                            propNames[cleanName] = propName;
                         }
                     }
                 }

@@ -120,7 +120,7 @@
             <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:StructuresPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
             <TextBlock x:Name="tb_InGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('InGameDatetime'), Mode=OneWay}"/>: <Run x:Name="run_InGameDatetime" Text="{x:Bind local:StructuresPage.InGameDatetime, Mode=OneWay}"/></TextBlock>
         </StackPanel>
-        <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,5">
+        <Grid x:Name="sp_SortAndFilters" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,0,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -181,6 +181,7 @@
                            Sorting="dg_Structures_Sorting"
                            PointerReleased="dg_Structures_PointerReleased"
                            SelectionChanged="dg_Structures_SelectionChanged"
+                           Margin="0,0,0,20"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
             <controls:DataGrid.Resources>
@@ -215,8 +216,7 @@
                         BorderThickness="2" CornerRadius="4" Margin="20" 
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <CheckBox x:Name="cb_IncludePropertiesWithManyValues" Checked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Unchecked="cb_IncludePropertiesWithManyValues_CheckedUnchecked" Content="{x:Bind local:StructuresPage.IncludeVariablesWithMoreThanNValues, Mode=OneWay}" IsChecked="False" VerticalAlignment="Center" HorizontalAlignment="Left" />
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
                             <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
                             <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
                                 <TextBlock x:Name="tb_StructureFilterOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>

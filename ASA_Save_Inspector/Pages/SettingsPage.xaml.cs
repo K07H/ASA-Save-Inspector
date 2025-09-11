@@ -1026,6 +1026,62 @@ namespace ASA_Save_Inspector.Pages
         private void mfi_JsonDataManual_Click(object sender, RoutedEventArgs e) => OpenJSONDataFolderPicker();
 #pragma warning restore CS4014
 
+
+        private List<T> DeserializeJsonObjects<T>(string filepath, ref bool hasErrors)
+        {
+            List<T> result = new List<T>();
+
+            if (!File.Exists(filepath))
+            {
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", $"\"{filepath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                hasErrors = true;
+            }
+            else
+            {
+                try
+                {
+                    string objBegin = "    {";
+                    string objEnd = "    }";
+                    string currentObj = string.Empty;
+                    using (FileStream fs = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        using (BufferedStream bs = new BufferedStream(fs))
+                        {
+                            using (StreamReader sr = new StreamReader(bs))
+                            {
+                                string? line;
+                                while ((line = sr.ReadLine()) != null)
+                                {
+                                    if (line == objBegin)
+                                        currentObj = "{\r\n";
+                                    else if (line.StartsWith(objEnd))
+                                    {
+                                        try
+                                        {
+                                            T? obj = JsonSerializer.Deserialize<T>(currentObj + "\r\n}");
+                                            if (obj != null)
+                                                result.Add(obj);
+                                        }
+                                        catch { }
+                                        currentObj = string.Empty;
+                                    }
+                                    else if (currentObj.Length > 0)
+                                        currentObj += line;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    hasErrors = true;
+                }
+            }
+
+            return result;
+        }
+
         private void btn_LoadJsonData_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedJsonExportProfile == null)
@@ -1085,136 +1141,22 @@ namespace ASA_Save_Inspector.Pages
             }
 
             if (_selectedJsonExportProfile.ExtractedDinos)
-            {
-                string dinosFilePath = Path.Combine(folderPath, "dinos.json");
-                if (!File.Exists(dinosFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_DinosFileNotFound").Replace("#FILEPATH#", $"\"{dinosFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _dinosData = JsonSerializer.Deserialize<List<Dino>>(File.ReadAllText(dinosFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_DinosFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _dinosData = DeserializeJsonObjects<Dino>(Path.Combine(folderPath, "dinos.json"), ref hasErrors);
 
             if (_selectedJsonExportProfile.ExtractedPlayerPawns)
-            {
-                string playerPawnsFilePath = Path.Combine(folderPath, "player_pawns.json");
-                if (!File.Exists(playerPawnsFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PawnsFileNotFound").Replace("#FILEPATH#", $"\"{playerPawnsFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _playerPawnsData = JsonSerializer.Deserialize<List<PlayerPawn>>(File.ReadAllText(playerPawnsFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PawnsFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _playerPawnsData = DeserializeJsonObjects<PlayerPawn>(Path.Combine(folderPath, "player_pawns.json"), ref hasErrors);
 
             if (_selectedJsonExportProfile.ExtractedItems)
-            {
-                string itemsFilePath = Path.Combine(folderPath, "items.json");
-                if (!File.Exists(itemsFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_ItemsFileNotFound").Replace("#FILEPATH#", $"\"{itemsFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _itemsData = JsonSerializer.Deserialize<List<Item>>(File.ReadAllText(itemsFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_ItemsFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _itemsData = DeserializeJsonObjects<Item>(Path.Combine(folderPath, "items.json"), ref hasErrors);
 
             if (_selectedJsonExportProfile.ExtractedItems)
-            {
-                string structuresFilePath = Path.Combine(folderPath, "structures.json");
-                if (!File.Exists(structuresFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_StructuresFileNotFound").Replace("#FILEPATH#", $"\"{structuresFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _structuresData = JsonSerializer.Deserialize<List<Structure>>(File.ReadAllText(structuresFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_StructuresFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _structuresData = DeserializeJsonObjects<Structure>(Path.Combine(folderPath, "structures.json"), ref hasErrors);
 
             if (_selectedJsonExportProfile.ExtractedPlayers)
-            {
-                string playersFilePath = Path.Combine(folderPath, "players.json");
-                if (!File.Exists(playersFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PlayersFileNotFound").Replace("#FILEPATH#", $"\"{playersFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _playersData = JsonSerializer.Deserialize<List<Player>>(File.ReadAllText(playersFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_PlayersFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _playersData = DeserializeJsonObjects<Player>(Path.Combine(folderPath, "players.json"), ref hasErrors);
 
             if (_selectedJsonExportProfile.ExtractedTribes)
-            {
-                string tribesFilePath = Path.Combine(folderPath, "tribes.json");
-                if (!File.Exists(tribesFilePath))
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_TribesFileNotFound").Replace("#FILEPATH#", $"\"{tribesFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                    hasErrors = true;
-                }
-                else
-                {
-                    try
-                    {
-                        _tribesData = JsonSerializer.Deserialize<List<Tribe>>(File.ReadAllText(tribesFilePath, Encoding.UTF8));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_TribesFileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                        hasErrors = true;
-                    }
-                }
-            }
+                _tribesData = DeserializeJsonObjects<Tribe>(Path.Combine(folderPath, "tribes.json"), ref hasErrors);
 
             if (_dinosData != null && _dinosData.Count > 0)
                 foreach (var dinoData in _dinosData)

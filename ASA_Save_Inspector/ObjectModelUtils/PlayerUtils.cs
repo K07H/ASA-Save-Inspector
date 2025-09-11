@@ -77,6 +77,31 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "CraftingSpeed", "Craft speed" },
         };
 
+        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
+        {
+            "BodyColors",
+            "DynamicMaterialBytes",
+            "ExperiencePoints",
+            "LastTimeDiedToEnemyTeam",
+            "LastTimeDiedToEnemyTeamReadable",
+            "Level",
+            "LoginTime",
+            "LoginTimeReadable",
+            "NumOfDeaths",
+            "PercentageOfFacialHairGrowth",
+            "PerMapExplorerNoteUnlocks",
+            "PlayerCharacterName",
+            "PlayerDataID",
+            "PlayerName",
+            "PlayerState_EngramBlueprints",
+            "PlayerState_TotalEngramPoints",
+            "RawBoneModifiers",
+            "SavedNetworkAddress",
+            "TribeID",
+            "TribeName",
+            "UniqueID",
+        };
+
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
         public static string? GetPropertyNameFromCleanName(string? cleanName) => Utils.GetPropertyNameFromCleanName(CleanNames, cleanName);
     }

@@ -30,7 +30,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 1000;
+        private const int MAX_PROPERTY_VALUES = 75;
 
         #endregion
 
@@ -57,8 +57,6 @@ namespace ASA_Save_Inspector.Pages
 
         private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
-        public static string IncludeVariablesWithMoreThanNValues => ASILang.Get("IncludeVariablesWithMoreThanNValues").Replace("#VALUES_AMOUNT#", $"{MAX_PROPERTY_VALUES.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCulture);
-
         // Map name, save file datetime and in-game datetime.
         public static string MapName => (SettingsPage._currentlyLoadedMapName ?? ASILang.Get("Unknown"));
         public static string SaveGameDatetime => (Utils.GetSaveFileDateTimeStr() ?? ASILang.Get("UnknownDate"));
@@ -81,6 +79,8 @@ namespace ASA_Save_Inspector.Pages
 
         private List<JsonGroupPreset> _groupPresets = new List<JsonGroupPreset>();
         private JsonGroupPreset? _selectedGroupPreset = null;
+
+        private List<string> _propertiesWithManyValues = new List<string>(ItemUtils.DoNotCheckPropertyValuesAmount);
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -165,9 +165,6 @@ namespace ASA_Save_Inspector.Pages
                         _selectedColumns.Add(c);
                 _setDefaultSelectedColumns = true;
             }
-
-            // Set "Include Properties With Many Values" checkbox label.
-            cb_IncludePropertiesWithManyValues.Content = IncludeVariablesWithMoreThanNValues;
 
             // Grab items data from settings if not set.
             if (_lastDisplayed == null)
@@ -648,6 +645,8 @@ namespace ASA_Save_Inspector.Pages
                         mfi_FilterByLowerThan.Visibility = Visibility.Collapsed;
                         mfi_FilterByGreaterThan.Visibility = Visibility.Collapsed;
                     }
+                    if (_propertiesWithManyValues.Contains(propName))
+                        mfi_FilterByExactMatch.Visibility = Visibility.Collapsed;
                 }
             }
         }
@@ -685,7 +684,6 @@ namespace ASA_Save_Inspector.Pages
                 _selectedItemFilter_Values.Clear();
             RefreshSelectedItemFilterValues();
 
-            bool includePropertiesWithManyValues = (cb_IncludePropertiesWithManyValues.IsChecked != null && cb_IncludePropertiesWithManyValues.IsChecked.HasValue && cb_IncludePropertiesWithManyValues.IsChecked.Value);
             var itemProperties = typeof(Item).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             if (itemProperties != null && itemProperties.Count() > 0)
             {
@@ -693,17 +691,28 @@ namespace ASA_Save_Inspector.Pages
                 List<string> toAdd = new List<string>();
                 foreach (var itemProperty in itemProperties)
                 {
-                    if (includePropertiesWithManyValues || !Utils.PropertyHasMoreValuesThan(SettingsPage._itemsData, itemProperty, MAX_PROPERTY_VALUES))
-                    {
-                        string propName = itemProperty.Name;
-                        if (propName != null)
+                    // Check amount of values for current property (to know if ExactMatch filter can be used or not).
+                    if (Utils.DoCheckForPropertyValuesAmount)
+                        if (!ItemUtils.DoNotCheckPropertyValuesAmount.Contains(itemProperty.Name))
                         {
-                            string? cleanName = ItemUtils.GetCleanNameFromPropertyName(propName);
-                            if (cleanName != null)
+                            if (Utils.PropertyHasMoreValuesThan(SettingsPage._itemsData, itemProperty, MAX_PROPERTY_VALUES))
                             {
-                                toAdd.Add(cleanName);
-                                propNames[cleanName] = propName;
+                                Logger.Instance.Log($"Found property with many values: {itemProperty.Name}", Logger.LogLevel.DEBUG);
+                                if (!_propertiesWithManyValues.Contains(itemProperty.Name))
+                                    _propertiesWithManyValues.Add(itemProperty.Name);
                             }
+                            else if (itemProperty.Name.Contains("Time", StringComparison.InvariantCultureIgnoreCase))
+                                Logger.Instance.Log($"Found property with \"time\": {itemProperty.Name}", Logger.LogLevel.DEBUG);
+                        }
+                    // Add current property.
+                    string propName = itemProperty.Name;
+                    if (propName != null)
+                    {
+                        string? cleanName = ItemUtils.GetCleanNameFromPropertyName(propName);
+                        if (cleanName != null)
+                        {
+                            toAdd.Add(cleanName);
+                            propNames[cleanName] = propName;
                         }
                     }
                 }

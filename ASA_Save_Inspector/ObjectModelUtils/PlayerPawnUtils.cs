@@ -47,6 +47,18 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "MapCoords", "Map coords" },
         };
 
+        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
+        {
+            "LastEnterStasisTime",
+            "LastEnterStasisTimeReadable",
+            "LastTimeUpdatedCharacterStatusComponent",
+            "LastTimeUpdatedCharacterStatusComponentReadable",
+            "OriginalCreationTime",
+            "OriginalCreationTimeReadable",
+            "SavedLastTimeHadController",
+            "SavedLastTimeHadControllerReadable",
+        };
+
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
         public static string? GetPropertyNameFromCleanName(string? cleanName) => Utils.GetPropertyNameFromCleanName(CleanNames, cleanName);
     }

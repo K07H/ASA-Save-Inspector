@@ -20,6 +20,11 @@ namespace ASA_Save_Inspector
     internal static class Utils
     {
         private static Version? _version = null;
+#if DEBUG
+        public static bool DoCheckForPropertyValuesAmount = true;
+#else
+        public static bool DoCheckForPropertyValuesAmount = false;
+#endif
 
         public static readonly string ASILatestVersionUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest";
         public static readonly string ASIArchiveUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest/download/ASA_Save_Inspector_vVERSIONSTR_WinX64.zip";
@@ -516,19 +521,49 @@ namespace ASA_Save_Inspector
             return retval;
         }
 
-        public static bool PropertyHasMoreValuesThan(IEnumerable<object?>? objs, PropertyInfo? property, int maxValues = -1)
+        private const int MAX_OBJECTS_TO_CHECK = 500;
+
+        public static bool PropertyHasMoreValuesThan(IEnumerable<object?>? objs, PropertyInfo? property, int maxValues)
         {
-            if (objs == null || objs.Count() <= 0 || property == null)
+            if (objs == null || property == null || maxValues <= 0)
+                return false;
+            int nbObjs = objs.Count();
+            if (nbObjs <= 0)
                 return false;
             List<string> result = new List<string>();
-            foreach (var obj in objs)
+
+            // Check first MAX_OBJECTS_TO_CHECK objects.
+            for (int i = 0; i < nbObjs && i < MAX_OBJECTS_TO_CHECK; i++)
+            {
+                var obj = objs.ElementAt(i);
                 if (obj != null)
                 {
                     string? propValue = GetPropertyValueForObject(property, obj);
                     if (propValue != null && !result.Contains(propValue))
                         result.Add(propValue);
                     if (maxValues > 0 && result.Count > maxValues)
+                    {
+                        result.Clear();
                         return true;
+                    }
+                }
+            }
+            // Check last MAX_OBJECTS_TO_CHECK objects.
+            if (nbObjs > (MAX_OBJECTS_TO_CHECK * 2))
+                for (int j = (nbObjs - MAX_OBJECTS_TO_CHECK - 1); j < nbObjs; j++)
+                {
+                    var obj = objs.ElementAt(j);
+                    if (obj != null)
+                    {
+                        string? propValue = GetPropertyValueForObject(property, obj);
+                        if (propValue != null && !result.Contains(propValue))
+                            result.Add(propValue);
+                        if (maxValues > 0 && result.Count > maxValues)
+                        {
+                            result.Clear();
+                            return true;
+                        }
+                    }
                 }
             result.Clear();
             return false;

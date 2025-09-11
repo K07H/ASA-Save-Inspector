@@ -41,6 +41,18 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "TribeMembers", "Members" },
         };
 
+        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
+        {
+            "LogIndex",
+            "MembersPlayerDataID",
+            "MembersPlayerName",
+            "OwnerPlayerDataId",
+            "TribeID",
+            "TribeLog",
+            "TribeMembers",
+            "TribeName",
+        };
+
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
         public static string? GetPropertyNameFromCleanName(string? cleanName) => Utils.GetPropertyNameFromCleanName(CleanNames, cleanName);
     }
