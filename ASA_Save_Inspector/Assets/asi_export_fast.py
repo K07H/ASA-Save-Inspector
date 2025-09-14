@@ -48,15 +48,15 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/AstraeosCreatures/AstraeosCreatures_Singleto
                                   "/DinoTamedInventoryComponent_",
                                   "/DinoWildInventoryComponent_", ]
 
-BLUEPRINTS_NO_PARSE: list[str] = [ "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
-                                   "/AI/",
-                                   "_AIController",
-                                   "/DinoCharacterStatus_BP",
-                                   "DinoCharacterStatusComponent_",
-                                   "DinoCharacterStatusComponent_BP",
-                                   "/PlayerCharacterStatusComponent_BP",
-                                   "/Buffs/",
-                                   "DayCycle" ]
+BLUEPRINTS_NO_EXPORT: list[str] = [ "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
+                                    "/AI/",
+                                    "_AIController",
+                                    "/DinoCharacterStatus_BP",
+                                    "DinoCharacterStatusComponent_",
+                                    "DinoCharacterStatusComponent_BP",
+                                    "/PlayerCharacterStatusComponent_BP",
+                                    "/Buffs/",
+                                    "DayCycle" ]
 
 def is_in_str(search_for: list[str], search_in: str) -> bool:
     if search_in is None or len(search_in) <= 0 or search_for is None or len(search_for) <= 0:
@@ -67,7 +67,7 @@ def is_in_str(search_for: list[str], search_in: str) -> bool:
     return False
 
 def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
         return False
     if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dinos/" in blueprint or "Creature" in blueprint):
         return True
@@ -85,7 +85,7 @@ def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
     return False
 
 def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
         return False
     if "/Structures" in blueprint \
             or "/GigantoraptorNest" in blueprint \
@@ -110,7 +110,7 @@ def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> 
     return False
 
 def is_item_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_PARSE, blueprint):
+    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
         return False
     if "/DroppedItemGeneric" in blueprint or \
             "Egg_Wyvern_Fertilized" in blueprint or \
@@ -210,7 +210,7 @@ def get_tribe_offsets_process(arg_obj): # parsing_data: PlayersAndTribesParsing)
 
     tribe_pointers: OrderedDict[uuid.UUID, list] = OrderedDict()
 
-    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"], print_findings=False)
+    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"])
 
     for pos in positions:
         arg_obj["data"].set_position(pos - 20)
@@ -234,7 +234,7 @@ def get_player_offsets_process(arg_obj): # parsing_data: PlayersAndTribesParsing
     player_pointers: OrderedDict[uuid.UUID, list] = OrderedDict()
     pattern = bytes([0x4E, 0x6F, 0x6E, 0x65])
 
-    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"], print_findings=False)
+    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"])
 
     for cnt, pos in enumerate(positions):
         # Get ID
@@ -499,7 +499,7 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
                         all_structures.append(structure)
                     elif __debug__:
                         failed_parsing.append(f"Structure {obj.uuid} with class {obj.blueprint}.")
-                elif not is_in_str(BLUEPRINTS_NO_PARSE, obj.blueprint):
+                elif not is_in_str(BLUEPRINTS_NO_EXPORT, obj.blueprint):
                     if __debug__ and obj.blueprint not in unknown_bps:
                         unknown_bps.append(obj.blueprint)
                         print(f"Unknown object {obj.uuid} with class {obj.blueprint}.", flush=True)
@@ -840,9 +840,9 @@ if __name__ == '__main__':
             custom_bps_structures = parsed_custom_bps[2]
         except Exception:
             print(f"Failed to decode custom blueprints: {sys.argv[9]}", flush=True)
-    
+
     '''
-    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps2\\TheIsland\\TheIsland_WP.ark")
+    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps2\\StvTheIsland\\TheIsland_WP.ark")
     export_path: Path = Path.cwd() / "json_exports" / "Ragnarok"
     export_dinos: bool = True
     export_pawns: bool = True
