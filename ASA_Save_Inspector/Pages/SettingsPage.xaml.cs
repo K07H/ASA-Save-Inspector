@@ -991,7 +991,7 @@ namespace ASA_Save_Inspector.Pages
             bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
             bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
 
-            bool fastExtract = string.Compare(tb_ExtractionType.Text, ASILang.Get("ExtractType_Legacy"), StringComparison.InvariantCulture) != 0;
+            bool fastExtract = true; // string.Compare(tb_ExtractionType.Text, ASILang.Get("ExtractType_Legacy"), StringComparison.InvariantCulture) != 0;
 
             await DoExtract(true, _asaSaveFilePath, _mapName, tb_ExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
         }
@@ -1265,9 +1265,11 @@ namespace ASA_Save_Inspector.Pages
                 ConfirmJsonExportRemovalPopup.IsOpen = false;
         }
 
+        /*
         private void mfi_ExtractFast_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = ASILang.Get("ExtractType_Fast");
 
         private void mfi_ExtractLegacy_Click(object sender, RoutedEventArgs e) => tb_ExtractionType.Text = ASILang.Get("ExtractType_Legacy");
+        */
 
         #region Extraction presets
 

@@ -8,10 +8,11 @@ from multiprocessing import Queue, Process
 from pathlib import Path
 from typing import Optional, OrderedDict
 
-from arkparse import AsaSave, ArkTribe
+from arkparse import AsaSave
 from arkparse.api.json_api import JsonApi
+from arkparse.ark_tribe import ArkTribe
 from arkparse.logging import ArkSaveLogger
-from arkparse.object_model import ArkGameObject
+from arkparse.object_model.ark_game_object import ArkGameObject
 from arkparse.object_model.cryopods.cryopod import Cryopod
 from arkparse.object_model.dinos import Dino, TamedDino, Baby, TamedBaby
 from arkparse.object_model.structures import Structure, StructureWithInventory

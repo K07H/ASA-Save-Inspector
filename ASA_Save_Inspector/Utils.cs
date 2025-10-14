@@ -253,6 +253,22 @@ namespace ASA_Save_Inspector
                     PlayableMaxZ = 655000.0
                 }
             },
+            new ArkMapInfo() { MapName = "Valguero", MinimapFilename = "Valguero_Minimap_Margin.jpg", Bounds = new MapBounds()
+                {
+                    OriginMinX = -408000.0,
+                    OriginMinY = -408000.0,
+                    OriginMinZ = -655000.0,
+                    OriginMaxX = 408000.0,
+                    OriginMaxY = 408000.0,
+                    OriginMaxZ = 54695.0,
+                    PlayableMinX = -408000.0,
+                    PlayableMinY = -408000.0,
+                    PlayableMinZ = -100000.0,
+                    PlayableMaxX = 408000.0,
+                    PlayableMaxY = 408000.0,
+                    PlayableMaxZ = 655000.0
+                }
+            },
             new ArkMapInfo() { MapName = "Astraeos", MinimapFilename = "Astraeos_Minimap_Margin.jpg", Bounds = new MapBounds()
                 {
                     OriginMinX = -800000.0,

@@ -29,6 +29,7 @@
     <Content Remove="Assets\Svartalfheim_Minimap_Margin.jpg" />
     <Content Remove="Assets\TheCenter_Minimap_Margin.jpg" />
     <Content Remove="Assets\TheIsland_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Valguero_Minimap_Margin.jpg" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="ExtraWindows\Minimap.xaml" />
@@ -68,6 +69,7 @@
     <EmbeddedResource Include="Assets\Svartalfheim_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\TheCenter_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\TheIsland_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\Valguero_Minimap_Margin.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -185,9 +187,9 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>1.0.11.0</AssemblyVersion>
-    <FileVersion>1.0.11.0</FileVersion>
-    <Version>1.0.11</Version>
+    <AssemblyVersion>1.0.12.0</AssemblyVersion>
+    <FileVersion>1.0.12.0</FileVersion>
+    <Version>1.0.12</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <NoWarn>WMC1506</NoWarn>
