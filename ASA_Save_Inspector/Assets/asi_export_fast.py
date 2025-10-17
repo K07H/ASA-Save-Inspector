@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional, OrderedDict
 
 from arkparse import AsaSave
+from arkparse.api import PlayerApi
 from arkparse.api.json_api import JsonApi
 from arkparse.ark_tribe import ArkTribe
 from arkparse.logging import ArkSaveLogger
@@ -163,184 +164,6 @@ def human_readable_time(time_in_sec : float):
         return str(minutes) + 'm' + str(seconds) + 's'
     else:
         return str(seconds) + 's'
-
-class PlayersAndTribesParsing:
-    HEADER_OFFSET_ADJUSTMENT = 4
-    TRIBE_HEADER_BASE_OFFSET = 4
-
-    # "/Script/ShooterGame.PrimalTribeData"
-    TRIBE_DATA_NAME = bytes([
-        0x2f, 0x53, 0x63, 0x72, 0x69, 0x70, 0x74, 0x2f, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x65, 0x72, 0x47,
-        0x61, 0x6d, 0x65, 0x2e, 0x50, 0x72, 0x69, 0x6d, 0x61, 0x6c, 0x54, 0x72, 0x69, 0x62, 0x65,
-        0x44, 0x61, 0x74, 0x61, 0x00
-    ])
-
-    # "Game/PrimalEarth/CoreBlueprints/PrimalPlayerDataBP.PrimalPlayerDataBP_C"
-    PLAYER_DATA_NAME = bytes([
-        0x47, 0x61, 0x6d, 0x65, 0x2f, 0x50, 0x72, 0x69, 0x6d, 0x61, 0x6c, 0x45, 0x61, 0x72, 0x74, 0x68,
-        0x2f, 0x43, 0x6f, 0x72, 0x65, 0x42, 0x6c, 0x75, 0x65, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x73, 0x2f,
-        0x50, 0x72, 0x69, 0x6d, 0x61, 0x6c, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x44, 0x61, 0x74, 0x61,
-        0x42, 0x50, 0x2e, 0x50, 0x72, 0x69, 0x6d, 0x61, 0x6c, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x44,
-        0x61, 0x74, 0x61, 0x42, 0x50, 0x5f, 0x43, 0x00
-    ])
-
-    save: AsaSave = None
-    from_store: bool = True
-    profile_paths: list[Path] = []
-    tribe_paths: list[Path] = []
-    data: ArkBinaryParser = None
-    tribe_data_pointers: OrderedDict[uuid.UUID, list] = {}
-    player_data_pointers: OrderedDict[uuid.UUID, list] = {}
-    tribes_data: dict[uuid.UUID, bytes] = {}
-    players_data: dict[uuid.UUID, bytes] = {}
-    players: dict[int, ArkPlayer] = {}
-    tribes: dict[int, ArkTribe] = {}
-    tribe_to_player_map: dict[int, list[ArkPlayer]] = {}
-
-def find_last_none_before(data: ArkBinaryParser, end_pos: int, pattern: bytes, adjust_offset: int = -1) -> Optional[int]:
-    # adjust offset is a temporary fix for off-by-one errors which i still have to figure out
-    original_position = data.get_position()
-    pos = data.byte_buffer.rfind(pattern, 0, end_pos)
-    data.set_position(original_position)
-    return None if pos == -1 else pos + adjust_offset
-
-def get_tribe_offsets_process(arg_obj): # parsing_data: PlayersAndTribesParsing) -> None:
-    # tribe_data_name: bytes = arg_obj["data_name"]
-    # data: ArkBinaryParser = arg_obj["data"]
-    # tribe_offsets_queue: Queue = arg_obj["queue"]
-
-    tribe_pointers: OrderedDict[uuid.UUID, list] = OrderedDict()
-
-    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"])
-
-    for pos in positions:
-        arg_obj["data"].set_position(pos - 20)
-        uuid_bytes = arg_obj["data"].read_bytes(16)
-        uuid_pos = arg_obj["data"].find_byte_sequence(uuid_bytes)
-        tribe_uuid = SaveConnection.byte_array_to_uuid(uuid_bytes)
-
-        offset = pos - 36
-        size = uuid_pos[1] - offset
-
-        #ArkSaveLogger.api_log(f"Tribe UUID: {tribe_uuid}, Position: {uuid_pos[0]}, Second UUID position: {uuid_pos[1]}")
-        tribe_pointers[tribe_uuid] = [uuid_bytes, offset + 1, size]
-
-    arg_obj["queue"].put(tribe_pointers)
-
-def get_player_offsets_process(arg_obj): # parsing_data: PlayersAndTribesParsing) -> None:
-    # player_data_name: bytes = arg_obj["data_name"]
-    # data: ArkBinaryParser = arg_obj["data"]
-    # player_offsets_queue: Queue = arg_obj["queue"]
-
-    player_pointers: OrderedDict[uuid.UUID, list] = OrderedDict()
-    pattern = bytes([0x4E, 0x6F, 0x6E, 0x65])
-
-    positions = arg_obj["data"].find_byte_sequence(arg_obj["data_name"])
-
-    for cnt, pos in enumerate(positions):
-        # Get ID
-        arg_obj["data"].set_position(pos - 20)
-        uuid_bytes = arg_obj["data"].read_bytes(16)
-        player_uuid = SaveConnection.byte_array_to_uuid(uuid_bytes)
-
-        offset = pos - 36
-        next_player_data = positions[cnt + 1] if cnt + 1 < len(positions) else None
-        last_none = find_last_none_before(arg_obj["data"], next_player_data, pattern)
-        if last_none is None:
-            continue
-        end_pos = last_none + 4
-        size = end_pos - offset
-
-        #ArkSaveLogger.api_log(f"Player UUID: {player_uuid}, Offset: {offset}, Size: {size}, End: {offset + size}, Next Player Data: {next_player_data}")
-        player_pointers[player_uuid] = [uuid_bytes, offset, size + 1]
-
-    arg_obj["queue"].put(player_pointers)
-
-def get_offsets_from_db(save: AsaSave, parsing_data: PlayersAndTribesParsing):
-    if save is None:
-        raise ValueError("Save not provided")
-
-    parsing_data.data = save.get_custom_value("GameModeCustomBytes")
-    if parsing_data.data is None:
-        raise ValueError("No GameModeCustomBytes found in the save data")
-
-    # Read initial flag (unused)
-    _ = parsing_data.data.read_boolean()
-
-    tribe_offsets_queue: Queue = Queue()
-    player_offsets_queue: Queue = Queue()
-    tribe_offsets_process: Process = Process(target=get_tribe_offsets_process, args=({"data_name": parsing_data.TRIBE_DATA_NAME,
-                                                                                      "data": players_and_tribes_data.data,
-                                                                                      "queue": tribe_offsets_queue},))
-    player_offsets_process: Process = Process(target=get_player_offsets_process, args=({"data_name": parsing_data.PLAYER_DATA_NAME,
-                                                                                        "data": players_and_tribes_data.data,
-                                                                                        "queue": player_offsets_queue},))
-
-    tribe_offsets_process.start()
-    player_offsets_process.start()
-
-    parsing_data.tribe_data_pointers = tribe_offsets_queue.get(timeout=300)
-    tribe_offsets_queue.close()
-    parsing_data.player_data_pointers = player_offsets_queue.get(timeout=300)
-    player_offsets_queue.close()
-
-def get_ark_tribe_raw_data(index: uuid.UUID, parsing_data: PlayersAndTribesParsing) -> Optional[bytes]:
-    pointer = parsing_data.tribe_data_pointers[index]
-    if not pointer:
-        return None
-    parsing_data.data.set_position(pointer[1])
-    return parsing_data.data.read_bytes(pointer[2])
-
-def get_ark_profile_raw_data(index: uuid.UUID, parsing_data: PlayersAndTribesParsing) -> Optional[bytes]:
-    pointer = parsing_data.player_data_pointers[index]
-    if not pointer:
-        return None
-    parsing_data.data.set_position(pointer[1])
-    return parsing_data.data.read_bytes(pointer[2]) + bytes([0x00, 0x01, 0x00, 0x00, 0x00]) + pointer[0]
-
-def get_files_from_directory(directory: Path, parsing_data: PlayersAndTribesParsing):
-    for path in directory.glob("*.arkprofile"):
-        parsing_data.profile_paths.append(path)
-    for path in directory.glob("*.arktribe"):
-        parsing_data.tribe_paths.append(path)
-
-def update_files(parsing_data: PlayersAndTribesParsing):
-    if not parsing_data.from_store:
-        index: int = 0
-        for path in parsing_data.profile_paths:
-            parsing_data.players_data[uuid.UUID(int=index)] = path.read_bytes()
-            index += 1
-        index = 0
-        for path in parsing_data.tribe_paths:
-            parsing_data.tribes_data[uuid.UUID(int=index)] = path.read_bytes()
-            index += 1
-
-    for player_uuid, player_data in parsing_data.players_data.items():
-        try:
-            parsed_player: ArkPlayer = ArkPlayer(player_data, parsing_data.from_store)
-            parsing_data.players[parsed_player.id_] = parsed_player
-        except Exception:
-            # if "Unsupported archive version" in str(e):
-            #     ArkSaveLogger.api_log(f"Skipping player data {player_uuid} due to unsupported archive version: {e}")
-            pass
-
-    for tribe_uuid, tribe_data in parsing_data.tribes_data.items():
-        try:
-            parsed_tribe: ArkTribe = ArkTribe(tribe_data, parsing_data.from_store)
-        except Exception:
-            # if "Unsupported archive version" in str(e):
-            #     ArkSaveLogger.api_log(f"Skipping player data {tribe_uuid} due to unsupported archive version: {e}")
-            continue
-
-        tribe_players = []
-        for member_id in parsed_tribe.member_ids:
-            if parsing_data.players.__contains__(member_id):
-                tribe_players.append(parsing_data.players[member_id])
-            # else:
-            #     ArkSaveLogger.api_log(f"Player with ID {member_id} not found in player list")
-
-        parsing_data.tribes[parsed_tribe.tribe_id] = parsed_tribe
-        parsing_data.tribe_to_player_map[parsed_tribe.tribe_id] = tribe_players
 
 def get_obj_for_uuid(obj_uuid: uuid.UUID, save: AsaSave):
     if obj_uuid in save.parsed_objects:
@@ -510,133 +333,12 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
 
     return { "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures, "skipped_blueprints": skipped_bps, "unknown_blueprints": unknown_bps, "failed_parsing": failed_parsing }
 
-def parse_players_and_tribes_for_process(players_data: dict[uuid.UUID, bytes], tribes_data: dict[uuid.UUID, bytes]):
-    parsed_players: dict[int, ArkPlayer] = {}
-    parsed_tribes: dict[int, ArkTribe] = {}
-    tribe_to_players_map: dict[int, list[ArkPlayer]] = {}
-
-    for player_uuid, player_data in players_data.items():
-        try:
-            parsed_player: ArkPlayer = ArkPlayer(player_data, True)
-            parsed_players[parsed_player.id_] = parsed_player
-        except Exception:
-            # if "Unsupported archive version" in str(e):
-            #     ArkSaveLogger.api_log(f"Skipping player data {player_uuid} due to unsupported archive version: {e}")
-            pass
-
-    for tribe_uuid, tribe_data in tribes_data.items():
-        try:
-            parsed_tribe: ArkTribe = ArkTribe(tribe_data, True)
-        except Exception:
-            # if "Unsupported archive version" in str(e):
-            #     ArkSaveLogger.api_log(f"Skipping player data {tribe_uuid} due to unsupported archive version: {e}")
-            continue
-
-        tribe_players = []
-        for member_id in parsed_tribe.member_ids:
-            if parsed_players.__contains__(member_id):
-                tribe_players.append(parsed_players[member_id])
-            # else:
-            #     ArkSaveLogger.api_log(f"Player with ID {member_id} not found in player list")
-
-        parsed_tribes[parsed_tribe.tribe_id] = parsed_tribe
-        tribe_to_players_map[parsed_tribe.tribe_id] = tribe_players
-
-    return [parsed_players, parsed_tribes, tribe_to_players_map]
-
-def asi_parse_players_process(arg_obj):
-    # players_indexes: tuple[int, int] = arg_obj["players_indexes"]
-    # players_pointers: OrderedDict[uuid.UUID, list] = arg_obj["players_pointers"]
-    # data: ArkBinaryParser = arg_obj["data"]
-    # players_queue: Queue = arg_obj["queue"]
-
-    parsed_players: dict[int, ArkPlayer] = {}
-
-    start_index = arg_obj["players_indexes"][0]
-    stop_index = arg_obj["players_indexes"][1]
-    player_index: int = -1
-    for key, value in arg_obj["players_pointers"].items():
-        player_index += 1
-        if player_index >= start_index and player_index < stop_index:
-            pointer = arg_obj["players_pointers"][key]
-            if not pointer:
-                continue
-            arg_obj["data"].set_position(pointer[1])
-            player_data = arg_obj["data"].read_bytes(pointer[2]) + bytes([0x00, 0x01, 0x00, 0x00, 0x00]) + pointer[0]
-            try:
-                parsed_player: ArkPlayer = ArkPlayer(player_data, True)
-                if not parsed_player is None:
-                    parsed_players[parsed_player.id_] = parsed_player
-            except Exception:
-                # if "Unsupported archive version" in str(e):
-                #     ArkSaveLogger.api_log(f"Skipping player data {player_uuid} due to unsupported archive version: {e}")
-                pass
-
-    arg_obj["queue"].put(parsed_players)
-
-def asi_parse_tribes_process(arg_obj):
-    # tribes_indexes: tuple[int, int] = arg_obj["tribes_indexes"]
-    # tribes_pointers: OrderedDict[uuid.UUID, list] = arg_obj["tribes_pointers"]
-    # parsed_players: dict[int, ArkPlayer] = arg_obj["parsed_players"]
-    # data: ArkBinaryParser = arg_obj["data"]
-    # tribes_queue: Queue = arg_obj["queue"]
-
-    parsed_tribes: dict[int, ArkTribe] = {}
-    tribe_to_players_map: dict[int, list[ArkPlayer]] = {}
-
-    start_index = arg_obj["tribes_indexes"][0]
-    stop_index = arg_obj["tribes_indexes"][1]
-    tribe_index: int = start_index - 1
-    for key, value in arg_obj["tribes_pointers"].items():
-        tribe_index += 1
-        if tribe_index >= start_index and tribe_index < stop_index:
-            pointer = arg_obj["tribes_pointers"][key]
-            if not pointer:
-                continue
-            arg_obj["data"].set_position(pointer[1])
-            tribe_data = arg_obj["data"].read_bytes(pointer[2])
-
-            try:
-                parsed_tribe: ArkTribe = ArkTribe(tribe_data, True)
-            except Exception:
-                # if "Unsupported archive version" in str(e):
-                #     ArkSaveLogger.api_log(f"Skipping player data {tribe_uuid} due to unsupported archive version: {e}")
-                continue
-
-            tribe_players = []
-            for member_id in parsed_tribe.member_ids:
-                if member_id in arg_obj["parsed_players"]: # arg_obj["parsed_players"].__contains__(member_id):
-                    tribe_players.append(arg_obj["parsed_players"][member_id])
-                # else:
-                #     ArkSaveLogger.api_log(f"Player with ID {member_id} not found in player list")
-
-            parsed_tribes[parsed_tribe.tribe_id] = parsed_tribe
-            tribe_to_players_map[parsed_tribe.tribe_id] = tribe_players
-
-    arg_obj["queue"].put([parsed_tribes, tribe_to_players_map])
-
-def legacy_parse_players_and_tribes(players_and_tribes: PlayersAndTribesParsing):
-    for key, value in players_and_tribes.player_data_pointers.items():
-        players_and_tribes.players_data[key] = get_ark_profile_raw_data(key, players_and_tribes)
-
-    for key, value in players_and_tribes.tribe_data_pointers.items():
-        players_and_tribes.tribes_data[key] = get_ark_tribe_raw_data(key, players_and_tribes)
-
-    if players_and_tribes.from_store:
-        ArkSaveLogger.api_log(
-            f"Found {len(players_and_tribes.players_data)} profile files and {len(players_and_tribes.tribes_data)} tribe files in save file")
-    else:
-        ArkSaveLogger.api_log(
-            f"Found {len(players_and_tribes.profile_paths)} profile files and {len(players_and_tribes.tribe_paths)} tribe files in save directory")
-
-    update_files(players_and_tribes)
-
-def players_and_tribes_to_json(players_and_tribes: PlayersAndTribesParsing, pawn_objects: list[ArkGameObject]):
+def players_and_tribes_to_json(player_api: PlayerApi):
     players = []
     tribes = []
 
     # Format players into JSON.
-    for player in players_and_tribes.players.values():  # player_api.players:
+    for player in player_api.players:
         player_json_obj = player.to_json_obj()
         found: bool = False
         for p in pawn_objects:
@@ -650,126 +352,26 @@ def players_and_tribes_to_json(players_and_tribes: PlayersAndTribesParsing, pawn
         players.append(player_json_obj)
 
     # Format tribes into JSON.
-    for tribe in players_and_tribes.tribes.values():  # player_api.tribes:
+    for tribe in player_api.tribes:
         # Grab the tribe json object
         tribe_json_obj = tribe.to_json_obj()
         # Grab tribe members as json objects if they exists
         tribe_members = []
-        for p in players_and_tribes.tribe_to_player_map[
-            tribe.tribe_id]:  # player_api.tribe_to_player_map[tribe.tribe_id]:
+        for p in player_api.tribe_to_player_map[tribe.tribe_id]:
             tribe_members.append({"PlayerCharacterName": p.char_name, "PlayerDataID": p.id_, "IsActive": True})
         for idx, p_id in enumerate(tribe.member_ids):
             is_active = False
-            for pl in players_and_tribes.tribe_to_player_map[
-                tribe.tribe_id]:  # player_api.tribe_to_player_map[tribe.tribe_id]:
+            for pl in player_api.tribe_to_player_map[tribe.tribe_id]:
                 if pl.id_ == p_id:
                     is_active = True
                     break
             if not is_active:
-                tribe_members.append(
-                    {"PlayerCharacterName": tribe.members[idx], "PlayerDataID": p_id, "IsActive": False})
+                tribe_members.append({"PlayerCharacterName": tribe.members[idx], "PlayerDataID": p_id, "IsActive": False})
         tribe_json_obj["TribeMembers"] = tribe_members
         # Add to the tribes array
         tribes.append(tribe_json_obj)
 
     return players, tribes
-
-def parse_players_and_tribes_as_json(players_and_tribes: PlayersAndTribesParsing, pawn_objects: list, processes_amount: int) -> tuple[list, list]:
-    if not arkparse_save.profile_data_in_saves():
-        ArkSaveLogger.api_log("Profile data not found in save, checking database")
-        players_and_tribes.from_store = False
-
-    legacy_parse: bool = False
-    legacy_parse_is_valid: bool = False
-    if not players_and_tribes.from_store:
-        legacy_parse = True
-        if arkparse_save.save_dir is not None:
-            legacy_parse_is_valid = True
-            get_files_from_directory(arkparse_save.save_dir, players_and_tribes)
-    else:
-        get_offsets_from_db(arkparse_save, players_and_tribes)
-
-        nb_tribes = len(players_and_tribes.tribe_data_pointers)
-        nb_players = len(players_and_tribes.player_data_pointers)
-
-        if processes_amount < 2 or nb_tribes < processes_amount or nb_players < processes_amount:
-            legacy_parse = True
-            legacy_parse_is_valid = True
-        else:
-            tribes_per_thread: int = math.floor(nb_tribes / processes_amount)
-            remaining_tribes: int = nb_tribes % processes_amount
-            players_per_thread: int = math.floor(nb_players / processes_amount)
-            remaining_players: int = nb_players % processes_amount
-
-            tribes_indexes_per_thread: list[tuple[int, int]] = []
-            players_indexes_per_thread: list[tuple[int, int]] = []
-
-            for j in range(processes_amount):
-                tribes_offset = j * tribes_per_thread
-                players_offset = j * players_per_thread
-                if j == processes_amount - 1:
-                    tribes_indexes_per_thread.append((tribes_offset, tribes_per_thread + tribes_offset + remaining_tribes))
-                    players_indexes_per_thread.append((players_offset, players_per_thread + players_offset + remaining_players))
-                else:
-                    tribes_indexes_per_thread.append((tribes_offset, tribes_per_thread + tribes_offset))
-                    players_indexes_per_thread.append((players_offset, players_per_thread + players_offset))
-
-            players_queues: list[Queue] = []
-            players_processes: list[Process] = []
-            for j in range(processes_amount):
-                players_queue = Queue()
-                players_queues.append(players_queue)
-
-                players_processes.append(Process(target=asi_parse_players_process, args=({"players_indexes": players_indexes_per_thread[j],
-                                                                                          "players_pointers": players_and_tribes_data.player_data_pointers,
-                                                                                          "data": players_and_tribes_data.data,
-                                                                                          "queue": players_queue},)))
-
-            for j in range(processes_amount):
-                players_processes[j].start()
-
-            players_processes_results: list = []
-            for j in range(processes_amount):
-                players_processes_results.append(players_queues[j].get(timeout=300))
-                players_queues[j].close()
-
-            for j in range(processes_amount):
-                for key, val in players_processes_results[j].items():
-                    for pawn in pawn_objects:
-                        if val.id_ == pawn.get_property_value("LinkedPlayerDataID"):
-                            val.location = ActorTransform(vector=pawn.get_property_value("SavedBaseWorldLocation"))
-                            break
-                    players_and_tribes.players[key] = val
-
-            tribes_queues: list[Queue] = []
-            tribes_processes: list[Process] = []
-            for j in range(processes_amount):
-                tribes_queue = Queue()
-                tribes_queues.append(tribes_queue)
-                tribes_processes.append(Process(target=asi_parse_tribes_process, args=({"tribes_indexes": tribes_indexes_per_thread[j],
-                                                                                        "tribes_pointers": players_and_tribes_data.tribe_data_pointers,
-                                                                                        "parsed_players": players_and_tribes.players,
-                                                                                        "data": players_and_tribes_data.data,
-                                                                                        "queue": tribes_queue},)))
-
-            for j in range(processes_amount):
-                tribes_processes[j].start()
-
-            tribes_processes_results: list = []
-            for j in range(processes_amount):
-                tribes_processes_results.append(tribes_queues[j].get(timeout=300))
-                tribes_queues[j].close()
-
-            for j in range(processes_amount):
-                for key, val in tribes_processes_results[j][0].items():
-                    players_and_tribes.tribes[key] = val
-                for key, val in tribes_processes_results[j][1].items():
-                    players_and_tribes.tribe_to_player_map[key] = val
-
-    if legacy_parse and legacy_parse_is_valid:
-        legacy_parse_players_and_tribes(players_and_tribes)
-
-    return players_and_tribes_to_json(players_and_tribes, pawn_objects)
 
 def parse_custom_blueprints_arg(custom_blueprints: str):
     custom_blueprints_dinos: list[str] = []
@@ -843,12 +445,12 @@ if __name__ == '__main__':
             print(f"Failed to decode custom blueprints: {sys.argv[9]}", flush=True)
 
     '''
-    save_path: Path = Path("C:\\Users\\Shadow\\Documents\\ArkBkps2\\StvTheIsland\\TheIsland_WP.ark")
-    export_path: Path = Path.cwd() / "json_exports" / "Ragnarok"
-    export_dinos: bool = True
-    export_pawns: bool = True
-    export_items: bool = True
-    export_structures: bool = True
+    save_path: Path = Path("D:/BACKUPS/TheIsland/TheIsland_WP.ark")
+    export_path: Path = Path.cwd() / "json_exports" / "AberrationTest"
+    export_dinos: bool = False
+    export_pawns: bool = False
+    export_items: bool = False
+    export_structures: bool = False
     export_players: bool = True
     export_tribes: bool = True
     custom_bps_dinos: list[str] = []
@@ -982,10 +584,8 @@ if __name__ == '__main__':
         print('Parsing players and tribes...', flush=True)
         players_and_tribes_start = time.time()
 
-        # player_api = PlayerApi(arkparse_save, True, True, True)
-        players_and_tribes_data = PlayersAndTribesParsing()
-        players_and_tribes_data.save = arkparse_save
-        all_players, all_tribes = parse_players_and_tribes_as_json(players_and_tribes_data, pawn_objects, nb_processes) # math.floor(nb_processes / 2)
+        player_api = PlayerApi(arkparse_save, True, True, True, pawn_objects)
+        all_players, all_tribes = players_and_tribes_to_json(player_api)
 
         players_and_tribes_end = time.time()
         print('Parsed players and tribes (time spent: ' + human_readable_time(players_and_tribes_end - players_and_tribes_start) + ').', flush=True)
