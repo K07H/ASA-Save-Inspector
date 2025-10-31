@@ -30,7 +30,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 75;
+        private const int MAX_PROPERTY_VALUES = 300;
 
         #endregion
 
@@ -106,6 +106,9 @@ namespace ASA_Save_Inspector.Pages
 
         private List<string> _propertiesWithManyValues = new List<string>(StructureUtils.DoNotCheckPropertyValuesAmount);
 
+        private ObservableCollection<string> _quickFilter_allTribes = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
+        private ObservableCollection<string> _quickFilter_allShortNames = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         private string? CurrentSort
@@ -160,6 +163,20 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
+        private string _quickFilter_Tribe_Label = ASILang.Get("Initializing");
+        public string QuickFilter_Tribe_Label
+        {
+            get { return _quickFilter_Tribe_Label; }
+            set { _quickFilter_Tribe_Label = value; OnPropertyChanged(); }
+        }
+
+        private string _quickFilter_Structure_Label = ASILang.Get("Initializing");
+        public string QuickFilter_Structure_Label
+        {
+            get { return _quickFilter_Structure_Label; }
+            set { _quickFilter_Structure_Label = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Constructor/Destructor
@@ -193,6 +210,9 @@ namespace ASA_Save_Inspector.Pages
             // Grab structures data from settings if not set.
             if (_lastDisplayed == null)
                 _lastDisplayed = SettingsPage._structuresData;
+
+            InitTribesQuickFilter();
+            InitStructuresQuickFilter();
 
             // Apply filters, sort and reorder columns.
             bool isQueued = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
@@ -270,9 +290,9 @@ namespace ASA_Save_Inspector.Pages
             _defaultFiltersPreset_TributeTerminals = new JsonFiltersPreset() { Name = ASILang.Get("TributeTerminals"), Filters = new List<JsonFilter>() };
             _defaultFiltersPreset_CityTerminals = new JsonFiltersPreset() { Name = ASILang.Get("CityTerminals"), Filters = new List<JsonFilter>() };
 
-            // Add "TribeID >= 50000" to default filters preset.
+            // Add "TribeID > 50000" to default filters preset.
             PropertyInfo? targetingTeam = typeof(Structure).GetProperty("TargetingTeam", BindingFlags.Instance | BindingFlags.Public);
-            Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.GREATER_THAN, FilterValue = "49999" };
+            Filter defaultFilter = new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.GREATER_THAN, FilterValue = "50000" };
             if (targetingTeam != null && _defaultFiltersPreset?.Filters != null)
             {
                 _defaultFiltersPreset.Filters.Add(new JsonFilter()
@@ -336,7 +356,6 @@ namespace ASA_Save_Inspector.Pages
                     _defaultFiltersPreset_CityTerminals.Filters.Add(new JsonFilter() { PropertyName = itemArchetype.Name, Filter = defaultFilter_CityTerminals });
             }
 
-            // Add "TribeID >= 50000" to current filters.
             if (!_addedDefaultFilters && _filters != null && targetingTeam != null)
             {
                 _addedDefaultFilters = true;
@@ -773,12 +792,16 @@ namespace ASA_Save_Inspector.Pages
                         {
                             if (Utils.PropertyHasMoreValuesThan(SettingsPage._structuresData, structureProperty, MAX_PROPERTY_VALUES))
                             {
+#if DEBUG
                                 Logger.Instance.Log($"Found property with many values: {structureProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                                 if (!_propertiesWithManyValues.Contains(structureProperty.Name))
                                     _propertiesWithManyValues.Add(structureProperty.Name);
                             }
+#if DEBUG
                             else if (structureProperty.Name.Contains("Time", StringComparison.InvariantCultureIgnoreCase))
                                 Logger.Instance.Log($"Found property with \"time\": {structureProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                         }
                     // Add current property.
                     string propName = structureProperty.Name;
@@ -1050,12 +1073,17 @@ namespace ASA_Save_Inspector.Pages
                 {
                     _page.sp_StructureFiltersPresetsInGroup.Children.Clear();
                     _page.sp_ExistingStructureFilters.Children.Clear();
+                    _page.QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+                    _page.QuickFilter_Structure_Label = ASILang.Get("ClickHere");
                 });
 #pragma warning restore CS1998
             _group.Clear();
             _filters.Clear();
             _addedDefaultFilters = false;
             InitDefaultPresets();
+            // TODO: Remove FillEditStructureFiltersPopup()?
+            if (_page != null)
+                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => _page.FillEditStructureFiltersPopup());
         }
 
         private void FillEditStructureFiltersPopup()
@@ -1079,8 +1107,18 @@ namespace ASA_Save_Inspector.Pages
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                    TextBlock tb0 = new TextBlock()
+                    {
+                        FontSize = 16.0d,
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = filter.Value.FilterOperator == FilterOperator.OR ? ASILang.Get("OperatorOR") : ASILang.Get("OperatorAND"),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
+                    };
                     TextBlock tb1 = new TextBlock()
                     {
                         FontSize = 16.0d,
@@ -1170,16 +1208,18 @@ namespace ASA_Save_Inspector.Pages
 
                     sv.Content = tbValues;
                     b.Child = sv;
+                    grd.Children.Add(tb0);
+                    Grid.SetColumn(tb0, 0);
                     grd.Children.Add(tb1);
-                    Grid.SetColumn(tb1, 0);
+                    Grid.SetColumn(tb1, 1);
                     grd.Children.Add(tb2);
-                    Grid.SetColumn(tb2, 1);
+                    Grid.SetColumn(tb2, 2);
                     grd.Children.Add(tb3);
-                    Grid.SetColumn(tb3, 2);
+                    Grid.SetColumn(tb3, 3);
                     grd.Children.Add(b);
-                    Grid.SetColumn(b, 3);
+                    Grid.SetColumn(b, 4);
                     grd.Children.Add(btn);
-                    Grid.SetColumn(btn, 4);
+                    Grid.SetColumn(btn, 5);
                     sp_ExistingStructureFilters.Children.Add(grd);
                 }
         }
@@ -1293,6 +1333,23 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
+        private void RemoveAllFiltersForProp(PropertyInfo prop)
+        {
+            List<int> toDel = new List<int>();
+            if (_filters != null && _filters.Count > 0)
+            {
+                for (int i = 0; i < _filters.Count; i++)
+                    if (string.Compare(_filters[i].Key.Name, prop.Name, false, CultureInfo.InvariantCulture) == 0)
+                        toDel.Add(i);
+                if (toDel.Count > 0)
+                {
+                    toDel.Reverse();
+                    foreach (int delIndex in toDel)
+                        _filters.RemoveAt(delIndex);
+                }
+            }
+        }
+
         private void btn_RemoveFilter_Click(object sender, RoutedEventArgs e)
         {
             Button? btn = sender as Button;
@@ -1303,7 +1360,7 @@ namespace ASA_Save_Inspector.Pages
             if (grd == null)
                 return;
 
-            TextBlock? tb = grd.Children[1] as TextBlock;
+            TextBlock? tb = grd.Children[2] as TextBlock;
             if (tb == null)
                 return;
 
@@ -1331,7 +1388,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 if (toDelProp != null && toDelFilter != null)
                 {
-                    RemoveFilter(toDelProp, toDelFilter); //_filters.Remove(toDel);
+                    RemoveFilter(toDelProp, toDelFilter);
                     FillEditStructureFiltersPopup();
                     ApplyFiltersAndSort();
                 }
@@ -1347,6 +1404,8 @@ namespace ASA_Save_Inspector.Pages
         private void btn_RemoveAllStructureFilters_Click(object sender, RoutedEventArgs e)
         {
             _filters.Clear();
+            QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            QuickFilter_Structure_Label = ASILang.Get("ClickHere");
             FillEditStructureFiltersPopup();
             ApplyFiltersAndSort();
         }
@@ -1938,8 +1997,11 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            Type type = typeof(Structure);
             _filters.Clear();
+            QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            QuickFilter_Structure_Label = ASILang.Get("ClickHere");
+
+            Type type = typeof(Structure);
             foreach (var filter in _selectedFiltersPreset.Filters)
                 if (filter != null && !string.IsNullOrEmpty(filter.PropertyName) && filter.Filter != null)
                 {
@@ -1947,8 +2009,10 @@ namespace ASA_Save_Inspector.Pages
                     if (prop != null)
                         _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, filter.Filter));
                 }
-            MainWindow.ShowToast(ASILang.Get("FiltersPresetLoaded"), BackgroundColor.SUCCESS);
+            // TODO: Remove FillEditStructureFiltersPopup()?
+            FillEditStructureFiltersPopup();
             ApplyFiltersAndSort();
+            MainWindow.ShowToast(ASILang.Get("FiltersPresetLoaded"), BackgroundColor.SUCCESS);
         }
 
         private void btn_RemoveFiltersPreset_Click(object sender, RoutedEventArgs e)
@@ -2612,6 +2676,100 @@ namespace ASA_Save_Inspector.Pages
                 MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
+            }
+        }
+
+        #endregion
+
+        #region Quick filters
+
+        public void InitTribesQuickFilter()
+        {
+            if (SettingsPage._allTribesForStructuresInitialized)
+            {
+                _quickFilter_allTribes.Clear();
+                _quickFilter_allTribes.Add(ASILang.Get("All").ToUpper());
+                if (SettingsPage._allTribesForStructuresSorted != null && SettingsPage._allTribesForStructuresSorted.Count > 0)
+                    foreach (string tribeName in SettingsPage._allTribesForStructuresSorted)
+                        if (tribeName != null)
+                            _quickFilter_allTribes.Add(tribeName);
+                QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            }
+            else
+                QuickFilter_Tribe_Label = ASILang.Get("Initializing");
+        }
+
+        public void InitStructuresQuickFilter()
+        {
+            if (SettingsPage._allShortNamesForStructuresInitialized)
+            {
+                _quickFilter_allShortNames.Clear();
+                _quickFilter_allShortNames.Add(ASILang.Get("All").ToUpper());
+                if (SettingsPage._allShortNamesForStructuresSorted != null && SettingsPage._allShortNamesForStructuresSorted.Count > 0)
+                    foreach (string? shortName in SettingsPage._allShortNamesForStructuresSorted)
+                        if (shortName != null)
+                            _quickFilter_allShortNames.Add(shortName);
+                QuickFilter_Structure_Label = ASILang.Get("ClickHere");
+            }
+            else
+                QuickFilter_Structure_Label = ASILang.Get("Initializing");
+        }
+
+        private static PropertyInfo? _targetingTeamProp = Utils.GetProperty(typeof(Structure), nameof(Structure.TargetingTeam));
+
+        private void QuickFilterTribeSelect(string tribeName)
+        {
+            if (_targetingTeamProp == null)
+                return;
+            RemoveAllFiltersForProp(_targetingTeamProp);
+            if (SettingsPage._allTribesForStructures.ContainsKey(tribeName))
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_targetingTeamProp, new Filter()
+                {
+                    FilterOperator = FilterOperator.AND,
+                    FilterType = FilterType.EXACT_MATCH,
+                    FilterValues = new List<string>() { SettingsPage._allTribesForStructures[tribeName].ToString(CultureInfo.InvariantCulture) }
+                }));
+            QuickFilter_Tribe_Label = tribeName;
+            FillEditStructureFiltersPopup();
+            ApplyFiltersAndSort();
+        }
+
+        private void cbb_QuickFilter_Tribe_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    QuickFilterTribeSelect(selected);
+            }
+        }
+
+        private static PropertyInfo? _shortNameProp = Utils.GetProperty(typeof(Structure), nameof(Structure.ShortName));
+
+        private void QuickFilterStructureSelect(string shortName)
+        {
+            if (_shortNameProp == null)
+                return;
+            RemoveAllFiltersForProp(_shortNameProp);
+            if (SettingsPage._allShortNamesForStructuresSorted.Contains(shortName))
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_shortNameProp, new Filter()
+                {
+                    FilterOperator = FilterOperator.AND,
+                    FilterType = FilterType.EXACT_MATCH,
+                    FilterValues = new List<string>() { shortName }
+                }));
+            QuickFilter_Structure_Label = shortName;
+            FillEditStructureFiltersPopup();
+            ApplyFiltersAndSort();
+        }
+
+        private void cbb_QuickFilter_Structure_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    QuickFilterStructureSelect(selected);
             }
         }
 

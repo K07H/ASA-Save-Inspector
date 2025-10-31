@@ -23,8 +23,7 @@ from arkparse.player.ark_player import ArkPlayer
 from arkparse.saves.save_connection import SaveConnection
 from arkparse.utils.json_utils import DefaultJsonEncoder
 
-BLUEPRINTS_TO_SKIP: list[str] = [ "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C",
-                                  "/ByteArrayObject",
+BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "/Doorsystem/ButtonSystem",
                                   "/Foliage",
                                   "/NPCZoneManagerBlueprint_",
@@ -48,9 +47,10 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/AstraeosCreatures/AstraeosCreatures_Singleto
                                   "/DinoDropInventoryComponent_",
                                   "/DinoInventoryComponent_",
                                   "/DinoTamedInventoryComponent_",
-                                  "/DinoWildInventoryComponent_", ]
+                                  "/DinoWildInventoryComponent_",
+                                  "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C" ]
 
-BLUEPRINTS_NO_EXPORT: list[str] = [ "/Game/PrimalEarth/Dinos/Para/Para_AI_Blueprint.Para_AI_Blueprint_C",
+BLUEPRINTS_NO_EXPORT: list[str] = [ "_AI_Blueprint.",
                                     "/AI/",
                                     "_AIController",
                                     "/DinoCharacterStatus_BP",
@@ -68,85 +68,93 @@ def is_in_str(search_for: list[str], search_in: str) -> bool:
             return True
     return False
 
-def is_dino_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
+def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
+    if game_obj.get_property_value("DinoID1") is None \
+            or game_obj.get_property_value("DinoID2") is None:
         return False
-    if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dinos/" in blueprint or "Creature" in blueprint):
+    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
+        return False
+    if ("_Character_" in game_obj.blueprint or "_Char_" in game_obj.blueprint) and ("Dino" in game_obj.blueprint or "Creature" in game_obj.blueprint):
         return True
-    if "/Raft_BP.Raft_BP" in blueprint \
-            or "/Raft/MotorRaft_BP.MotorRaft_BP" in blueprint \
-            or "Car_Vehicle_BP.Car_Vehicle_BP_C" in blueprint \
-            or "BP_HelperBot_DockingBay" in blueprint \
-            or "Polar_Bear.Polar_Bear_C" in blueprint:
+    if "/Raft_BP.Raft_BP" in game_obj.blueprint \
+            or "/Raft/MotorRaft_BP.MotorRaft_BP" in game_obj.blueprint \
+            or "/Raft/Tireme_BP_" in game_obj.blueprint \
+            or "Car_Vehicle_BP.Car_Vehicle_BP_C" in game_obj.blueprint \
+            or "Polar_Bear.Polar_Bear_C" in game_obj.blueprint:
         return True
     if additional_blueprints is not None and len(additional_blueprints) > 0:
         for additional_blueprint in additional_blueprints:
             if additional_blueprint is not None and len(additional_blueprints) > 0:
-                if additional_blueprint in blueprint:
+                if additional_blueprint in game_obj.blueprint:
                     return True
     return False
 
-def is_structure_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
+def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
+    if game_obj.get_property_value("StructureID") is None:
         return False
-    if "/Structures" in blueprint \
-            or "/GigantoraptorNest" in blueprint \
-            or "Rug_Shag" in blueprint \
-            or "TributeTerminal" in blueprint \
-            or "StructureStandingTurret_Flightseeker" in blueprint \
-            or "ArtifactCrate_" in blueprint \
-            or "/WyvernNest" in blueprint \
-            or "/Structure_PlantSpecies" in blueprint \
-            or "/HordeCrates/ElementWall_Horde" in blueprint \
-            or "/Flag_SM_" in blueprint \
-            or "/SupplyCrateBaseBP_" in blueprint \
-            or "/StructureBP_WoodBench" in blueprint \
-            or "MB_Button.MB_Button_C" in blueprint \
-            or "/PortableRope_Ladder_" in blueprint:
+    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
+        return False
+    if game_obj.get_property_value("DinoID1") is None \
+            and game_obj.get_property_value("ItemID") is None:
+        return True
+    if "/Structures" in game_obj.blueprint \
+            or "/GigantoraptorNest" in game_obj.blueprint \
+            or "Rug_Shag" in game_obj.blueprint \
+            or "TributeTerminal" in game_obj.blueprint \
+            or "StructureStandingTurret_Flightseeker" in game_obj.blueprint \
+            or "ArtifactCrate_" in game_obj.blueprint \
+            or "/WyvernNest" in game_obj.blueprint \
+            or "/Structure_PlantSpecies" in game_obj.blueprint \
+            or "/HordeCrates/ElementWall_Horde" in game_obj.blueprint \
+            or "/Flag_SM_" in game_obj.blueprint \
+            or "/SupplyCrateBaseBP_" in game_obj.blueprint \
+            or "/StructureBP_WoodBench" in game_obj.blueprint \
+            or "MB_Button.MB_Button_C" in game_obj.blueprint \
+            or "/PortableRope_Ladder_" in game_obj.blueprint \
+            or "BP_HelperBot_DockingBay" in game_obj.blueprint:
         return True
     if additional_blueprints is not None and len(additional_blueprints) > 0:
         for additional_blueprint in additional_blueprints:
             if additional_blueprint is not None and len(additional_blueprints) > 0:
-                if additional_blueprint in blueprint:
+                if additional_blueprint in game_obj.blueprint:
                     return True
     return False
 
-def is_item_blueprint(blueprint: str, additional_blueprints: list[str]) -> bool:
-    if is_in_str(BLUEPRINTS_NO_EXPORT, blueprint):
+def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
+    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
         return False
-    if "/DroppedItemGeneric" in blueprint or \
-            "Egg_Wyvern_Fertilized" in blueprint or \
-            "Items/Raft/Tireme_BP_" in blueprint or \
-            "/PrimalItem_" in blueprint or \
-            "/PrimalItemAmmo_" in blueprint or \
-            "/PrimalItemArmor_" in blueprint or \
-            "/PrimalItemArtifact" in blueprint or \
-            "/PrimalItemC4Ammo" in blueprint or \
-            "/PrimalItemConsumable_" in blueprint or \
-            "/PrimalItemConsumableBuff_Parachute" in blueprint or \
-            "/PrimalItemConsumableEatable_" in blueprint or \
-            "/PrimalItemConsumableMiracleGro" in blueprint or \
-            "/PrimalItemConsumableRespecSoup" in blueprint or \
-            "/PrimalItemConsumableSoap" in blueprint or \
-            "/PrimalItemCostume_" in blueprint or \
-            "/PrimalItemCustomDrinkRecipe_" in blueprint or \
-            "/PrimalItemCustomFoodRecipe_" in blueprint or \
-            "/PrimalItemDinoCostume_" in blueprint or \
-            "/PrimalItemDye_" in blueprint or \
-            "/PrimalItemMotorboat" in blueprint or \
-            "/PrimalItemRadio" in blueprint or \
-            "/PrimalItemRaft" in blueprint or \
-            "/PrimalItemResource_" in blueprint or \
-            "/PrimalItemSkin_" in blueprint or \
-            "/PrimalItemStructure_" in blueprint or \
-            "/PrimalItemStructureSkin_" in blueprint or \
-            "/PrimalItemTrophy" in blueprint or \
-            "/PrimalItemWeaponAttachment_" in blueprint:
+    if "/DroppedItemGeneric" in game_obj.blueprint or \
+            "Egg_Wyvern_Fertilized" in game_obj.blueprint or \
+            "/PrimalItem_" in game_obj.blueprint or \
+            "/PrimalItemAmmo_" in game_obj.blueprint or \
+            "/PrimalItemArmor_" in game_obj.blueprint or \
+            "/PrimalItemArtifact" in game_obj.blueprint or \
+            "/PrimalItemC4Ammo" in game_obj.blueprint or \
+            "/PrimalItemConsumable_" in game_obj.blueprint or \
+            "/PrimalItemConsumableBuff_Parachute" in game_obj.blueprint or \
+            "/PrimalItemConsumableEatable_" in game_obj.blueprint or \
+            "/PrimalItemConsumableMiracleGro" in game_obj.blueprint or \
+            "/PrimalItemConsumableRespecSoup" in game_obj.blueprint or \
+            "/PrimalItemConsumableSoap" in game_obj.blueprint or \
+            "/PrimalItemCostume_" in game_obj.blueprint or \
+            "/PrimalItemCustomDrinkRecipe_" in game_obj.blueprint or \
+            "/PrimalItemCustomFoodRecipe_" in game_obj.blueprint or \
+            "/PrimalItemDinoCostume_" in game_obj.blueprint or \
+            "/PrimalItemDye_" in game_obj.blueprint or \
+            "/PrimalItemMotorboat" in game_obj.blueprint or \
+            "/PrimalItemRadio" in game_obj.blueprint or \
+            "/PrimalItemRaft" in game_obj.blueprint or \
+            "/PrimalItemResource_" in game_obj.blueprint or \
+            "/PrimalItemSkin_" in game_obj.blueprint or \
+            "/PrimalItemStructure_" in game_obj.blueprint or \
+            "/PrimalItemStructureSkin_" in game_obj.blueprint or \
+            "/PrimalItemTrophy" in game_obj.blueprint or \
+            "/PrimalItemWeaponAttachment_" in game_obj.blueprint:
         return True
     if additional_blueprints is not None and len(additional_blueprints) > 0:
         for additional_blueprint in additional_blueprints:
             if additional_blueprint is not None and len(additional_blueprints) > 0:
-                if additional_blueprint in blueprint:
+                if additional_blueprint in game_obj.blueprint:
                     return True
     return False
 
@@ -294,15 +302,15 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
         if obj is not None:
             try:
                 if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint): # or (obj.has_property("bIsEngram") and obj.get_property_value("bIsEngram", False)):
-                    if __debug__ and obj.blueprint not in skipped_bps:
+                    if debug_logging and obj.blueprint not in skipped_bps:
                         skipped_bps.append(obj.blueprint)
                     continue
 
-                if is_dino_blueprint(obj.blueprint, dino_bps):
+                if is_dino_blueprint(obj, dino_bps):
                     dino = parse_single_dino(obj, save)
                     if dino is not None:
                         all_dinos.append(dino)
-                    elif __debug__:
+                    elif debug_logging:
                         failed_parsing.append(f"Dino {obj.uuid} with class {obj.blueprint}.")
                 elif "PrimalItem_WeaponEmptyCryopod_C" in obj.blueprint:
                     cryopod = parse_single_cryopod(obj, save)
@@ -310,23 +318,35 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
                         if cryopod.dino is not None:
                             cryopod.dino.is_cryopodded = True
                             all_dinos.append(cryopod.dino)
-                    elif __debug__:
+                    elif debug_logging:
                         failed_parsing.append(f"Cryopod {obj.uuid} content.")
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 elif "/PlayerPawnTest_Female.PlayerPawnTest_Female_C" in obj.blueprint or "/PlayerPawnTest_Male.PlayerPawnTest_Male_C" in obj.blueprint:
                     all_pawns_objects.append(obj)
-                elif is_item_blueprint(obj.blueprint, item_bps):
+                elif is_item_blueprint(obj, item_bps):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
-                elif is_structure_blueprint(obj.blueprint, structure_bps) and obj.get_property_value("StructureID") is not None:
+                elif is_structure_blueprint(obj, structure_bps):
                     structure = parse_single_structure(obj, save, True)
                     if structure is not None:
                         all_structures.append(structure)
-                    elif __debug__:
+                    elif debug_logging:
                         failed_parsing.append(f"Structure {obj.uuid} with class {obj.blueprint}.")
+                # Fallback cases
+                elif obj.get_property_value("ItemID") is not None:
+                    all_items.append(JsonApi.primal_item_to_json_obj(obj))
+                # Absolutely unknown
                 elif not is_in_str(BLUEPRINTS_NO_EXPORT, obj.blueprint):
-                    if __debug__ and obj.blueprint not in unknown_bps:
+                    if debug_logging and obj.blueprint not in unknown_bps:
                         unknown_bps.append(obj.blueprint)
                         print(f"Unknown object {obj.uuid} with class {obj.blueprint}.", flush=True)
+                        ''' Can cause deadlocks when outputting from python -> C# console
+                        if obj.properties is not None and len(obj.properties) > 0:
+                            for prop in obj.properties:
+                                if prop is not None and \
+                                        prop.name is not None and \
+                                        len(prop.name) > 0:
+                                    print(f"    \"{prop.name}\"=[{obj.get_property_value(prop.name)}]", flush=True)
+                        '''
             except Exception as e:
                 if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
                     print(f"Exception caught during parsing: {e}", flush=True)
@@ -429,6 +449,7 @@ if __name__ == '__main__':
     export_structures: bool = sys.argv[6] == '1'
     export_players: bool = sys.argv[7] == '1'
     export_tribes: bool = sys.argv[8] == '1'
+    debug_logging: bool = False
 
     custom_bps_dinos: list[str] = []
     custom_bps_items: list[str] = []
@@ -558,7 +579,7 @@ if __name__ == '__main__':
     unknown_blueprints: list[str] = []
     failed_to_parse: list[str] = []
 
-    if __debug__:
+    if debug_logging:
         skipped_blueprints = parsed_result["skipped_blueprints"]
         unknown_blueprints = parsed_result["unknown_blueprints"]
         failed_to_parse = parsed_result["failed_parsing"]
@@ -568,7 +589,7 @@ if __name__ == '__main__':
         if not pawn_object is None:
             pawns.append(pawn_to_json(pawn_object))
 
-    if __debug__:
+    if debug_logging:
         skipped_blueprints = list(dict.fromkeys(skipped_blueprints))
         skipped_blueprints.sort()
         unknown_blueprints = list(dict.fromkeys(unknown_blueprints))
@@ -598,7 +619,7 @@ if __name__ == '__main__':
         export_path.mkdir(parents=True, exist_ok=True)
 
     # Write JSONs.
-    if __debug__:
+    if debug_logging:
         with open(export_path / "skipped_blueprints.json", "w") as text_file:
             text_file.write(json.dumps(skipped_blueprints, indent=4, cls=DefaultJsonEncoder))
         with open(export_path / "unknown_blueprints.json", "w") as text_file:

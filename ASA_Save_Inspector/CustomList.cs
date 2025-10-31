@@ -102,6 +102,21 @@ namespace ASA_Save_Inspector
                 }
                 return ret;
             }
+            else if (template == typeof(float?))
+            {
+                string ret = "";
+                foreach (var val in _list)
+                {
+                    if (ret.Length > 0)
+                        ret += ", ";
+                    float? tmp = val as float?;
+                    if (tmp != null && tmp.HasValue)
+                        ret += tmp.Value.ToString(CultureInfo.InvariantCulture);
+                    else
+                        ret += "null";
+                }
+                return ret;
+            }
             else if (template == typeof(double?))
             {
                 string ret = "";

@@ -116,6 +116,8 @@ namespace ASA_Save_Inspector.ObjectModel
         public object? painting_revision_map { get; set; }
         public string? custom_data_name { get; set; }
         public CustomList<string>? custom_data_soft_classes { get; set; }
+
+        public override string ToString() => $"{custom_data_name ?? string.Empty} [{strings}] [{floats}] [{doubles}]";
     }
 
     public class DinoID
@@ -124,7 +126,7 @@ namespace ASA_Save_Inspector.ObjectModel
         public int? id1 { get; set; }
         public int? id2 { get; set; }
 
-        public override string ToString() => $"{(id1 != null && id1.HasValue ? id1.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} {(id2 != null && id2.HasValue ? id2.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
+        public override string ToString() => $"{(id1 != null && id1.HasValue ? id1.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} {(id2 != null && id2.HasValue ? id2.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} {name ?? string.Empty}";
     }
 
     public class DinoAncestor

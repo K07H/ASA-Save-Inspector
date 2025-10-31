@@ -108,6 +108,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -160,8 +161,19 @@
                 <TextBlock x:Name="tb_SecondarySort" FontSize="14" Visibility="Collapsed"><Run Text="{x:Bind asi:ASILang.Get('SecondarySort'), Mode=OneWay}"/>: <Run x:Name="run_SecondarySort" Text="None"/></TextBlock>
             </StackPanel>
         </Grid>
+        <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{ThemeResource ToolTipBorderThemeBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" Margin="5,0,0,0"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,5,0,0">
+                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('Dino'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Dino" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Dino_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Dino_SelectionChanged"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
         <controls:DataGrid x:Name="dg_Dinos"
-                           Grid.Row="2"
+                           Grid.Row="3"
                            Grid.ColumnSpan="2"
                            FontSize="16"
                            AutoGenerateColumns="True"
@@ -181,7 +193,7 @@
                            Sorting="dg_Dinos_Sorting"
                            PointerReleased="dg_Dinos_PointerReleased"
                            SelectionChanged="dg_Dinos_SelectionChanged"
-                           Margin="0,0,0,20"
+                           Margin="0,5,0,24"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
             <controls:DataGrid.Resources>

@@ -122,7 +122,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "PlacedOnFloorStructure",
             "PreventCryopodDeploymentTilTime",
             "PreventCryopodDeploymentTilTimeReadable",
-            "ShortName",
+            //"ShortName",
             "StructureID",
             "StructuresPlacedOnFloor",
             "timeStateStarted",

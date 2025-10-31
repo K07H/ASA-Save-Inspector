@@ -49,14 +49,32 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
         public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
         {
+            "ActorTransformX",
+            "ActorTransformY",
+            "ActorTransformZ",
+            "BodyColors",
+            "CurrentWeapon",
+            "DynamicMaterialBytes",
+            "Instigator",
+            "InventoryUUID",
             "LastEnterStasisTime",
             "LastEnterStasisTimeReadable",
             "LastTimeUpdatedCharacterStatusComponent",
             "LastTimeUpdatedCharacterStatusComponentReadable",
+            "LinkedPlayerDataID",
+            "Location",
+            "MapCoords",
+            "MyCharacterStatusComponent",
             "OriginalCreationTime",
             "OriginalCreationTimeReadable",
+            "OriginalHairColor",
+            "PlatformProfileID",
+            "PlatformProfileName",
+            "PlayerName",
             "SavedLastTimeHadController",
             "SavedLastTimeHadControllerReadable",
+            "UUID",
+            "UniqueNetID"
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);

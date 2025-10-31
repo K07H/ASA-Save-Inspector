@@ -2,10 +2,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -13,9 +16,13 @@ namespace ASA_Save_Inspector.Pages
     {
         private bool _initialized = false;
 
+        public static OtherPage? _page = null;
+
         public OtherPage()
         {
             InitializeComponent();
+
+            _page = this;
 
             // Calculate page center.
             AdjustToSizeChange();
@@ -25,10 +32,82 @@ namespace ASA_Save_Inspector.Pages
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
 
+            Task.Run(() => ComputeJsonExportsFolderSize());
+            Task.Run(() => ComputeASIDataFolderTotalSize());
+            Task.Run(() => CheckForPreviousInstallsToRemove());
+
             _initialized = true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        private string? _asiDataFolderTotalSize = null;
+        public string ASIDataFolderTotalSize
+        {
+            get { return _asiDataFolderTotalSize ?? ASILang.Get("Computing"); }
+            set { _asiDataFolderTotalSize = value; }
+        }
+
+        private void UpdateASIDataFolderTotalSize(string folderSizeStr)
+        {
+            try
+            {
+                _asiDataFolderTotalSize = folderSizeStr;
+                if (PropertyChanged != null)
+                    PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(ASIDataFolderTotalSize)));
+            }
+            catch { }
+        }
+
+        private void ComputeASIDataFolderTotalSize()
+        {
+            try
+            {
+                string? folderPath = GetASIDataFolderPath();
+                if (folderPath != null)
+                {
+                    double folderSize = Utils.GetDirectorySize(folderPath);
+                    string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
+                    DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateASIDataFolderTotalSize(folderSizeStr));
+                }
+            }
+            catch { }
+        }
+
+        private string? _jsonExportsFolderSize = null;
+        public string JsonExportsFolderSize
+        {
+            get { return _jsonExportsFolderSize ?? ASILang.Get("Computing"); }
+            set { _jsonExportsFolderSize = value; }
+        }
+
+        private void UpdateJsonExportsFolderSize(string folderSizeStr)
+        {
+            try
+            {
+                _jsonExportsFolderSize = folderSizeStr;
+                if (PropertyChanged != null)
+                    PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(JsonExportsFolderSize)));
+            }
+            catch { }
+        }
+
+        private void ComputeJsonExportsFolderSize()
+        {
+            try
+            {
+                string? folderPath = GetJsonExportsFolderPath();
+                if (folderPath != null)
+                {
+                    double folderSize = Utils.GetDirectorySize(folderPath);
+                    if (folderSize > (20.0d * 1024.0d * 1024.0d * 1024.0d)) // If greater than 20 GB
+                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemoveJsonData.Visibility = Visibility.Visible);
+                    string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
+                    DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateJsonExportsFolderSize(folderSizeStr));
+                }
+            }
+            catch { }
+        }
 
         private int _windowWidth = 0;
         public int WindowWidth
@@ -61,19 +140,33 @@ namespace ASA_Save_Inspector.Pages
 
         private void page_SizeChanged(object sender, SizeChangedEventArgs e) => AdjustToSizeChange();
 
+        private string? GetASIDataFolderPath()
+        {
+            string folderPath = Utils.GetDataDir();
+            if (Directory.Exists(folderPath))
+                return folderPath;
+            folderPath = Utils.GetBaseDir();
+            if (Directory.Exists(folderPath))
+                return folderPath;
+            return null;
+        }
+
+        private string? GetJsonExportsFolderPath()
+        {
+            string folderPath = Utils.JsonExportsFolder();
+            if (Directory.Exists(folderPath))
+                return folderPath;
+            return null;
+        }
+
         private void btn_OpenAppDataFolder_Click(object sender, RoutedEventArgs e)
         {
-            bool dirExists = true;
-            string folderPath = Utils.GetDataDir();
-            Logger.Instance.Log($"AppDataFolderPath=[{folderPath}]");
-            if (!Directory.Exists(folderPath))
+            string? folderPath = GetASIDataFolderPath();
+            if (folderPath != null)
             {
-                folderPath = Utils.GetBaseDir();
-                if (!Directory.Exists(folderPath))
-                    dirExists = false;
-            }
-            if (dirExists)
+                Logger.Instance.Log($"AppDataFolderPath=[{folderPath}]");
                 Process.Start(Environment.GetEnvironmentVariable("WINDIR") + @"\explorer.exe", $"\"{folderPath}\"");
+            }
             else
                 MainWindow.ShowToast(ASILang.Get("CannotFindASIDataFolder"), BackgroundColor.ERROR);
         }
@@ -87,7 +180,7 @@ namespace ASA_Save_Inspector.Pages
         }
 
 #pragma warning disable CS1998
-        private void btn_ForceArkParseUpdate_Click(object sender, RoutedEventArgs e)
+        private void btn_ForceReinstallArkParse_Click(object sender, RoutedEventArgs e)
         {
             if (Directory.Exists(Utils.ArkParseFolder()))
             {
@@ -453,5 +546,94 @@ namespace ASA_Save_Inspector.Pages
         private void cb_AppTheme_Checked(object sender, RoutedEventArgs e) => SwitchAppTheme(true, _initialized);
 
         private void cb_AppTheme_Unchecked(object sender, RoutedEventArgs e) => SwitchAppTheme(false, _initialized);
+
+        private void RemovePreviousInstalls()
+        {
+            IEnumerable<string>? previousFolders = Utils.GetPreviousASIFolders();
+            if (previousFolders != null && previousFolders.Count() > 0)
+                foreach (string folder in previousFolders)
+                    if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+                    {
+                        try { Directory.Delete(folder, true); }
+                        catch (Exception ex)
+                        {
+                            Logger.Instance.Log($"Failed to delete previous ASI installation located at [{folder}]. Exception=[{ex}]", Logger.LogLevel.WARNING);
+                        }
+                    }
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                tb_RemovingPreviousInstalls.Visibility = Visibility.Collapsed;
+                sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed;
+                btn_RemovePreviousInstalls.IsEnabled = true;
+            });
+        }
+
+        private void btn_RemovePreviousInstalls_Click(object sender, RoutedEventArgs e)
+        {
+            btn_RemovePreviousInstalls.IsEnabled = false;
+            tb_RemovingPreviousInstalls.Visibility = Visibility.Visible;
+            Task.Run(() => RemovePreviousInstalls());
+        }
+
+        private void CheckForPreviousInstallsToRemove()
+        {
+            IEnumerable<string>? previousFolders = Utils.GetPreviousASIFolders();
+            if (previousFolders != null && previousFolders.Count() > 0)
+            {
+                double totalSize = 0.0d;
+                foreach (string folder in previousFolders)
+                    if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+                        totalSize += Utils.GetDirectorySize(folder);
+                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                {
+                    run_RemovePreviousInstalls.Text = ASILang.Get("PrivousInstallsFound_Description").Replace("#STORAGE_SIZE#", Utils.BytesSizeToReadableString(totalSize), StringComparison.InvariantCulture);
+                    sp_RemovePreviousInstalls.Visibility = Visibility.Visible;
+                });
+            }
+            else
+                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed);
+        }
+
+        private void RemoveOldJsonData()
+        {
+            if (SettingsPage._jsonExportProfiles == null || SettingsPage._jsonExportProfiles.Count <= 0)
+                SettingsPage.LoadJsonExportProfiles();
+            if (SettingsPage._jsonExportProfiles != null && SettingsPage._jsonExportProfiles.Count > 0)
+            {
+                var groupedProfiles = SettingsPage._jsonExportProfiles.OrderByDescending(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                if (groupedProfiles != null && groupedProfiles.Count() > 0)
+                {
+                    foreach (var group in groupedProfiles)
+                        if (group != null && group.Count() > 1)
+                        {
+                            bool isFirst = true;
+                            foreach (var jep in group)
+                                if (jep != null)
+                                {
+                                    if (isFirst)
+                                        isFirst = false;
+                                    else
+                                        try { SettingsPage.DeleteJsonExportProfile(jep); }
+                                        catch { }
+                                }
+                        }
+                    Task.Run(() => ComputeJsonExportsFolderSize());
+                    Task.Run(() => ComputeASIDataFolderTotalSize());
+                }
+            }
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                tb_RemovingJsonData.Visibility = Visibility.Collapsed;
+                sp_RemoveJsonData.Visibility = Visibility.Collapsed;
+                btn_RemoveJsonData.IsEnabled = true;
+            });
+        }
+
+        private void btn_RemoveJsonData_Click(object sender, RoutedEventArgs e)
+        {
+            btn_RemoveJsonData.IsEnabled = false;
+            tb_RemovingJsonData.Visibility = Visibility.Visible;
+            Task.Run(() => RemoveOldJsonData());
+        }
     }
 }

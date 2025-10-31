@@ -5,31 +5,128 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ASA_Save_Inspector.Pages"
     xmlns:asi="using:ASA_Save_Inspector"
+    xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:primitives="using:CommunityToolkit.WinUI.UI.Controls.Primitives"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:controlsb="using:Microsoft.UI.Xaml.Controls"
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     mc:Ignorable="d"
     FontSize="16"
     x:Name="page_Settings"
     SizeChanged="page_SizeChanged">
 
+    <Page.Resources>
+        <Style x:Key="ASICustomDataGridHeaderStyle" TargetType="primitives:DataGridColumnHeader">
+            <Setter Property="Foreground" Value="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="SeparatorBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,0,4,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="primitives:DataGridColumnHeader">
+                        <Grid x:Name="ColumnHeaderRoot">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemAltHighColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemListLowColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BackgroundRectangle" Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Duration="0" To="{StaticResource SystemListMediumColor}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Unfocused"/>
+                                    <VisualState x:Name="Focused">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusVisual" Storyboard.TargetProperty="Opacity" To="1" Duration="0"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="SortStates">
+                                    <VisualState x:Name="Unsorted"/>
+                                    <VisualState x:Name="SortAscending">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SortIcon" Storyboard.TargetProperty="Opacity" Duration="0" To="1"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="SortDescending">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SortIcon" Storyboard.TargetProperty="Opacity" Duration="0" To="1"/>
+                                        </Storyboard>
+                                        <VisualState.Setters>
+                                            <Setter Target="SortIcon.Glyph" Value="&#xE74B;"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Rectangle x:Name="BackgroundRectangle" Stretch="Fill" Fill="{StaticResource SystemAltHighColor}" Grid.ColumnSpan="2"/>
+
+                            <Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition MinWidth="0" MaxWidth="1" Width="0"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                                <FontIcon Grid.Column="1" x:Name="SortIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE74A;" FontSize="12" Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" Visibility="Collapsed"/>
+                            </Grid>
+                            <Rectangle x:Name="VerticalSeparator" Grid.Column="1" Width="1" VerticalAlignment="Stretch" Fill="{TemplateBinding SeparatorBrush}" Visibility="{TemplateBinding SeparatorVisibility}"/>
+
+                            <Grid x:Name="FocusVisual" IsHitTestVisible="False" Opacity="0">
+                                <Rectangle x:Name="FocusVisualPrimary" Stroke="{StaticResource SystemControlFocusVisualPrimaryBrush}" StrokeThickness="2" Fill="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="FocusVisualSecondary" Stroke="{StaticResource SystemControlFocusVisualSecondaryBrush}" StrokeThickness="1" Fill="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False" Margin="2"/>
+                            </Grid>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
     <Grid x:Name="gr_SettingsPage">
-        <StackPanel Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <TextBlock Text="{x:Bind asi:ASILang.Get('Settings'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
-            <StackPanel Orientation="Vertical" Margin="10,15,0,0">
-                <TextBlock Text="{x:Bind asi:ASILang.Get('Language'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" TextWrapping="WrapWholeWords"/>
-                <DropDownButton x:Name="ddb_LanguageSelect" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                    <RichTextBlock x:Name="rtb_LanguageSelect" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords">
-                        <Paragraph TextAlignment="Left" HorizontalTextAlignment="Left" LineHeight="20">
-                            <InlineUIContainer>
-                                <Image x:Name="i_LanguageSelect" Source="ms-appx:///Assets/FlagGBIcon96.png" Height="20" Width="20" Margin="0,0,0,-5"/>
-                            </InlineUIContainer>
-                            <Run x:Name="r_LanguageSelect" Text="English"/>
-                        </Paragraph>
-                    </RichTextBlock>
-                    <DropDownButton.Flyout>
-                        <MenuFlyout x:Name="mf_LanguageSlect" Placement="BottomEdgeAlignedLeft">
-                            <!--
+        <!--<StackPanel Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">-->
+        <TextBlock Text="{x:Bind asi:ASILang.Get('Settings'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
+        <Border BorderBrush="Transparent" BorderThickness="0" Margin="0,40,24,24"
+                          styling:CustomScrollBar.KeepHorizontalExpanded="True"
+                          styling:CustomScrollBar.KeepVerticalExpanded="True"
+                          styling:CustomScrollBar.LargeHorizontalScrollBar="True"
+                          styling:CustomScrollBar.LargeVerticalScrollBar="True">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Vertical" Margin="10,15,0,0">
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('Language'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" TextWrapping="WrapWholeWords"/>
+                    <DropDownButton x:Name="ddb_LanguageSelect" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                        <RichTextBlock x:Name="rtb_LanguageSelect" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords">
+                            <Paragraph TextAlignment="Left" HorizontalTextAlignment="Left" LineHeight="20">
+                                <InlineUIContainer>
+                                    <Image x:Name="i_LanguageSelect" Source="ms-appx:///Assets/FlagGBIcon96.png" Height="20" Width="20" Margin="0,0,0,-5"/>
+                                </InlineUIContainer>
+                                <Run x:Name="r_LanguageSelect" Text="English"/>
+                            </Paragraph>
+                        </RichTextBlock>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout x:Name="mf_LanguageSlect" Placement="BottomEdgeAlignedLeft">
+                                <!--
                             <MenuFlyoutItem x:Name="mfi_LanguageEnglish" Text="{x:Bind asi:ASILang.Get('English'), Mode=OneWay}" Click="mfi_LanguageEnglish_Click">
                                 <MenuFlyoutItem.Icon>
                                     <ImageIcon Source="ms-appx:///Assets/FlagGBIcon96.png" Width="20" Height="20"/>
@@ -41,54 +138,93 @@
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             -->
-                        </MenuFlyout>
-                    </DropDownButton.Flyout>
-                </DropDownButton>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
 
-                <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,25,0,0" TextWrapping="WrapWholeWords"/>
-                <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine1'), Mode=OneWay}" Margin="0,5,0,0" TextWrapping="WrapWholeWords"/>
-                <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine2'), Mode=OneWay}" TextWrapping="WrapWholeWords"/>
-                <DropDownButton x:Name="ddb_PythonSelect" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                    <TextBlock x:Name="tb_PythonSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                    <DropDownButton.Flyout>
-                        <MenuFlyout x:Name="mf_PythonSelect" Placement="BottomEdgeAlignedLeft">
-                        </MenuFlyout>
-                    </DropDownButton.Flyout>
-                </DropDownButton>
-                <TextBlock Margin="0,5,0,0" FontStyle="Italic" TextWrapping="WrapWholeWords"><Run Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine3'), Mode=OneWay}"/> <Hyperlink NavigateUri="https://www.python.org/downloads/" ToolTipService.ToolTip="Download Python 3">https://www.python.org/downloads/</Hyperlink></TextBlock>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,20,0,0" TextWrapping="WrapWholeWords"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine1'), Mode=OneWay}" Margin="0,5,0,0" TextWrapping="WrapWholeWords"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine2'), Mode=OneWay}" TextWrapping="WrapWholeWords"/>
+                    <DropDownButton x:Name="ddb_PythonSelect" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
+                        <TextBlock x:Name="tb_PythonSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout x:Name="mf_PythonSelect" Placement="BottomEdgeAlignedLeft">
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <TextBlock Margin="0,5,0,0" FontStyle="Italic" TextWrapping="WrapWholeWords"><Run Text="{x:Bind asi:ASILang.Get('PythonSetup_DescriptionLine3'), Mode=OneWay}"/> <Hyperlink NavigateUri="https://www.python.org/downloads/" ToolTipService.ToolTip="Download Python 3">https://www.python.org/downloads/</Hyperlink></TextBlock>
 
-                <TextBlock Text="{x:Bind asi:ASILang.Get('JsonData'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,25,0,0" TextWrapping="WrapWholeWords"/>
-                <TextBlock Text="{x:Bind asi:ASILang.Get('JsonData_DescriptionLine1'), Mode=OneWay}" Margin="0,5,0,0" TextWrapping="WrapWholeWords"/>
-                <DropDownButton x:Name="ddb_JsonDataSelect" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                    <TextBlock x:Name="tb_JsonDataSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                    <DropDownButton.Flyout>
-                        <MenuFlyout x:Name="mf_JsonDataSelect" Placement="BottomEdgeAlignedLeft">
-                            <MenuFlyoutItem x:Name="mfi_JsonDataArkParse" Text="{x:Bind asi:ASILang.Get('JsonData_ExtractSingleFile'), Mode=OneWay}" Click="mfi_JsonDataArkParse_Click">
-                                <MenuFlyoutItem.Icon>
-                                    <ImageIcon Source="ms-appx:///Assets/ArkParserIcon96.png" Width="20" Height="20"/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Name="mfi_JsonDataArkParseWithPreset" Text="{x:Bind asi:ASILang.Get('JsonData_ExtractWithPreset'), Mode=OneWay}" Click="mfi_JsonDataArkParseWithPreset_Click">
-                                <MenuFlyoutItem.Icon>
-                                    <ImageIcon Source="ms-appx:///Assets/ArkParserIcon96.png" Width="20" Height="20"/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Name="mfi_JsonDataManual" Text="{x:Bind asi:ASILang.Get('JsonData_ExtractFromDirectory'), Mode=OneWay}" Click="mfi_JsonDataManual_Click">
-                                <MenuFlyoutItem.Icon>
-                                    <ImageIcon Source="ms-appx:///Assets/FolderIcon96.png" Width="20" Height="20"/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                        </MenuFlyout>
-                    </DropDownButton.Flyout>
-                </DropDownButton>
-                <TextBlock x:Name="tb_CannotExtractWithArkParse" Text="{x:Bind asi:ASILang.Get('JsonData_ExtractFailedCheckPython'), Mode=OneWay}" Foreground="Red" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <Button x:Name="btn_LoadJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Load'), Mode=OneWay}" Click="btn_LoadJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="0,10,0,0"/>
-                    <Button x:Name="btn_RemoveJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Remove'), Mode=OneWay}" Click="btn_RemoveJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="10,10,0,0"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('JsonData'), Mode=OneWay}" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,20,0,0" TextWrapping="WrapWholeWords"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('JsonData_NewExtraction'), Mode=OneWay}" Margin="0,5,0,0" TextWrapping="WrapWholeWords"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <Button x:Name="btn_ExtractWithSaveFile" Content="{x:Bind asi:ASILang.Get('JsonData_ExtractWithSaveFile'), Mode=OneWay}" Click="btn_ExtractWithSaveFile_Click"/>
+                        <Button x:Name="btn_ExtractWithPreset" Content="{x:Bind asi:ASILang.Get('JsonData_ExtractWithPreset'), Mode=OneWay}" Click="btn_ExtractWithPreset_Click" Margin="10,0,0,0"/>
+                        <Button x:Name="btn_ManagePresets" Content="{x:Bind asi:ASILang.Get('JsonData_ManagePresets'), Mode=OneWay}" Click="btn_ManagePresets_Click" Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock x:Name="tb_CannotExtractWithArkParse" Text="{x:Bind asi:ASILang.Get('JsonData_ExtractFailedCheckPython'), Mode=OneWay}" Foreground="Red" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('JsonData_AvailableData'), Mode=OneWay}" Margin="0,10,0,0" TextWrapping="WrapWholeWords"/>
+                    <Border BorderBrush="Transparent" BorderThickness="0" Padding="0,5,24,0">
+                        <controls:DataGrid x:Name="dg_JEP"
+                                       FontSize="16"
+                                       AutoGenerateColumns="True"
+                                       AutoGeneratingColumn="dg_JEP_AutoGeneratingColumn"
+                                       CanUserSortColumns="True"
+                                       CanUserResizeColumns="True"
+                                       CanUserReorderColumns="True"
+                                       IsReadOnly="True"
+                                       VerticalAlignment="Top"
+                                       HorizontalAlignment="Left"
+                                       HorizontalScrollBarVisibility="Visible"
+                                       VerticalScrollBarVisibility="Visible"
+                                       LoadingRowGroup="dg_JEP_LoadingRowGroup"
+                                       styling:CustomScrollBar.KeepHorizontalExpanded="True"
+                                       styling:CustomScrollBar.KeepVerticalExpanded="True"
+                                       styling:CustomScrollBar.LargeHorizontalScrollBar="True"
+                                       styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                                       Sorting="dg_JEP_Sorting"
+                                       Margin="-24,0,0,24"
+                                       Background="{StaticResource MyAcrylicBrush}"
+                                       ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
+                            <controls:DataGrid.Resources>
+                                <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
+                                    <Setter Property="UseSystemFocusVisuals" Value="False" />
+                                    <Setter Property="FocusVisualMargin" Value="0" />
+                                    <Setter Property="MinWidth" Value="20" />
+                                    <Setter Property="Width" Value="20" />
+                                </Style>
+                            </controls:DataGrid.Resources>
+                            <controls:DataGrid.Columns>
+                                <controls:DataGridTemplateColumn Width="24" Header=" ">
+                                    <controls:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text=""/>
+                                        </DataTemplate>
+                                    </controls:DataGridTemplateColumn.CellTemplate>
+                                </controls:DataGridTemplateColumn>
+                                <controls:DataGridTemplateColumn Width="auto" Header="{x:Bind asi:ASILang.Get('Actions'), Mode=OneWay}">
+                                    <controls:DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="local:JsonExportProfile">
+                                            <StackPanel Orientation="Horizontal" Margin="1">
+                                                <Button Content="{x:Bind LabelLoad}" Click="LoadJsonExportProfile_Click"/>
+                                                <Button Content="{x:Bind LabelRemove}" Click="RemoveJsonExportProfile_Click" Margin="5,0,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </controls:DataGridTemplateColumn.CellTemplate>
+                                </controls:DataGridTemplateColumn>
+                            </controls:DataGrid.Columns>
+                        </controls:DataGrid>
+                    </Border>
+                    <!--
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                        <Button x:Name="btn_LoadJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Load'), Mode=OneWay}" Click="btn_LoadJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="0,10,0,0"/>
+                        <Button x:Name="btn_RemoveJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Remove'), Mode=OneWay}" Click="btn_RemoveJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="10,10,0,0"/>
+                    </StackPanel>
+                    -->
+                    <TextBlock x:Name="tb_JsonDataLoaded" Text="{x:Bind asi:ASILang.Get('JsonData_SuccessfullyLoaded'), Mode=OneWay}" Foreground="Green" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
                 </StackPanel>
-                <TextBlock x:Name="tb_JsonDataLoaded" Text="{x:Bind asi:ASILang.Get('JsonData_SuccessfullyLoaded'), Mode=OneWay}" Foreground="Green" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
-            </StackPanel>
-        </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <!--</StackPanel>-->
 
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="SelectExportPresetPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
@@ -114,16 +250,16 @@
 
                                 </StackPanel>
                             </ScrollViewer>
-                            <Button x:Name="btn_ExportPresetExtract" Content="{x:Bind asi:ASILang.Get('Extract'), Mode=OneWay}" Click="btn_ExportPresetExtract_Click" FontSize="16" Margin="0,10,0,0" HorizontalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,10">
-                                <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseSelectExportPresetPopup_Click" FontSize="16" />
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,20,0,10">
+                                <Button x:Name="btn_ExportPresetExtract" Content="{x:Bind asi:ASILang.Get('Extract'), Mode=OneWay}" Click="btn_ExportPresetExtract_Click" FontSize="16"/>
+                                <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_CloseSelectExportPresetPopup_Click" FontSize="16" Margin="10,0,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </Border>
             </Border>
         </Popup>
-        
+
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ExtractProfilePresetsPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
@@ -156,20 +292,6 @@
                                 <Button x:Name="btn_CreateExtractionPreset" Content="{x:Bind asi:ASILang.Get('Create'), Mode=OneWay}" IsEnabled="False" Click="btn_CreateExtractionPreset_Click" FontSize="16" Margin="10,0,0,0"/>
                             </StackPanel>
 
-                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('ExtractPreset_RemovePreset'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
-                                <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('Preset'), Mode=OneWay}"/>:</TextBlock>
-                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
-                                    <TextBlock x:Name="tb_ExistingExtractionPresets_Remove" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                    <DropDownButton.Flyout>
-                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_Remove" Placement="BottomEdgeAlignedLeft">
-
-                                        </MenuFlyout>
-                                    </DropDownButton.Flyout>
-                                </DropDownButton>
-                                <Button x:Name="btn_RemoveExistingExtractionPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" Click="btn_RemoveExistingExtractionPreset_Click" FontSize="16" Margin="10,0,0,0"/>
-                            </StackPanel>
-
                             <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('ExtractPreset_ViewDetails'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
                                 <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('Preset'), Mode=OneWay}"/>:</TextBlock>
@@ -197,6 +319,66 @@
             </Border>
         </Popup>
 
+        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ManageJEPPresetsPopup">
+            <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
+                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
+                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        BorderThickness="2" CornerRadius="4">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                <Border BorderBrush="Transparent" BorderThickness="0">
+                                </Border>
+                            </StackPanel>
+                            
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('ExtractPreset_CreatePreset'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,10,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
+                                <TextBox x:Name="tb_CreateExtractionPreset_B" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="10,0,0,0" TextChanged="tb_CreateExtractionPreset_B_TextChanged"/>
+                                <Button x:Name="btn_CreateExtractionPreset_B" Content="{x:Bind asi:ASILang.Get('Create'), Mode=OneWay}" IsEnabled="False" Click="btn_CreateExtractionPreset_B_Click" FontSize="16" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('ExtractPreset_RemovePreset'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('Preset'), Mode=OneWay}"/>:</TextBlock>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExistingExtractionPresets_Remove" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_Remove" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                                <Button x:Name="btn_RemoveExistingExtractionPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" Click="btn_RemoveExistingExtractionPreset_Click" FontSize="16" Margin="10,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('ExtractPreset_ViewDetails'), Mode=OneWay}" TextWrapping="Wrap" Margin="10,30,10,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,5,10,0">
+                                <TextBlock FontSize="16" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('Preset'), Mode=OneWay}"/>:</TextBlock>
+                                <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="10,0,0,0">
+                                    <TextBlock x:Name="tb_ExistingExtractionPresets_Details_B" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout x:Name="mf_ExistingExtractionPresets_Details_B" Placement="BottomEdgeAlignedLeft">
+
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="10,5,0,0" MaxHeight="350">
+                                <StackPanel x:Name="sp_ExistingExtractionPresetDetails_B" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
+
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="10,30,10,10">
+                                <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseManageJEPPresetsPopup_Click" FontSize="16" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Border>
+        </Popup>
+        
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="StandardPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
@@ -244,7 +426,7 @@
                             <DropDownButton x:Name="ddb_MapName" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                                 <TextBlock x:Name="tb_MapNameSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                                 <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_MapNameSlect" Placement="BottomEdgeAlignedLeft">
+                                    <MenuFlyout x:Name="mf_MapNameSelect" Placement="BottomEdgeAlignedLeft">
                                     </MenuFlyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
@@ -256,48 +438,6 @@
                             <TextBlock x:Name="tb_ExtractJsonResult" Text="{x:Bind asi:ASILang.Get('ExtractFailed'), Mode=OneWay}" TextWrapping="WrapWholeWords" Visibility="Collapsed" Margin="0,5,0,0" FontSize="18"/>
                         </StackPanel>
                         <Button x:Name="btn_CancelBottom" Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="CloseArkParserPopupClicked" Margin="0,40,0,0" FontSize="18"/>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="JsonFolderSelectedPopup">
-            <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
-                        BorderThickness="2" CornerRadius="4">
-                    <StackPanel Orientation="Vertical" Margin="10,5,0,0">
-                        <TextBlock Text="{x:Bind asi:ASILang.Get('JsonDataInfo'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
-                        <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('FoundJsonData'), Mode=OneWay}"/>:</TextBlock>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="180"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <CheckBox x:Name="cb_foundDinos" Grid.Row="0" Grid.Column="0" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Dinos'), Mode=OneWay}"/>
-                            <CheckBox x:Name="cb_foundPlayerPawns" Grid.Row="0" Grid.Column="1" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Pawns'), Mode=OneWay}"/>
-                            <CheckBox x:Name="cb_foundItems" Grid.Row="1" Grid.Column="0" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Items'), Mode=OneWay}"/>
-                            <CheckBox x:Name="cb_foundStructures" Grid.Row="1" Grid.Column="1" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Structures'), Mode=OneWay}"/>
-                            <CheckBox x:Name="cb_foundPlayers" Grid.Row="2" Grid.Column="0" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Players'), Mode=OneWay}"/>
-                            <CheckBox x:Name="cb_foundTribes" Grid.Row="2" Grid.Column="1" IsChecked="False" IsEnabled="False" FontSize="18" Content="{x:Bind asi:ASILang.Get('Tribes'), Mode=OneWay}"/>
-                        </Grid>
-                        <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExtractName'), Mode=OneWay}"/>:</TextBlock>
-                        <TextBox x:Name="tb_FolderExtractionName" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" MinWidth="250" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="0,5,0,0"/>
-                        <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>:</TextBlock>
-                        <DropDownButton x:Name="ddb_FolderMapName" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_FolderMapNameSelect" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout x:Name="mf_FolderMapNameSlect" Placement="BottomEdgeAlignedLeft">
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                        <Button Content="{x:Bind asi:ASILang.Get('OK'), Mode=OneWay}" Click="ValidateJsonFolderSelectedClicked" Margin="0,15,0,0" FontSize="18"/>
-                        <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="CloseJsonFolderSelectedPopupClicked" Margin="0,55,0,0" FontSize="18"/>
                     </StackPanel>
                 </Border>
             </Border>

@@ -19,6 +19,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
+        public const string LANGUAGE_VERSION = "2.0";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -30,6 +31,14 @@ namespace ASA_Save_Inspector
         static ASILang()
         {
             EnsureInitialized();
+        }
+
+        public static CultureInfo GetCultureInfo()
+        {
+            CultureInfo? ci = null;
+            try { ci = CultureInfo.GetCultureInfo(ASILang.Get("MicrosoftCultureFormat")); }
+            catch { ci = null; }
+            return (ci == null ? CultureInfo.InvariantCulture : ci);
         }
 
         public static string GetLanguageCode(string? code) => (!string.IsNullOrEmpty(code) && ASILang._languages.ContainsKey(code) ? code : ASILang.DEFAULT_LANGUAGE_CODE);
@@ -177,7 +186,7 @@ namespace ASA_Save_Inspector
                     Items = fr_FR
                 };
 
-            Logger.Instance.Log("Languages initialized.", Logger.LogLevel.INFO);
+            Logger.Instance.Log("Languages initialised.", Logger.LogLevel.INFO);
         }
 
         public static void SwitchLanguage(string langCode)
@@ -205,12 +214,37 @@ namespace ASA_Save_Inspector
             Utils.EnsureLangFolderExist();
 
             string outputFilepath = Path.Combine(Utils.GetLangDir(), $"{code}.json");
-            /*
 #if !DEBUG // Always overwrite language files in DEBUG.
             if (File.Exists(outputFilepath))
-                return;
+            {
+                bool versionUpToDate = false;
+                try
+                {
+                    using (FileStream fs = File.Open(outputFilepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        using (BufferedStream bs = new BufferedStream(fs))
+                        {
+                            using (StreamReader sr = new StreamReader(bs))
+                            {
+                                string? line;
+                                while ((line = sr.ReadLine()) != null)
+                                {
+                                    if (line.Contains("\"Language_Version\"", StringComparison.InvariantCulture))
+                                    {
+                                        if (line.Contains($"\"{LANGUAGE_VERSION}\"", StringComparison.InvariantCulture))
+                                            versionUpToDate = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+                if (versionUpToDate)
+                    return;
+            }
 #endif
-            */
 
             ASILangFile lang = new ASILangFile()
             {
@@ -238,8 +272,11 @@ namespace ASA_Save_Inspector
 
         private static readonly Dictionary<string, string> en_GB = new Dictionary<string, string>()
         {
+            { "Language_Version", "2.0" },
             { "Language_Name", "English" },
             { "Language_Code", "en_GB" },
+            { "MicrosoftDateTimeFormat", "G" },
+            { "MicrosoftCultureFormat", "en-GB" },
 
             // About page
             { "Version", "Version" },
@@ -271,28 +308,39 @@ namespace ASA_Save_Inspector
             { "Save", "Save" },
             { "Load", "Load" },
             { "Remove", "Remove" },
+            { "Actions", "Actions" },
             { "Yes", "Yes" },
             { "No", "No" },
             { "NoAndDontAskAgain", "No, don't ask me again" },
+            { "Undefined", "Undefined" },
+            { "File", "File" },
+            { "RowsGroupItems", "items" },
             { "Settings", "Settings" },
             { "Pawns", "Pawns" },
+            { "Dino", "Dino" },
             { "Dinos", "Dinos" },
             { "Structures", "Structures" },
             { "Items", "Items" },
             { "Players", "Players" },
+            { "Tribe", "Tribe" },
             { "Tribes", "Tribes" },
             { "Other", "Other" },
             { "About", "About" },
+            { "All", "All" },
+            { "Computing", "Computing..." },
             { "ClickHere", "Click here..." },
             { "Operator", "Operator" },
             { "OperatorAND", "AND" },
             { "OperatorOR", "OR" },
             { "SortAscending", "Ascending" },
             { "SortDescending", "Descending" },
+            { "Extracts", "Extracts" },
+            { "CreationDate", "Creation date" },
             { "Unknown", "Unknown" },
             { "UnknownDate", "1970-01-01 00h00m00s" },
             { "UniqueID", "Unique ID" },
             { "TribeID", "Tribe ID" },
+            { "Initializing", "Initialising..." },
             { "ErrorHappened", "An error happened, see logs for details." },
             { "UnableToRestartASI", "Unable to restart." },
             { "PleaseRestartASIManually", "Please restart ASI manually." },
@@ -392,6 +440,7 @@ namespace ASA_Save_Inspector
             { "DinoNotFound", "Dino not found." },
             { "StructureNotFound", "Structure not found." },
             { "TribeNotFound", "Tribe not found." },
+            { "QuickFiltering", "Quickly add filters:" },
             { "CheckFilters", "Check filters." },
             { "FilteringByInventoryIDFailed", "Filtering by inventory ID failed." },
             { "InventoryIDNotFound", "Inventory ID not found." },
@@ -400,6 +449,9 @@ namespace ASA_Save_Inspector
             { "ApplicationTheme_Light", "Light" },
             { "OpenMiniMap", "Open Minimap" },
             { "OpenASIDataFolder", "Open ASI data folder" },
+            { "JsonExportsFolderSize", "JSON data folder size" },
+            { "ASIDataFolderTotalSize", "ASI data folder total size" },
+            { "Statistics", "Statistics" },
             { "CustomBlueprints", "Custom blueprints" },
             { "ForceReinstallArkParse", "Force reinstall ArkParse" },
             { "CustomBlueprintsSectionDescription", "You can use this section to register and manage custom blueprints. Note that registering a custom blueprint does not necessarily means that its data will be extracted successfully (data extraction succeeds if the object is similar enough to a basic ASA game object)." },
@@ -440,9 +492,11 @@ namespace ASA_Save_Inspector
             { "PythonSetup_DescriptionLine2", "Please select Python executable from the dropdown menu below:" },
             { "PythonSetup_DescriptionLine3", "If you don't have Python 3 installed, you can get it here:" },
             { "JsonData", "JSON data" },
-            { "JsonData_DescriptionLine1", "Please select the JSON data from the dropdown menu below:" },
-            { "JsonData_ExtractSingleFile", "Extract JSON data (single save file)" },
-            { "JsonData_ExtractWithPreset", "Extract JSON data (using preset)" },
+            { "JsonData_NewExtraction", "New extraction:" },
+            { "JsonData_AvailableData", "Available JSON data:" },
+            { "JsonData_ExtractWithSaveFile", "With a save file" },
+            { "JsonData_ExtractWithPreset", "With a preset" },
+            { "JsonData_ManagePresets", "Manage presets" },
             { "JsonData_ExtractFromDirectory", "Select JSON data folder manually" },
             { "JsonData_ExtractFailedCheckPython", "Cannot extract JSON data. Please verify the Python Setup above." },
             { "JsonData_SuccessfullyLoaded", "JSON data successfully loaded." },
@@ -517,7 +571,7 @@ namespace ASA_Save_Inspector
             { "OilVeins", "Oil Veins" },
             { "WaterVeins", "Water Veins" },
             { "GasVeins", "Gas Veins" },
-            { "PowerNodes", "Power Nodes" },
+            { "PowerNodes", "Charge Nodes" },
             { "BeaverDams", "Beaver Dams" },
             { "ZPlants", "Z Plants" },
             { "WyvernNests", "Wyvern Nests" },
@@ -533,15 +587,21 @@ namespace ASA_Save_Inspector
             { "UnknownContainerType", "Unknown container type." },
             { "PlayersDataPageNotFound", "Players data page not found." },
             { "TribesDataPageNotFound", "Tribes data page not found." },
+            { "PrivousInstallsFound_Title", "Previous installs found" },
+            { "PrivousInstallsFound_Description", "Older versions of ASI have been found. You can delete them using the button below to free up #STORAGE_SIZE# of storage space." },
+            { "RemovePreviousInstalls", "Remove previous installs" },
+            { "RemovingPreviousInstalls", "Removing previous installs." },
+            { "RemoveJsonData_Description", "High disk space usage detected. You can either delete JSON data one by one from the Settings page, or delete all JSON data except the latest for each save file using the button below." },
+            { "RemoveJsonData", "Delete all JSON data except the latest (for each save file)" },
+            { "RemovingJsonData", "Deleting JSON data." },
 
             // Python manager
             { "GetArkParseVersionFailed", "Could not get ArkParse version." },
-            { "PyProjectTomlFileNotFound", "Local file pyproject.toml not found." },
-            { "PyProjectTomlFileIsEmpty", "Local file pyproject.toml is empty." },
-            { "PyProjectTomlFileParsingFailed", "Could not find line starting with 'version = \"' in local pyproject.toml." },
-            { "RepoPyProjectTomlFileNotFound", "File pyproject.toml not found in repository." },
-            { "RepoPyProjectTomlFileIsEmpty", "File pyproject.toml from repository is empty." },
-            { "RepoPyProjectTomlFileParsingFailed", "Could not find line starting with 'version = \"' in pyproject.toml from repository." },
+            { "ArkParseVersionFileNotFound", "Local file ASI_VERSION.txt not found." },
+            { "ArkParseVersionFileIsEmpty", "Local file ASI_VERSION.txt is empty." },
+            { "ArkParseVersionFileFailedReading", "Failed to read local file ASI_VERSION.txt." },
+            { "RepoArkParseVersionFileNotFound", "File ASI_VERSION.txt not found in repository." },
+            { "RepoArkParseVersionFileIsEmpty", "File ASI_VERSION.txt from repository is empty." },
             { "ArkParseUpToDate", "ArkParse is up to date." },
             { "ArkParseUpdating", "Updating ArkParse..." },
             { "ArkParseDownloading", "Downloading ArkParse archive..." },
@@ -585,6 +645,7 @@ namespace ASA_Save_Inspector
             { "CheckASISettings", "Check ASA Save Inspector settings." },
             { "CheckSettings", "Check settings." },
             { "ArkParseExtractingJsonData", "Extracting JSON data..." },
+            { "LoadingJsonData", "Loading JSON data..." },
             { "ArkParseJsonExportProfileCreationFailed", "Failed to create new JSON export profile." },
             { "PleaseWait", "Please wait." },
             { "ArkParseRunError", "An error happened in RunArkParse." },
@@ -594,8 +655,11 @@ namespace ASA_Save_Inspector
 
         private static readonly Dictionary<string, string> fr_FR = new Dictionary<string, string>()
         {
+            { "Language_Version", "2.0" },
             { "Language_Name", "Français" },
             { "Language_Code", "fr_FR" },
+            { "MicrosoftDateTimeFormat", "G" },
+            { "MicrosoftCultureFormat", "fr-FR" },
 
             // About page
             { "Version", "Version" },
@@ -627,30 +691,41 @@ namespace ASA_Save_Inspector
             { "Save", "Sauvegarder" },
             { "Load", "Charger" },
             { "Remove", "Supprimer" },
+            { "Actions", "Actions" },
             { "Yes", "Oui" },
             { "No", "Non" },
             { "NoAndDontAskAgain", "Non, ne plus me demander" },
+            { "Undefined", "Non définit" },
+            { "File", "Fichier" },
+            { "RowsGroupItems", "éléments" },
             { "Settings", "Réglages" },
             { "Pawns", "Persos" },
+            { "Dino", "Dino" },
             { "Dinos", "Dinos" },
             { "Structures", "Structures" },
             { "Items", "Objets" },
             { "Players", "Joueurs" },
+            { "Tribe", "Tribu" },
             { "Tribes", "Tribus" },
             { "Other", "Autre" },
             { "About", "À Propos" },
+            { "All", "Tous" },
+            { "Computing", "Calcul en cours..." },
             { "ClickHere", "Cliquez ici..." },
             { "Operator", "Operateur" },
             { "OperatorAND", "ET" },
             { "OperatorOR", "OU" },
             { "SortAscending", "Ascendant" },
             { "SortDescending", "Descendant" },
+            { "Extracts", "Extrait" },
+            { "CreationDate", "Date de création" },
             { "Unknown", "Inconnu" },
             { "UnknownDate", "1970-01-01 00h00m00s" },
             { "UniqueID", "ID unique" },
             { "TribeID", "ID de tribu" },
+            { "Initializing", "Initialisation en cours..." },
             { "ErrorHappened", "Une erreur est survenue, voir les logs pour plus d'info." },
-            { "UnableToRestartASI", "Impossible de rédémarrer." },
+            { "UnableToRestartASI", "Impossible de redémarrer." },
             { "PleaseRestartASIManually", "Veuillez redémarrer ASI manuellement." },
             { "ASISettings", "Configuration d'ASI" },
             { "ExportProfiles", "Profils d'extraction" },
@@ -747,7 +822,8 @@ namespace ASA_Save_Inspector
             { "PlayerPawnNotFound", "Perso non trouvé." },
             { "DinoNotFound", "Dino non trouvé." },
             { "StructureNotFound", "Structure non trouvée." },
-            { "TribeNotFound", "Tribe not found." },
+            { "TribeNotFound", "Tribu non trouvée." },
+            { "QuickFiltering", "Ajout rapide de filtres :" },
             { "CheckFilters", "Vérifiez les filtres." },
             { "FilteringByInventoryIDFailed", "Le filtrage par ID d'inventaire a échoué." },
             { "InventoryIDNotFound", "L'ID d'inventaire n'a pas été trouvé." },
@@ -756,8 +832,11 @@ namespace ASA_Save_Inspector
             { "ApplicationTheme_Light", "Clair" },
             { "OpenMiniMap", "Ouvrir la mini-carte" },
             { "OpenASIDataFolder", "Ouvrir le dossier de données d'ASI" },
+            { "JsonExportsFolderSize", "Taille du dossier de données JSON" },
+            { "ASIDataFolderTotalSize", "Taille totale du dossier de données ASI" },
+            { "Statistics", "Statistiques" },
             { "CustomBlueprints", "Blueprints personnalisés" },
-            { "ForceReinstallArkParse", "Réinstaller ArkParse" },
+            { "ForceReinstallArkParse", "Forcer la réinstallation d'ArkParse" },
             { "CustomBlueprintsSectionDescription", "Vous pouvez utiliser cette section pour ajouter et gérer des blueprints personnalisés. Notez qu'ajouter un blueprint personnalisé ne signifie pas forcément que l'extraction va réussir (l'extraction des données réussie uniquement si l'élément est suffisament similaire à un élément du jeu de base)." },
             { "RegisterCustomBlueprint", "Ajouter un blueprint personnalisé" },
             { "BlueprintType", "Type de blueprint" },
@@ -769,7 +848,7 @@ namespace ASA_Save_Inspector
             { "StructureBlueprints", "Blueprints de structure" },
             { "BlueprintClassName", "Nom de classe du blueprint" },
             { "BlueprintClassNameExample", "Exemple : PrimalItem_WeaponCrossbow" },
-            { "CustomBlueprintsRegistered", "Blueprint personnalisé ajouté" },
+            { "CustomBlueprintsRegistered", "Blueprints personnalisés ajoutés" },
             { "CannotFindASIDataFolder", "Le dossier de données d'ASI n'a pas été trouvé." },
             { "ReinstallArkParseFailed", "La réinstallation d'ArkParse a échouée, voir logs pour plus d'info." },
             { "CustomDinoBlueprintUnregistered", "Blueprint personnalisé de dino supprimé." },
@@ -783,7 +862,7 @@ namespace ASA_Save_Inspector
             { "CustomItemBlueprintAdded", "Le blueprint personnalisé d'objet a été ajouté." },
             { "CustomStructureBlueprintAlreadyRegistered", "Ce blueprint personnalisé de structure existe déjà." },
             { "CustomStructureBlueprintAdded", "Le blueprint personnalisé de structure a été ajouté." },
-            { "ThemeSwitched_RestartAppToApplyChanges", "#THEME_NAME# theme enabled. Restart app to see changes." },
+            { "ThemeSwitched_RestartAppToApplyChanges", "Thème #THEME_NAME# activé. Redémarrez l'appli pour voir les changements." },
             { "UpdateAvailable", "Nouvelle mise à jour disponible" },
             { "UpdateAvailableDescription", "La version #NEW_VERSION# de ASA Save Inspector est disponible (vous utilisez actuellement la version #MY_VERSION#). Voulez-vous la télécharger (cela ouvrira la page web d'ASI dans votre navigateur) ?" },
             { "ASIStopped", "ASA Save Inspector s'est arrêté." },
@@ -796,19 +875,21 @@ namespace ASA_Save_Inspector
             { "PythonSetup_DescriptionLine2", "Sélectionnez l'exécutable Python via le menu déroulant ci-dessous :" },
             { "PythonSetup_DescriptionLine3", "Si vous n'avez pas Python 3 d'installé, vous pouvez le récuperer ici :" },
             { "JsonData", "Données JSON" },
-            { "JsonData_DescriptionLine1", "Choisissez les données JSON via le menu déroulant ci-dessous :" },
-            { "JsonData_ExtractSingleFile", "Extraire les données JSON (via fichier de sauvegarde)" },
-            { "JsonData_ExtractWithPreset", "Extraire les données JSON (via préréglages)" },
+            { "JsonData_NewExtraction", "Nouvelle extraction :" },
+            { "JsonData_AvailableData", "Données JSON disponibles :" },
+            { "JsonData_ExtractWithSaveFile", "Via fichier de sauvegarde" },
+            { "JsonData_ExtractWithPreset", "Via préréglage" },
+            { "JsonData_ManagePresets", "Gérer les préréglages" },
             { "JsonData_ExtractFromDirectory", "Récupérer les données JSON depuis un dossier" },
             { "JsonData_ExtractFailedCheckPython", "Impossible d'extraire les données JSON. Vérifiez la configuration de Python ci-dessus." },
             { "JsonData_SuccessfullyLoaded", "Les données JSON ont bien été chargées." },
             { "JsonData_Load", "Charger les données JSON" },
             { "JsonData_Remove", "Supprimer les données JSON" },
             { "ExtractPreset_Select", "Choisissez un préréglage d'extraction" },
-            { "ExtractPreset_AddExtractProfile", "Ajouer les paramètres d'extraction en cours au préréglage" },
+            { "ExtractPreset_AddExtractProfile", "Ajouter les paramètres d'extraction en cours au préréglage" },
             { "ExtractPreset_CreatePreset", "Créer un nouveau préréglage d'extraction" },
             { "ExtractPreset_RemovePreset", "Supprimer un préréglage d'extraction existant" },
-            { "ExtractPreset_ViewDetails", "Voir les détails du préréglage d'extraction" },
+            { "ExtractPreset_ViewDetails", "Voir les détails d'un préréglage d'extraction" },
             { "ExtractJsonData", "Extraire les données JSON" },
             { "ExtractName", "Nom de l'extraction (optionnel)" },
             { "ExtractType", "Type d'extraction" },
@@ -873,7 +954,7 @@ namespace ASA_Save_Inspector
             { "OilVeins", "Filons de Pétrole" },
             { "WaterVeins", "Veines d'Eau" },
             { "GasVeins", "Veines de Gaz" },
-            { "PowerNodes", "Nœuds d'Alimentation" },
+            { "PowerNodes", "Nœuds de Charge" },
             { "BeaverDams", "Barrages de Castor" },
             { "ZPlants", "Plantes Z" },
             { "WyvernNests", "Nids de Wyverne" },
@@ -885,18 +966,25 @@ namespace ASA_Save_Inspector
             { "NoValidID_PlayerPawn", "Le perso n'a pas d'identifiant correct." },
             { "NoValidID_Dino", "Le dino n'a pas d'identifiant correct." },
             { "NoValidID_Structure", "La structure n'a pas d'identifiant correct." },
+            { "NoValidID_Player", "Le joueur n'a pas d'identifiant correct." },
             { "UnknownContainerType", "Le type du conteneur est inconnu." },
             { "PlayersDataPageNotFound", "Page de données des joueurs non trouvée." },
             { "TribesDataPageNotFound", "Page de données des tribus non trouvée." },
-            
+            { "PrivousInstallsFound_Title", "Présence d'anciennes versions" },
+            { "PrivousInstallsFound_Description", "Des anciennes versions d'ASI ont été trouvées, vous pouvez les supprimer via le boutton ci-dessous afin de libérer #STORAGE_SIZE# d'espace de stockage." },
+            { "RemovePreviousInstalls", "Supprimer les anciennes versions" },
+            { "RemovingPreviousInstalls", "Suppression des installation précédentes." },
+            { "RemoveJsonData_Description", "Consommation d'espace disque élevée détectée. Vous pouvez soit supprimer les données JSON une par une depuis la page Réglages, ou supprimer toutes les données JSON sauf les plus récentes pour chaque fichier de sauvegarde via le boutton ci-dessous." },
+            { "RemoveJsonData", "Supprimer les données JSON sauf les plus récentes (pour chaque fichier de sauvegarde)" },
+            { "RemovingJsonData", "Suppression des données JSON." },
+
             // Python manager
             { "GetArkParseVersionFailed", "Impossible de récupérer la version de ArkParse." },
-            { "PyProjectTomlFileNotFound", "Le fichier local pyproject.toml est introuvable." },
-            { "PyProjectTomlFileIsEmpty", "Le fichier local pyproject.toml est vide." },
-            { "PyProjectTomlFileParsingFailed", "Impossible de trouver la ligne commençant par 'version = \"' dans le fichier local pyproject.toml." },
-            { "RepoPyProjectTomlFileNotFound", "Le fichier pyproject.toml est introuvable dans le dépôt." },
-            { "RepoPyProjectTomlFileIsEmpty", "Le fichier pyproject.toml du dépôt est vide." },
-            { "RepoPyProjectTomlFileParsingFailed", "Impossible de trouver la ligne commençant par 'version = \"' dans le fichier pyproject.toml du dépôt." },
+            { "ArkParseVersionFileNotFound", "Le fichier local ASI_VERSION.txt est introuvable." },
+            { "ArkParseVersionFileIsEmpty", "Le fichier local ASI_VERSION.txt est vide." },
+            { "ArkParseVersionFileFailedReading", "Impossible de lire le fichier local ASI_VERSION.txt." },
+            { "RepoArkParseVersionFileNotFound", "Le fichier ASI_VERSION.txt est introuvable dans le dépôt." },
+            { "RepoArkParseVersionFileIsEmpty", "Le fichier ASI_VERSION.txt du dépôt est vide." },
             { "ArkParseUpToDate", "ArkParse est à jour." },
             { "ArkParseUpdating", "Mise à jour de ArkParse..." },
             { "ArkParseDownloading", "Téléchargement de l'archive ArkParse..." },
@@ -940,6 +1028,7 @@ namespace ASA_Save_Inspector
             { "CheckASISettings", "Vérifiez les réglages d'ASA Save Inspector." },
             { "CheckSettings", "Vérifiez les réglages." },
             { "ArkParseExtractingJsonData", "Extraction des données JSON..." },
+            { "LoadingJsonData", "Chargement des données JSON..." },
             { "ArkParseJsonExportProfileCreationFailed", "La création d'un nouveau profil d'export JSON a échouée." },
             { "PleaseWait", "Veuillez patienter." },
             { "ArkParseRunError", "Une erreur est survenue dans RunArkParse." },

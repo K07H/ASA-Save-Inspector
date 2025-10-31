@@ -92,13 +92,13 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "PerMapExplorerNoteUnlocks",
             "PlayerCharacterName",
             "PlayerDataID",
-            "PlayerName",
+            //"PlayerName",
             "PlayerState_EngramBlueprints",
             "PlayerState_TotalEngramPoints",
             "RawBoneModifiers",
             "SavedNetworkAddress",
-            "TribeID",
-            "TribeName",
+            //"TribeID",
+            //"TribeName",
             "UniqueID",
         };
 

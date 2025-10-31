@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -29,7 +30,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 75;
+        private const int MAX_PROPERTY_VALUES = 300;
 
         #endregion
 
@@ -80,6 +81,9 @@ namespace ASA_Save_Inspector.Pages
         private JsonGroupPreset? _selectedGroupPreset = null;
 
         private List<string> _propertiesWithManyValues = new List<string>(DinoUtils.DoNotCheckPropertyValuesAmount);
+
+        private ObservableCollection<string> _quickFilter_allTribes = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
+        private ObservableCollection<string> _quickFilter_allShortNames = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -135,6 +139,20 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
+        private string _quickFilter_Tribe_Label = ASILang.Get("Initializing");
+        public string QuickFilter_Tribe_Label
+        {
+            get { return _quickFilter_Tribe_Label; }
+            set { _quickFilter_Tribe_Label = value; OnPropertyChanged(); }
+        }
+
+        private string _quickFilter_Dino_Label = ASILang.Get("Initializing");
+        public string QuickFilter_Dino_Label
+        {
+            get { return _quickFilter_Dino_Label; }
+            set { _quickFilter_Dino_Label = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Constructor/Destructor
@@ -168,6 +186,9 @@ namespace ASA_Save_Inspector.Pages
             // Grab dinos data from settings if not set.
             if (_lastDisplayed == null)
                 _lastDisplayed = SettingsPage._dinosData;
+
+            InitTribesQuickFilter();
+            InitDinosQuickFilter();
 
             // Apply filters, sort and reorder columns.
             bool isQueued = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
@@ -699,12 +720,16 @@ namespace ASA_Save_Inspector.Pages
                         {
                             if (Utils.PropertyHasMoreValuesThan(SettingsPage._dinosData, dinoProperty, MAX_PROPERTY_VALUES))
                             {
+#if DEBUG
                                 Logger.Instance.Log($"Found property with many values: {dinoProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                                 if (!_propertiesWithManyValues.Contains(dinoProperty.Name))
                                     _propertiesWithManyValues.Add(dinoProperty.Name);
                             }
+#if DEBUG
                             else if (dinoProperty.Name.Contains("Time", StringComparison.InvariantCultureIgnoreCase))
                                 Logger.Instance.Log($"Found property with \"time\": {dinoProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                         }
                     // Add current property.
                     string propName = dinoProperty.Name;
@@ -970,18 +995,21 @@ namespace ASA_Save_Inspector.Pages
 
         public static void ClearPageFiltersAndGroups()
         {
-#pragma warning disable CS1998
             if (_page != null)
-                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
                 {
                     _page.sp_DinoFiltersPresetsInGroup.Children.Clear();
                     _page.sp_ExistingDinoFilters.Children.Clear();
+                    _page.QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+                    _page.QuickFilter_Dino_Label = ASILang.Get("ClickHere");
                 });
-#pragma warning restore CS1998
             _group.Clear();
             _filters.Clear();
             _addedDefaultFilters = false;
             InitDefaultPresets();
+            // TODO: Remove FillEditDinoFiltersPopup()?
+            if (_page != null)
+                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => _page.FillEditDinoFiltersPopup());
         }
 
         private void FillEditDinoFiltersPopup()
@@ -1005,13 +1033,23 @@ namespace ASA_Save_Inspector.Pages
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
                     grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
+                    TextBlock tb0 = new TextBlock()
+                    {
+                        FontSize = 16.0d,
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = filter.Value.FilterOperator == FilterOperator.OR ? ASILang.Get("OperatorOR") : ASILang.Get("OperatorAND"),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
+                    };
                     TextBlock tb1 = new TextBlock()
                     {
                         FontSize = 16.0d,
                         TextWrapping = TextWrapping.Wrap,
-                        Text = ASILang.Get("FilterBy"),
+                        Text = ASILang.Get("FilterBy").ToLowerInvariant(),
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -1096,16 +1134,18 @@ namespace ASA_Save_Inspector.Pages
 
                     sv.Content = tbValues;
                     b.Child = sv;
+                    grd.Children.Add(tb0);
+                    Grid.SetColumn(tb0, 0);
                     grd.Children.Add(tb1);
-                    Grid.SetColumn(tb1, 0);
+                    Grid.SetColumn(tb1, 1);
                     grd.Children.Add(tb2);
-                    Grid.SetColumn(tb2, 1);
+                    Grid.SetColumn(tb2, 2);
                     grd.Children.Add(tb3);
-                    Grid.SetColumn(tb3, 2);
+                    Grid.SetColumn(tb3, 3);
                     grd.Children.Add(b);
-                    Grid.SetColumn(b, 3);
+                    Grid.SetColumn(b, 4);
                     grd.Children.Add(btn);
-                    Grid.SetColumn(btn, 4);
+                    Grid.SetColumn(btn, 5);
                     sp_ExistingDinoFilters.Children.Add(grd);
                 }
         }
@@ -1219,6 +1259,23 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
+        private void RemoveAllFiltersForProp(PropertyInfo prop)
+        {
+            List<int> toDel = new List<int>();
+            if (_filters != null && _filters.Count > 0)
+            {
+                for (int i = 0; i < _filters.Count; i++)
+                    if (string.Compare(_filters[i].Key.Name, prop.Name, false, CultureInfo.InvariantCulture) == 0)
+                        toDel.Add(i);
+                if (toDel.Count > 0)
+                {
+                    toDel.Reverse();
+                    foreach (int delIndex in toDel)
+                        _filters.RemoveAt(delIndex);
+                }
+            }
+        }
+
         private void btn_RemoveFilter_Click(object sender, RoutedEventArgs e)
         {
             Button? btn = sender as Button;
@@ -1229,7 +1286,7 @@ namespace ASA_Save_Inspector.Pages
             if (grd == null)
                 return;
 
-            TextBlock? tb = grd.Children[1] as TextBlock;
+            TextBlock? tb = grd.Children[2] as TextBlock;
             if (tb == null)
                 return;
 
@@ -1257,7 +1314,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 if (toDelProp != null && toDelFilter != null)
                 {
-                    RemoveFilter(toDelProp, toDelFilter); //_filters.Remove(toDel);
+                    RemoveFilter(toDelProp, toDelFilter);
                     FillEditDinoFiltersPopup();
                     ApplyFiltersAndSort();
                 }
@@ -1273,6 +1330,8 @@ namespace ASA_Save_Inspector.Pages
         private void btn_RemoveAllDinoFilters_Click(object sender, RoutedEventArgs e)
         {
             _filters.Clear();
+            QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            QuickFilter_Dino_Label = ASILang.Get("ClickHere");
             FillEditDinoFiltersPopup();
             ApplyFiltersAndSort();
         }
@@ -1832,8 +1891,11 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            Type type = typeof(Dino);
             _filters.Clear();
+            QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            QuickFilter_Dino_Label = ASILang.Get("ClickHere");
+
+            Type type = typeof(Dino);
             foreach (var filter in _selectedFiltersPreset.Filters)
                 if (filter != null && !string.IsNullOrEmpty(filter.PropertyName) && filter.Filter != null)
                 {
@@ -1841,6 +1903,8 @@ namespace ASA_Save_Inspector.Pages
                     if (prop != null)
                         _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, filter.Filter));
                 }
+            // TODO: Remove FillEditDinoFiltersPopup()?
+            FillEditDinoFiltersPopup();
             ApplyFiltersAndSort();
             MainWindow.ShowToast(ASILang.Get("FiltersPresetLoaded"), BackgroundColor.SUCCESS);
         }
@@ -2572,6 +2636,100 @@ namespace ASA_Save_Inspector.Pages
             {
                 MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToInventoryItems_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        #endregion
+
+        #region Quick filters
+
+        public void InitTribesQuickFilter()
+        {
+            if (SettingsPage._allTribesForDinosInitialized)
+            {
+                _quickFilter_allTribes.Clear();
+                _quickFilter_allTribes.Add(ASILang.Get("All").ToUpper());
+                if (SettingsPage._allTribesForDinosSorted != null && SettingsPage._allTribesForDinosSorted.Count > 0)
+                    foreach (string tribeName in SettingsPage._allTribesForDinosSorted)
+                        if (tribeName != null)
+                            _quickFilter_allTribes.Add(tribeName);
+                QuickFilter_Tribe_Label = ASILang.Get("ClickHere");
+            }
+            else
+                QuickFilter_Tribe_Label = ASILang.Get("Initializing");
+        }
+
+        public void InitDinosQuickFilter()
+        {
+            if (SettingsPage._allShortNamesForDinosInitialized)
+            {
+                _quickFilter_allShortNames.Clear();
+                _quickFilter_allShortNames.Add(ASILang.Get("All").ToUpper());
+                if (SettingsPage._allShortNamesForDinosSorted != null && SettingsPage._allShortNamesForDinosSorted.Count > 0)
+                    foreach (string? shortName in SettingsPage._allShortNamesForDinosSorted)
+                        if (shortName != null)
+                            _quickFilter_allShortNames.Add(shortName);
+                QuickFilter_Dino_Label = ASILang.Get("ClickHere");
+            }
+            else
+                QuickFilter_Dino_Label = ASILang.Get("Initializing");
+        }
+
+        private static PropertyInfo? _owningTribeIdProp = Utils.GetProperty(typeof(Dino), nameof(Dino.OwningTribeID));
+
+        private void QuickFilterTribeSelect(string tribeName)
+        {
+            if (_owningTribeIdProp == null)
+                return;
+            RemoveAllFiltersForProp(_owningTribeIdProp);
+            if (SettingsPage._allTribesForDinos.ContainsKey(tribeName))
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_owningTribeIdProp, new Filter()
+                {
+                    FilterOperator = FilterOperator.AND,
+                    FilterType = FilterType.EXACT_MATCH,
+                    FilterValues = new List<string>() { SettingsPage._allTribesForDinos[tribeName].ToString(CultureInfo.InvariantCulture) }
+                }));
+            QuickFilter_Tribe_Label = tribeName;
+            FillEditDinoFiltersPopup();
+            ApplyFiltersAndSort();
+        }
+
+        private void cbb_QuickFilter_Tribe_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    QuickFilterTribeSelect(selected);
+            }
+        }
+
+        private static PropertyInfo? _shortNameProp = Utils.GetProperty(typeof(Dino), nameof(Dino.ShortName));
+
+        private void QuickFilterDinoSelect(string shortName)
+        {
+            if (_shortNameProp == null)
+                return;
+            RemoveAllFiltersForProp(_shortNameProp);
+            if (SettingsPage._allShortNamesForDinosSorted.Contains(shortName))
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_shortNameProp, new Filter()
+                {
+                    FilterOperator = FilterOperator.AND,
+                    FilterType = FilterType.EXACT_MATCH,
+                    FilterValues = new List<string>() { shortName }
+                }));
+            QuickFilter_Dino_Label = shortName;
+            FillEditDinoFiltersPopup();
+            ApplyFiltersAndSort();
+        }
+
+        private void cbb_QuickFilter_Dino_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    QuickFilterDinoSelect(selected);
             }
         }
 

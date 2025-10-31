@@ -79,54 +79,44 @@ namespace ASA_Save_Inspector
 
         private static string? GetLocalArkParseVersion()
         {
-            string arkParseProjectFilePath = Utils.ArkParseProjectFilePath();
-            if (!File.Exists(arkParseProjectFilePath))
+            string arkParseVersionFilePath = Utils.ArkParseVersionFilePath();
+            if (!File.Exists(arkParseVersionFilePath))
             {
-                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileNotFound")}", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("ArkParseVersionFileNotFound")}", Logger.LogLevel.WARNING);
                 return null;
             }
-            string[] lines = File.ReadAllLines(arkParseProjectFilePath);
-            if (lines == null || lines.Length <= 0)
+            try
             {
-                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileIsEmpty")}", Logger.LogLevel.WARNING);
-                return null;
-            }
-            foreach (string line in lines)
-                if (!string.IsNullOrWhiteSpace(line) && line.StartsWith("version = \"", StringComparison.InvariantCulture))
+                string[] lines = File.ReadAllLines(arkParseVersionFilePath);
+                if (lines == null || lines.Length <= 0)
                 {
-                    string[] splitted = line.Split('"', StringSplitOptions.RemoveEmptyEntries);
-                    if (splitted != null && splitted.Length > 1)
-                        return splitted[1];
-                    break;
+                    Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("ArkParseVersionFileIsEmpty")}", Logger.LogLevel.WARNING);
+                    return null;
                 }
-            Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("PyProjectTomlFileParsingFailed")}", Logger.LogLevel.WARNING);
-            return null;
+                return lines[0];
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"{ASILang.Get("ArkParseVersionFileFailedReading")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                return null;
+            }
         }
 
         private static async Task<string?> GetRepoArkParseVersion()
         {
-            string projectFileContent = await _client.GetStringAsync(Utils.ArkParseProjectUrl);
+            string projectFileContent = await _client.GetStringAsync(Utils.ArkParseVersionFileUrl);
             if (string.IsNullOrWhiteSpace(projectFileContent))
             {
-                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileNotFound")}", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoArkParseVersionFileNotFound")}", Logger.LogLevel.WARNING);
                 return null;
             }
             string[] lines = projectFileContent.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (lines == null || lines.Length <= 0)
             {
-                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileIsEmpty")}", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoArkParseVersionFileIsEmpty")}", Logger.LogLevel.WARNING);
                 return null;
             }
-            foreach (string line in lines)
-                if (!string.IsNullOrWhiteSpace(line) && line.StartsWith("version = \"", StringComparison.InvariantCulture))
-                {
-                    string[] splitted = line.Split('"', StringSplitOptions.RemoveEmptyEntries);
-                    if (splitted != null && splitted.Length > 1)
-                        return splitted[1];
-                    break;
-                }
-            Logger.Instance.Log($"{ASILang.Get("GetArkParseVersionFailed")} {ASILang.Get("RepoPyProjectTomlFileParsingFailed")}", Logger.LogLevel.WARNING);
-            return null;
+            return lines[0];
         }
 
         public static async Task<bool> DownloadAndExtractArkParse()
@@ -547,7 +537,7 @@ namespace ASA_Save_Inspector
                 return false;
             if (string.IsNullOrWhiteSpace(jep.SaveFilePath) || !File.Exists(jep.SaveFilePath))
                 return false;
-            string asiExportAllPath = jep.FastExtract ? Utils.AsiExportFastFilePath() : Utils.AsiExportAllFilePath();
+            string asiExportAllPath = Utils.AsiExportFastFilePath();
             if (!File.Exists(asiExportAllPath))
                 return false;
 
@@ -715,7 +705,8 @@ namespace ASA_Save_Inspector
             {
                 bool isQueued = SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                 {
-                    SettingsPage._page.AddJsonExportProfileToDropDown(jep);
+                    SettingsPage._page.InitDatagrid(false, false);
+                    //SettingsPage._page.AddJsonExportProfileToDropDown(jep);
                 });
             }
         }

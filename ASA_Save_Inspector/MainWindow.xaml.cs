@@ -104,27 +104,9 @@ namespace ASA_Save_Inspector
 
             PythonManager.InitHttpClient();
             PythonManager.GetPythonExePaths();
-            PythonManager.CreateAsiExportScriptFile(Utils.AsiExportAllOrigFilePath(), Utils.AsiExportAllFilePath());
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
-            //PythonManager.InstallArkParse();
 
             CheckForUpdateAndPreviousData();
-            /*
-            CheckForUpdate();
-
-            _ = DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
-            {
-                await Task.Delay(1000);
-                CheckPreviousData();
-            });
-            */
-
-            /*
-            AcrylicBrush myBrush = new AcrylicBrush();
-            myBrush.TintColor = Color.FromArgb(255, 202, 24, 37);
-            myBrush.FallbackColor = Color.FromArgb(255, 202, 24, 37);
-            myBrush.TintOpacity = 0.6;
-            */
         }
 
         public void LanguageChanged()
@@ -519,59 +501,11 @@ namespace ASA_Save_Inspector
         private KeyValuePair<string?, List<string>?> SearchPreviousData()
         {
             KeyValuePair<string?, List<string>?> emptyResult = new KeyValuePair<string?, List<string>?>(null, null);
-            string? actualDirName = null;
-            string[]? directories = null;
-
-            try
-            {
-                string actualDir = Utils.GetBaseDir();
-                if (string.IsNullOrEmpty(actualDir) || !Directory.Exists(actualDir))
-                    return emptyResult;
-                actualDirName = Path.GetFileName(Path.GetDirectoryName(actualDir));
-                if (string.IsNullOrEmpty(actualDirName))
-                    return emptyResult;
-
-                string parentDir = Utils.GetBaseDirParent();
-                if (string.IsNullOrEmpty(parentDir) || !Directory.Exists(parentDir))
-                    return emptyResult;
-                directories = Directory.GetDirectories(parentDir);
-                if (directories == null || directories.Length <= 0)
-                    return emptyResult;
-            }
-            catch (Exception ex)
-            {
-                Logger.Instance.Log($"Exception caught in CheckForPreviousData. Exception=[{ex}]", Logger.LogLevel.WARNING);
-                return emptyResult;
-            }
-
-            if (string.IsNullOrEmpty(actualDirName) || directories == null || directories.Length <= 0)
+            IEnumerable<string>? previousASIFolders = Utils.GetPreviousASIFolders();
+            if (previousASIFolders == null)
                 return emptyResult;
 
-            Dictionary<string, DateTime> foundDirs = new Dictionary<string, DateTime>();
-            foreach (var dir in directories)
-                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
-                {
-                    string? dirName = null;
-                    try
-                    {
-                        if (dir.EndsWith("/", StringComparison.InvariantCulture) || dir.EndsWith("\\", StringComparison.InvariantCulture))
-                            dirName = Path.GetFileName(Path.GetDirectoryName(dir));
-                        else
-                            dirName = Path.GetFileName(dir);
-                    }
-                    catch { dirName = null; }
-                    if (string.IsNullOrEmpty(dirName) || string.Compare(actualDirName, dirName, StringComparison.InvariantCulture) == 0)
-                        continue;
-
-                    DateTime? dt = null;
-                    try { dt = Directory.GetLastWriteTimeUtc(dir); }
-                    catch { dt = null; }
-                    if (dt != null && dt.HasValue)
-                        foundDirs[dir] = dt.Value;
-                }
-
-            var sortedDirs = from dir in foundDirs orderby dir.Value descending select dir.Key;
-            foreach (string? sortedDir in sortedDirs)
+            foreach (string? sortedDir in previousASIFolders)
                 if (!string.IsNullOrEmpty(sortedDir))
                 {
                     KeyValuePair<string?, List<string>?> ASIData = HasASIData(sortedDir);

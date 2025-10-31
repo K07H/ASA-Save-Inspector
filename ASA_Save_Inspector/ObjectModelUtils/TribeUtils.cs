@@ -1,7 +1,9 @@
-﻿using System;
+﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {
@@ -13,6 +15,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "TribeName",
             "OwnerPlayerDataID",
             "NumTribeDinos",
+            "TotalTribeDinos",
             "MembersPlayerDataID",
             "MembersPlayerName",
             "TribeMembers",
@@ -23,7 +26,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "ID",
             "Name",
             "Owner ID",
-            "Num dinos",
+            "Outside dinos",
+            "Total dinos",
             "Members IDs",
             "Members names",
             "Members",
@@ -33,7 +37,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
         {
             { "MembersPlayerDataID", "Members IDs" },
             { "MembersPlayerName", "Members names" },
-            { "NumTribeDinos", "Num dinos" },
+            { "NumTribeDinos", "Outside dinos" },
+            { "TotalTribeDinos", "Total dinos" },
             { "OwnerPlayerDataID", "Owner ID" },
             { "TribeName", "Name" },
             { "TribeID", "ID" },
@@ -47,10 +52,10 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "MembersPlayerDataID",
             "MembersPlayerName",
             "OwnerPlayerDataId",
-            "TribeID",
+            //"TribeID",
             "TribeLog",
             "TribeMembers",
-            "TribeName",
+            //"TribeName",
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
@@ -86,6 +91,19 @@ namespace ASA_Save_Inspector.ObjectModel
                         tribeLogs += $"{log}{Environment.NewLine}";
             _tribeLogsFormatted = tribeLogs;
             return _tribeLogsFormatted;
+        }
+
+        private int _totalTribeDinos = -1;
+        public int TotalTribeDinos
+        {
+            get
+            {
+                if (_totalTribeDinos < 0)
+                    if (SettingsPage._dinosData != null && SettingsPage._dinosData.Count > 0)
+                        _totalTribeDinos = SettingsPage._dinosData.Count(dino => dino.TargetingTeam == this.TribeID);
+                return _totalTribeDinos < 0 ? 0 : _totalTribeDinos;
+            }
+            private set { }
         }
     }
 }

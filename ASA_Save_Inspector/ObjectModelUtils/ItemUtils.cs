@@ -49,8 +49,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Crafted skill bonus",
             "Armor",
             "Damage",
-            "HyperthermalResistance",
-            "HypothermalResistance",
+            "Hyperthermal resistance",
+            "Hypothermal resistance",
         };
 
         private static readonly Dictionary<string, string> CleanNames = new Dictionary<string, string>()
@@ -87,6 +87,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Durability",
             "ItemArchetype",
             "ItemID",
+            "ItemQuantity",
             "ItemRating",
             "LastAutoDurabilityDecreaseTime",
             "LastAutoDurabilityDecreaseTimeReadable",
@@ -108,7 +109,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalCreationTimeReadable",
             "OriginalItemDropLocation",
             "OwnerInventoryUUID",
-            "ShortName",
+            "SavedDurability",
+            //"ShortName",
             "UECoords",
             "UUID",
         };
@@ -305,7 +307,12 @@ namespace ASA_Save_Inspector.ObjectModel
                     {
                         Structure? obj = owner.Value.Value as Structure;
                         if (obj != null)
-                            return obj.OwnerName;
+                        {
+                            if (obj.OwnerName != null)
+                                return obj.OwnerName;
+                            else
+                                return obj.OwningPlayerName;
+                        }
                     }
                 }
                 return null;

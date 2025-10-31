@@ -27,10 +27,10 @@ namespace ASA_Save_Inspector
 #endif
 
         public static readonly string ASILatestVersionUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest";
-        public static readonly string ASIArchiveUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest/download/ASA_Save_Inspector_vVERSIONSTR_WinX64.zip";
+        //public static readonly string ASIArchiveUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest/download/ASA_Save_Inspector_vVERSIONSTR_WinX64.zip";
         public static readonly string ASIVersionFileUrl = "https://raw.githubusercontent.com/K07H/ASA-Save-Inspector/refs/heads/main/Version.txt";
         public static readonly string ArkParseArchiveUrl = "https://github.com/K07H/ark-save-parser/archive/refs/heads/main.zip";
-        public static readonly string ArkParseProjectUrl = "https://github.com/K07H/ark-save-parser/raw/refs/heads/main/pyproject.toml";
+        public static readonly string ArkParseVersionFileUrl = "https://github.com/K07H/ark-save-parser/raw/refs/heads/main/ASI_VERSION.txt";
 
         public static string GetBaseDir() => AppDomain.CurrentDomain.BaseDirectory; //AppContext.BaseDirectory
         public static string GetBaseDirParent()
@@ -103,12 +103,10 @@ namespace ASA_Save_Inspector
         public static string ExportPresetsFilePath() => Path.Combine(GetDataDir(), "export_presets.json");
         public static string DontCheckForUpdateFilePath() => Path.Combine(GetDataDir(), "skip_update_check.txt");
         public static string DontReimportPreviousDataFilePath() => Path.Combine(GetDataDir(), "skip_reimport_previous_data.txt");
-        public static string ArkParseProjectFilePath() => Path.Combine(ArkParseFolder(), "pyproject.toml");
+        public static string ArkParseVersionFilePath() => Path.Combine(ArkParseFolder(), "ASI_VERSION.txt");
         public static string ArkParseJsonApiFilePath() => Path.Combine(ArkParseFolder(), "src", "arkparse", "api", "json_api.py");
         public static string ArkParseArchiveFilePath() => Path.Combine(GetDataDir(), "ark-save-parser-main.zip");
         public static string ASIArchiveFilePath() => Path.Combine(GetTempDir(), "ASA_Save_Inspector_vVERSIONSTR_WinX64.zip");
-        public static string AsiExportAllOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_all.py");
-        public static string AsiExportAllFilePath() => Path.Combine(GetDataDir(), "asi_export_all.py");
         public static string AsiExportFastOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_fast.py");
         public static string AsiExportFastFilePath() => Path.Combine(GetDataDir(), "asi_export_fast.py");
         public static string PythonVenvSetupFilePath() => Path.Combine(GetDataDir(), "python_venv_setup.bat");
@@ -926,6 +924,133 @@ namespace ASA_Save_Inspector
                 }
             return !hasErrors;
         }
+
+        public static string BytesSizeToReadableString(double size)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            int order = 0;
+            while (size >= 1024.0d && order < sizes.Length - 1)
+            {
+                order++;
+                size = size / 1024.0d;
+            }
+            return String.Format(CultureInfo.InvariantCulture, "{0:0.##} {1}", size, sizes[order]);
+        }
+
+        public static double GetDirectorySize(string path)
+        {
+            string[] files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+            double totalSize = 0.0d;
+            foreach (string name in files)
+                try
+                {
+                    if (File.Exists(name))
+                    {
+                        FileInfo info = new FileInfo(name);
+                        totalSize += Convert.ToDouble(info.Length);
+                    }
+                }
+                catch { }
+            return totalSize;
+        }
+
+        public static IEnumerable<string>? GetPreviousASIFolders()
+        {
+            string? actualDirName = null;
+            string[]? directories = null;
+
+            try
+            {
+                string actualDir = Utils.GetBaseDir();
+                if (string.IsNullOrEmpty(actualDir) || !Directory.Exists(actualDir))
+                    return null;
+                actualDirName = Path.GetFileName(Path.GetDirectoryName(actualDir));
+                if (string.IsNullOrEmpty(actualDirName))
+                    return null;
+
+                string parentDir = Utils.GetBaseDirParent();
+                if (string.IsNullOrEmpty(parentDir) || !Directory.Exists(parentDir))
+                    return null;
+                directories = Directory.GetDirectories(parentDir);
+                if (directories == null || directories.Length <= 0)
+                    return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in CheckForPreviousData. Exception=[{ex}]", Logger.LogLevel.WARNING);
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(actualDirName) || directories == null || directories.Length <= 0)
+                return null;
+
+            DirectoryInfo? actualDI = null;
+            try { actualDI = new DirectoryInfo(actualDirName); }
+            catch { actualDI = null; }
+
+            Dictionary<string, DateTime> foundDirs = new Dictionary<string, DateTime>();
+            foreach (var dir in directories)
+                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                {
+                    string? dirName = null;
+                    try
+                    {
+                        if (dir.EndsWith("/", StringComparison.InvariantCulture) || dir.EndsWith("\\", StringComparison.InvariantCulture))
+                            dirName = Path.GetFileName(Path.GetDirectoryName(dir));
+                        else
+                            dirName = Path.GetFileName(dir);
+                    }
+                    catch { dirName = null; }
+                    if (string.IsNullOrEmpty(dirName))
+                        continue;
+                    if (string.Compare(actualDirName, dirName, StringComparison.InvariantCulture) == 0)
+                        continue;
+
+                    DirectoryInfo? di = null;
+                    if (actualDI != null)
+                    {
+                        try { di = new DirectoryInfo(dirName); }
+                        catch { di = null; }
+                    }
+                    if (actualDI != null && di != null && string.Compare(actualDI.FullName, di.FullName, false, CultureInfo.InvariantCulture) == 0)
+                        continue;
+
+                    DateTime? dt = null;
+                    try { dt = Directory.GetLastWriteTimeUtc(dir); }
+                    catch { dt = null; }
+                    if (dt != null && dt.HasValue)
+                        foundDirs[dir] = dt.Value;
+                }
+
+            if (foundDirs.Count <= 0)
+                return null;
+
+            return (from dir in foundDirs orderby dir.Value descending select dir.Key);
+        }
+
+        public static void LockAllPages(bool doLock)
+        {
+            if (MainWindow._mainWindow != null && MainWindow._mainWindow._navView != null)
+                MainWindow._mainWindow._navView.IsEnabled = !doLock;
+            if (AboutPage._page != null)
+                AboutPage._page.IsEnabled = !doLock;
+            if (DinosPage._page != null)
+                DinosPage._page.IsEnabled = !doLock;
+            if (ItemsPage._page != null)
+                ItemsPage._page.IsEnabled = !doLock;
+            if (OtherPage._page != null)
+                OtherPage._page.IsEnabled = !doLock;
+            if (PlayerPawnsPage._page != null)
+                PlayerPawnsPage._page.IsEnabled = !doLock;
+            if (PlayersPage._page != null)
+                PlayersPage._page.IsEnabled = !doLock;
+            if (SettingsPage._page != null)
+                SettingsPage._page.IsEnabled = !doLock;
+            if (StructuresPage._page != null)
+                StructuresPage._page.IsEnabled = !doLock;
+            if (TribesPage._page != null)
+                TribesPage._page.IsEnabled = !doLock;
+        }
     }
 
     public enum ArkObjectType
@@ -1002,6 +1127,29 @@ namespace ASA_Save_Inspector
         public override Expression? Visit(Expression? node)
         {
             return node == from ? to : base.Visit(node);
+        }
+    }
+
+    public class GroupInfoCollection<K, T> : IGrouping<K, T>
+    {
+        private readonly IEnumerable<T> _items;
+
+        public GroupInfoCollection(K key, IEnumerable<T> items)
+        {
+            Key = key;
+            _items = items;
+        }
+
+        public K Key { get; }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _items.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return _items.GetEnumerator();
         }
     }
 }

@@ -29,7 +29,7 @@ namespace ASA_Save_Inspector.Pages
         #region Constants
 
         private const double _scrollBarWidth = 24.0d;
-        private const int MAX_PROPERTY_VALUES = 75;
+        private const int MAX_PROPERTY_VALUES = 300;
 
         #endregion
 
@@ -630,12 +630,16 @@ namespace ASA_Save_Inspector.Pages
                         {
                             if (Utils.PropertyHasMoreValuesThan(SettingsPage._playersData, playerProperty, MAX_PROPERTY_VALUES))
                             {
+#if DEBUG
                                 Logger.Instance.Log($"Found property with many values: {playerProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                                 if (!_propertiesWithManyValues.Contains(playerProperty.Name))
                                     _propertiesWithManyValues.Add(playerProperty.Name);
                             }
+#if DEBUG
                             else if (playerProperty.Name.Contains("Time", StringComparison.InvariantCultureIgnoreCase))
                                 Logger.Instance.Log($"Found property with \"time\": {playerProperty.Name}", Logger.LogLevel.DEBUG);
+#endif
                         }
                     // Add current property.
                     string propName = playerProperty.Name;

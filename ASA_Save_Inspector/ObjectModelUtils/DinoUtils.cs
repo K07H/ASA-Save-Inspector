@@ -29,10 +29,13 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "CurrentLevel",
             "TamerString",
             "ImprinterName",
+            "OwningTribeID",
             "TribeName",
             "TargetingTeam",
             "IsTamed",
-            "MapCoords"
+            "IsUnclaimed",
+            "MapCoords",
+            "CryopodCoords"
         };
 
         public static List<string> DefaultColumnsOrder = new List<string>()
@@ -41,11 +44,22 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Level",
             "Base Level",
             "Tamed",
+            "Unclaimed",
             "Baby",
             "Female",
             "Cryoed",
             "Map Coords",
             "Cryo Coords",
+            "Base HP",
+            "Base Stam",
+            "Base Oxy",
+            "Base Food",
+            "Base Weight",
+            "Base Dmg",
+            "Base Speed",
+            "ID 1",
+            "ID 2",
+            "Owning Tribe ID"
         };
 
         private static readonly Dictionary<string, string> CleanNames = new Dictionary<string, string>()
@@ -63,6 +77,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ImprinterName", "Imprinter" },
             { "TribeName", "Tribe" },
             { "IsTamed", "Tamed" },
+            { "IsUnclaimed", "Unclaimed" },
+            { "OwningTribeID", "Owning Tribe ID" },
             { "TargetingTeam", "Tribe ID" },
             { "BaseHealth", "Base HP" },
             { "BaseStamina", "Base Stam" },
@@ -131,6 +147,9 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "BiteCorpseTime",
             "BiteCorpseTimeReadable",
             "bTimersAreInUTC",
+            "CharacterSavedDynamicBase",
+            "CharacterSavedDynamicBaseRelativeLocation",
+            "CharacterSavedDynamicBaseRelativeRotation",
             "ColorSetIndices",
             "ColorSetNames",
             "CorpseDestructionTime",
@@ -149,6 +168,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "FriendModeEndTimeReadable",
             "GeneTraits",
             "Instigator",
+            "InventoryUUID",
             "ItemArchetype",
             "LastEggSpawnChanceTime",
             "LastEggSpawnChanceTimeReadable",
@@ -194,6 +214,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "LastWildNestSpawnTimeReadable",
             "Location",
             "MapCoords",
+            "MutatedStatPoints",
             "MyCharacterStatusComponent",
             "NextAllowedMatingTime",
             "NextAllowedMatingTimeReadable",
@@ -202,7 +223,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalCreationTimeReadable",
             "OriginalNPCVolumeName",
             "RequiredTameAffinity",
-            "ShortName",
+            //"ShortName",
             "StatValues",
             "TamedAtTime",
             "TamedAtTimeReadable",
@@ -277,7 +298,27 @@ namespace ASA_Save_Inspector.ObjectModel
 
         public bool IsTamed
         {
-            get { return TargetingTeam >= 50000; }
+            get { return TargetingTeam > 50000; }
+            private set { }
+        }
+
+        public bool IsUnclaimed
+        {
+            get { return TargetingTeam == 2000000000; }
+            private set { }
+        }
+
+        public int OwningTribeID
+        {
+            get
+            {
+                if (Cryopod != null && Cryopod.ContainerTribeID != null && Cryopod.ContainerTribeID.HasValue)
+                    return Cryopod.ContainerTribeID.Value;
+                else if (TargetingTeam != null && TargetingTeam.HasValue)
+                    return TargetingTeam.Value;
+                else
+                    return 0;
+            }
             private set { }
         }
 
