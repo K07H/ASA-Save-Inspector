@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import json
 import math
 import sys
@@ -301,7 +301,7 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
     for obj in save.parsed_objects.values():
         if obj is not None:
             try:
-                if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint): # or (obj.has_property("bIsEngram") and obj.get_property_value("bIsEngram", False)):
+                if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint):
                     if debug_logging and obj.blueprint not in skipped_bps:
                         skipped_bps.append(obj.blueprint)
                     continue
@@ -339,14 +339,6 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
                     if debug_logging and obj.blueprint not in unknown_bps:
                         unknown_bps.append(obj.blueprint)
                         print(f"Unknown object {obj.uuid} with class {obj.blueprint}.", flush=True)
-                        ''' Can cause deadlocks when outputting from python -> C# console
-                        if obj.properties is not None and len(obj.properties) > 0:
-                            for prop in obj.properties:
-                                if prop is not None and \
-                                        prop.name is not None and \
-                                        len(prop.name) > 0:
-                                    print(f"    \"{prop.name}\"=[{obj.get_property_value(prop.name)}]", flush=True)
-                        '''
             except Exception as e:
                 if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
                     print(f"Exception caught during parsing: {e}", flush=True)
@@ -449,7 +441,6 @@ if __name__ == '__main__':
     export_structures: bool = sys.argv[6] == '1'
     export_players: bool = sys.argv[7] == '1'
     export_tribes: bool = sys.argv[8] == '1'
-    debug_logging: bool = False
 
     custom_bps_dinos: list[str] = []
     custom_bps_items: list[str] = []
@@ -467,11 +458,11 @@ if __name__ == '__main__':
 
     '''
     save_path: Path = Path("D:/BACKUPS/TheIsland/TheIsland_WP.ark")
-    export_path: Path = Path.cwd() / "json_exports" / "AberrationTest"
-    export_dinos: bool = False
-    export_pawns: bool = False
-    export_items: bool = False
-    export_structures: bool = False
+    export_path: Path = Path.cwd() / "json_exports" / "Test"
+    export_dinos: bool = True
+    export_pawns: bool = True
+    export_items: bool = True
+    export_structures: bool = True
     export_players: bool = True
     export_tribes: bool = True
     custom_bps_dinos: list[str] = []
@@ -483,7 +474,8 @@ if __name__ == '__main__':
         print('Nothing selected for extraction.', flush=True)
         sys.exit(0) # Exit with default code
 
-    # Configure logging (only show errors)
+    # Configure logging (only show warnings and errors)
+    debug_logging: bool = False
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.API, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.PARSER, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.SAVE, False)

@@ -864,7 +864,59 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS8625
         }
 
-        private async Task<KeyValuePair<bool, List<T>?>> DeserializeJsonObjectsAsync<T>(string filepath)
+        private List<T>? DeserializeJsonObjects<T>(string filepath)
+        {
+            if (!File.Exists(filepath))
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", $"\"{filepath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+            else
+            {
+                try
+                {
+                    List<T> result = new List<T>();
+                    string objBegin = "    {";
+                    string objEnd = "    }";
+                    string currentObj = string.Empty;
+                    using (FileStream fs = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        using (BufferedStream bs = new BufferedStream(fs))
+                        {
+                            using (StreamReader sr = new StreamReader(bs))
+                            {
+                                string? line;
+                                while ((line = sr.ReadLine()) != null)
+                                {
+                                    if (line == objBegin)
+                                        currentObj = "{\r\n";
+                                    else if (line.StartsWith(objEnd))
+                                    {
+                                        if (currentObj.Length > 0)
+                                            try
+                                            {
+                                                T? obj = JsonSerializer.Deserialize<T>(currentObj + "\r\n}");
+                                                if (obj != null)
+                                                    result.Add(obj);
+                                            }
+                                            catch { }
+                                        currentObj = string.Empty;
+                                    }
+                                    else if (currentObj.Length > 0)
+                                        currentObj += line;
+                                }
+                            }
+                        }
+                    }
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                }
+            }
+            return null;
+        }
+
+        /*
+        private async Task<List<T>?> DeserializeJsonObjectsAsync<T>(string filepath)
         {
             if (!File.Exists(filepath))
                 Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", $"\"{filepath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
@@ -874,8 +926,7 @@ namespace ASA_Save_Inspector.Pages
                 {
                     using (FileStream fs = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        List<T>? res = await JsonSerializer.DeserializeAsync<List<T>?>(fs);
-                        return new KeyValuePair<bool, List<T>?>(false, res);
+                        return await JsonSerializer.DeserializeAsync<List<T>?>(fs);
                     }
                 }
                 catch (Exception ex)
@@ -883,8 +934,9 @@ namespace ASA_Save_Inspector.Pages
                     Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
                 }
             }
-            return new KeyValuePair<bool, List<T>?>(true, null);
+            return null;
         }
+        */
 
         private static void RemoveJsonExportProfile(JsonExportProfile jep)
         {
@@ -1760,19 +1812,64 @@ namespace ASA_Save_Inspector.Pages
             return jep;
         }
 
-        private static string GetTribeNameOrId(Dino d) => !string.IsNullOrEmpty(d.TribeName) ? d.TribeName : d.OwningTribeID.ToString(CultureInfo.InvariantCulture);
-        private static string GetTribeNameOrId(Dino d, Dictionary<int, string> tribeNames) => tribeNames.ContainsKey(d.OwningTribeID) ? tribeNames[d.OwningTribeID] : GetTribeNameOrId(d);
+        private const int NB_PROCESSES = 8;
+        private static int _nbProcessedDinosSubsets = 0;
+        private static List<Dino> _processedDinosSubsets = new List<Dino>();
+        private static int _nbProcessedStructuresSubsets = 0;
+        private static List<Structure> _processedStructuresSubsets = new List<Structure>();
+        private static int _nbProcessedItemsSubsets = 0;
+        private static List<Item> _processedItemsSubsets = new List<Item>();
+
+        private static string GetTribeNameOrId(Dino d) => SettingsPage._tribeNames.ContainsKey(d.OwningTribeID) ? SettingsPage._tribeNames[d.OwningTribeID] : (!string.IsNullOrEmpty(d.TribeName) ? d.TribeName : d.OwningTribeID.ToString(CultureInfo.InvariantCulture));
+
+        private static void GotAllTribeIdsForDinos(List<Dino> dinos)
+        {
+            _allTribesForDinos = dinos.DistinctBy(d => d.OwningTribeID).Select(d => new KeyValuePair<string, int>(GetTribeNameOrId(d), d.OwningTribeID)).DistinctBy(e => e.Key).ToDictionary();
+            if (_allTribesForDinos != null && _allTribesForDinos.Count > 0)
+            {
+                _allTribesForDinosSorted = _allTribesForDinos.Select(t => t.Key).ToList();
+                if (_allTribesForDinosSorted != null && _allTribesForDinosSorted.Count > 0)
+                    _allTribesForDinosSorted.Sort();
+            }
+            _allTribesForDinosInitialized = true;
+            if (DinosPage._page != null)
+                DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => DinosPage._page.InitTribesQuickFilter());
+        }
+
+        private static void DinosSubsetProcessed(List<Dino> dinos)
+        {
+            if (dinos != null && dinos.Count > 0)
+                foreach (var d in dinos)
+                    _processedDinosSubsets.Add(d);
+            ++_nbProcessedDinosSubsets;
+            if (_nbProcessedDinosSubsets == NB_PROCESSES)
+                GotAllTribeIdsForDinos(_processedDinosSubsets);
+        }
+
+        private static void ProcessDinosSubset(List<Dino> dinos)
+        {
+            Task.Run(() =>
+            {
+                return dinos.DistinctBy(d => d.OwningTribeID).ToList();
+            }).ContinueWith((result) =>
+            {
+                DinosSubsetProcessed(result.Result);
+            });
+        }
 
         private static void ComputeAllTribesForDinos()
         {
             if (_dinosData != null && _dinosData.Count > 0)
             {
-                _allTribesForDinos = _dinosData.DistinctBy(d => d.OwningTribeID).Select(d => new KeyValuePair<string, int>(GetTribeNameOrId(d, SettingsPage._tribeNames), d.OwningTribeID)).ToDictionary(); //.Where(s => s.Value >= 0 && !string.IsNullOrEmpty(s.Key))
-                if (_allTribesForDinos != null && _allTribesForDinos.Count > 0)
+                _nbProcessedDinosSubsets = 0;
+                _processedDinosSubsets.Clear();
+                int nbElems = _dinosData.Count / NB_PROCESSES;
+                int remaining = _dinosData.Count % NB_PROCESSES;
+                for (int i = 0; i < NB_PROCESSES; i++)
                 {
-                    _allTribesForDinosSorted = _allTribesForDinos.Select(t => t.Key).ToList();
-                    if (_allTribesForDinosSorted != null && _allTribesForDinosSorted.Count > 0)
-                        _allTribesForDinosSorted.Sort();
+                    int toSkip = (i * nbElems);
+                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
+                    ProcessDinosSubset(_dinosData.Skip(toSkip).Take(toTake).ToList());
                 }
             }
         }
@@ -1793,12 +1890,7 @@ namespace ASA_Save_Inspector.Pages
             _allTribesForDinosSorted.Clear();
             _allShortNamesForDinosInitialized = false;
             _allShortNamesForDinosSorted.Clear();
-            Task.Run(() => ComputeAllTribesForDinos()).ContinueWith((result) =>
-            {
-                _allTribesForDinosInitialized = true;
-                if (DinosPage._page != null)
-                    DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => DinosPage._page.InitTribesQuickFilter());
-            });
+            Task.Run(() => ComputeAllTribesForDinos());
             Task.Run(() => ComputeAllShortNamesForDinos()).ContinueWith((result) =>
             {
                 _allShortNamesForDinosInitialized = true;
@@ -1807,19 +1899,57 @@ namespace ASA_Save_Inspector.Pages
             });
         }
 
-        private static string GetTribeNameOrId(Structure s) => !string.IsNullOrEmpty(s.OwnerName) ? s.OwnerName : (!string.IsNullOrEmpty(s.OwningPlayerName) ? s.OwningPlayerName : (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture) : string.Empty));
-        private static string GetTribeNameOrId(Structure s, Dictionary<int, string> tribeNames) => s.TargetingTeam != null && s.TargetingTeam.HasValue && tribeNames.ContainsKey(s.TargetingTeam.Value) ? tribeNames[s.TargetingTeam.Value] : GetTribeNameOrId(s);
+        private static string GetTribeNameOrId_Fallback(Structure s) => !string.IsNullOrEmpty(s.OwnerName) ? s.OwnerName : (!string.IsNullOrEmpty(s.OwningPlayerName) ? s.OwningPlayerName : (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture) : string.Empty));
+        private static string GetTribeNameOrId(Structure s) => s.TargetingTeam != null && s.TargetingTeam.HasValue && SettingsPage._tribeNames.ContainsKey(s.TargetingTeam.Value) ? SettingsPage._tribeNames[s.TargetingTeam.Value] : GetTribeNameOrId_Fallback(s);
+
+        private static void GotAllTribeIdsForStructures(List<Structure> structures)
+        {
+            _allTribesForStructures = structures.DistinctBy(d => d.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), s.TargetingTeam.Value)).DistinctBy(e => e.Key).ToDictionary();
+            if (_allTribesForStructures != null && _allTribesForStructures.Count > 0)
+            {
+                _allTribesForStructuresSorted = _allTribesForStructures.Select(t => t.Key).ToList();
+                if (_allTribesForStructuresSorted != null && _allTribesForStructuresSorted.Count > 0)
+                    _allTribesForStructuresSorted.Sort();
+            }
+            _allTribesForStructuresInitialized = true;
+            if (StructuresPage._page != null)
+                StructuresPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => StructuresPage._page.InitTribesQuickFilter());
+        }
+
+        private static void StructuresSubsetProcessed(List<Structure> structures)
+        {
+            if (structures != null && structures.Count > 0)
+                foreach (var s in structures)
+                    _processedStructuresSubsets.Add(s);
+            ++_nbProcessedStructuresSubsets;
+            if (_nbProcessedStructuresSubsets == NB_PROCESSES)
+                GotAllTribeIdsForStructures(_processedStructuresSubsets);
+        }
+
+        private static void ProcessStructuresSubset(List<Structure> structures)
+        {
+            Task.Run(() =>
+            {
+                return structures.DistinctBy(s => s.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).ToList();
+            }).ContinueWith((result) =>
+            {
+                StructuresSubsetProcessed(result.Result);
+            });
+        }
 
         private static void ComputeAllTribesForStructures()
         {
             if (_structuresData != null && _structuresData.Count > 0)
             {
-                _allTribesForStructures = _structuresData.DistinctBy(s => s.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s, SettingsPage._tribeNames), s.TargetingTeam.Value)).ToDictionary();
-                if (_allTribesForStructures != null && _allTribesForStructures.Count > 0)
+                _nbProcessedStructuresSubsets = 0;
+                _processedStructuresSubsets.Clear();
+                int nbElems = _structuresData.Count / NB_PROCESSES;
+                int remaining = _structuresData.Count % NB_PROCESSES;
+                for (int i = 0; i < NB_PROCESSES; i++)
                 {
-                    _allTribesForStructuresSorted = _allTribesForStructures.Select(t => t.Key).ToList();
-                    if (_allTribesForStructuresSorted != null && _allTribesForStructuresSorted.Count > 0)
-                        _allTribesForStructuresSorted.Sort();
+                    int toSkip = (i * nbElems);
+                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
+                    ProcessStructuresSubset(_structuresData.Skip(toSkip).Take(toTake).ToList());
                 }
             }
         }
@@ -1840,12 +1970,7 @@ namespace ASA_Save_Inspector.Pages
             _allTribesForStructuresSorted.Clear();
             _allShortNamesForStructuresInitialized = false;
             _allShortNamesForStructuresSorted.Clear();
-            Task.Run(() => ComputeAllTribesForStructures()).ContinueWith((result) =>
-            {
-                _allTribesForStructuresInitialized = true;
-                if (StructuresPage._page != null)
-                    StructuresPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => StructuresPage._page.InitTribesQuickFilter());
-            });
+            Task.Run(() => ComputeAllTribesForStructures());
             Task.Run(() => ComputeAllShortNamesForStructures()).ContinueWith((result) =>
             {
                 _allShortNamesForStructuresInitialized = true;
@@ -1854,18 +1979,56 @@ namespace ASA_Save_Inspector.Pages
             });
         }
 
-        private static string GetTribeNameOrId(Item i, Dictionary<int, string> tribeNames) => i.ContainerTribeID != null && i.ContainerTribeID.HasValue && tribeNames.ContainsKey(i.ContainerTribeID.Value) ? tribeNames[i.ContainerTribeID.Value] : (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value.ToString(CultureInfo.InvariantCulture) : "0");
+        private static string GetTribeNameOrId(Item i) => i.ContainerTribeID != null && i.ContainerTribeID.HasValue && SettingsPage._tribeNames.ContainsKey(i.ContainerTribeID.Value) ? SettingsPage._tribeNames[i.ContainerTribeID.Value] : (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value.ToString(CultureInfo.InvariantCulture) : "0");
+
+        private static void GotAllTribeIdsForItems(List<Item> items)
+        {
+            _allTribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), i.ContainerTribeID.Value)).DistinctBy(e => e.Key).ToDictionary();
+            if (_allTribesForItems != null && _allTribesForItems.Count > 0)
+            {
+                _allTribesForItemsSorted = _allTribesForItems.Select(t => t.Key).ToList();
+                if (_allTribesForItemsSorted != null && _allTribesForItemsSorted.Count > 0)
+                    _allTribesForItemsSorted.Sort();
+            }
+            _allTribesForItemsInitialized = true;
+            if (ItemsPage._page != null)
+                ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => ItemsPage._page.InitTribesQuickFilter());
+        }
+
+        private static void ItemsSubsetProcessed(List<Item> items)
+        {
+            if (items != null && items.Count > 0)
+                foreach (var i in items)
+                    _processedItemsSubsets.Add(i);
+            ++_nbProcessedItemsSubsets;
+            if (_nbProcessedItemsSubsets == NB_PROCESSES)
+                GotAllTribeIdsForItems(_processedItemsSubsets);
+        }
+
+        private static void ProcessItemsSubset(List<Item> items)
+        {
+            Task.Run(() =>
+            {
+                return items.DistinctBy(d => d.ContainerTribeID).ToList();
+            }).ContinueWith((result) =>
+            {
+                ItemsSubsetProcessed(result.Result);
+            });
+        }
 
         private static void ComputeAllTribesForItems()
         {
             if (_itemsData != null && _itemsData.Count > 0)
             {
-                _allTribesForItems = _itemsData.DistinctBy(i => i.ContainerTribeID).Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i, SettingsPage._tribeNames), i.ContainerTribeID.Value)).ToDictionary();
-                if (_allTribesForItems != null && _allTribesForItems.Count > 0)
+                _nbProcessedItemsSubsets = 0;
+                _processedItemsSubsets.Clear();
+                int nbElems = _itemsData.Count / NB_PROCESSES;
+                int remaining = _itemsData.Count % NB_PROCESSES;
+                for (int i = 0; i < NB_PROCESSES; i++)
                 {
-                    _allTribesForItemsSorted = _allTribesForItems.Select(t => t.Key).ToList();
-                    if (_allTribesForItemsSorted != null && _allTribesForItemsSorted.Count > 0)
-                        _allTribesForItemsSorted.Sort();
+                    int toSkip = (i * nbElems);
+                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
+                    ProcessItemsSubset(_itemsData.Skip(toSkip).Take(toTake).ToList());
                 }
             }
         }
@@ -1886,12 +2049,7 @@ namespace ASA_Save_Inspector.Pages
             _allTribesForItemsSorted.Clear();
             _allShortNamesForItemsInitialized = false;
             _allShortNamesForItemsSorted.Clear();
-            Task.Run(() => ComputeAllTribesForItems()).ContinueWith((result) =>
-            {
-                _allTribesForItemsInitialized = true;
-                if (ItemsPage._page != null)
-                    ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => ItemsPage._page.InitTribesQuickFilter());
-            });
+            Task.Run(() => ComputeAllTribesForItems());
             Task.Run(() => ComputeAllShortNamesForItems()).ContinueWith((result) =>
             {
                 _allShortNamesForItemsInitialized = true;
@@ -1958,6 +2116,92 @@ namespace ASA_Save_Inspector.Pages
             Utils.LockAllPages(false);
         }
 
+        private void DeserializeAllData_WithBufferedStream(string folderPath)
+        {
+            if (_selectedJsonExportProfile == null)
+                return;
+
+            if (_selectedJsonExportProfile.ExtractedDinos)
+                Task.Run(() => DeserializeJsonObjects<Dino>(Path.Combine(folderPath, "dinos.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["dinos"] = true;
+                    _dinosData = result.Result;
+                    if (_dinosData == null)
+                        _deserializationHasErrors = true;
+                    else if (_dinosData.Count > 0)
+                        foreach (var dinoData in _dinosData)
+                            dinoData.InitStats();
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["dinos"] = true;
+
+            if (_selectedJsonExportProfile.ExtractedPlayerPawns)
+                Task.Run(() => DeserializeJsonObjects<PlayerPawn>(Path.Combine(folderPath, "player_pawns.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["player_pawns"] = true;
+                    _playerPawnsData = result.Result;
+                    if (_playerPawnsData == null)
+                        _deserializationHasErrors = true;
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["player_pawns"] = true;
+
+            if (_selectedJsonExportProfile.ExtractedItems)
+                Task.Run(() => DeserializeJsonObjects<Item>(Path.Combine(folderPath, "items.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["items"] = true;
+                    _itemsData = result.Result;
+                    if (_itemsData == null)
+                        _deserializationHasErrors = true;
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["items"] = true;
+
+            if (_selectedJsonExportProfile.ExtractedStructures)
+                Task.Run(() => DeserializeJsonObjects<Structure>(Path.Combine(folderPath, "structures.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["structures"] = true;
+                    _structuresData = result.Result;
+                    if (_structuresData == null)
+                        _deserializationHasErrors = true;
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["structures"] = true;
+
+            if (_selectedJsonExportProfile.ExtractedPlayers)
+                Task.Run(() => DeserializeJsonObjects<Player>(Path.Combine(folderPath, "players.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["players"] = true;
+                    _playersData = result.Result;
+                    if (_playersData == null)
+                        _deserializationHasErrors = true;
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["players"] = true;
+
+            if (_selectedJsonExportProfile.ExtractedTribes)
+                Task.Run(() => DeserializeJsonObjects<Tribe>(Path.Combine(folderPath, "tribes.json"))).ContinueWith((result) =>
+                {
+                    _deserializationTasks["tribes"] = true;
+                    _tribesData = result.Result;
+                    if (_tribesData == null)
+                        _deserializationHasErrors = true;
+                    if (_tribesData != null && _tribesData.Count > 0)
+                        _tribeNames = _tribesData.DistinctBy(t => t.TribeID).Select(t => new KeyValuePair<int, string>(t.TribeID != null && t.TribeID.HasValue ? t.TribeID.Value : -1, t.TribeName ?? string.Empty)).Where(s => s.Key != -1 && !string.IsNullOrEmpty(s.Value)).ToDictionary();
+                    if (_tribeNames == null)
+                        _tribeNames = new Dictionary<int, string>();
+                    CheckForTasksCompletion();
+                });
+            else
+                _deserializationTasks["tribes"] = true;
+        }
+
+        /*
         private void DeserializeAllData(string folderPath)
         {
             if (_selectedJsonExportProfile == null)
@@ -1967,10 +2211,10 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<Dino>(Path.Combine(folderPath, "dinos.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["dinos"] = true;
-                    if (result.Result.Key)
+                    _dinosData = result.Result;
+                    if (_dinosData == null)
                         _deserializationHasErrors = true;
-                    _dinosData = result.Result.Value;
-                    if (_dinosData != null && _dinosData.Count > 0)
+                    else if (_dinosData.Count > 0)
                         foreach (var dinoData in _dinosData)
                             dinoData.InitStats();
                     CheckForTasksCompletion();
@@ -1982,9 +2226,9 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<PlayerPawn>(Path.Combine(folderPath, "player_pawns.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["player_pawns"] = true;
-                    if (result.Result.Key)
+                    _playerPawnsData = result.Result;
+                    if (_playerPawnsData == null)
                         _deserializationHasErrors = true;
-                    _playerPawnsData = result.Result.Value;
                     CheckForTasksCompletion();
                 });
             else
@@ -1994,9 +2238,9 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<Item>(Path.Combine(folderPath, "items.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["items"] = true;
-                    if (result.Result.Key)
+                    _itemsData = result.Result;
+                    if (_itemsData == null)
                         _deserializationHasErrors = true;
-                    _itemsData = result.Result.Value;
                     CheckForTasksCompletion();
                 });
             else
@@ -2006,9 +2250,9 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<Structure>(Path.Combine(folderPath, "structures.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["structures"] = true;
-                    if (result.Result.Key)
+                    _structuresData = result.Result;
+                    if (_structuresData == null)
                         _deserializationHasErrors = true;
-                    _structuresData = result.Result.Value;
                     CheckForTasksCompletion();
                 });
             else
@@ -2018,9 +2262,9 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<Player>(Path.Combine(folderPath, "players.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["players"] = true;
-                    if (result.Result.Key)
+                    _playersData = result.Result;
+                    if (_playersData == null)
                         _deserializationHasErrors = true;
-                    _playersData = result.Result.Value;
                     CheckForTasksCompletion();
                 });
             else
@@ -2030,9 +2274,9 @@ namespace ASA_Save_Inspector.Pages
                 DeserializeJsonObjectsAsync<Tribe>(Path.Combine(folderPath, "tribes.json")).ContinueWith((result) =>
                 {
                     _deserializationTasks["tribes"] = true;
-                    if (result.Result.Key)
+                    _tribesData = result.Result;
+                    if (_tribesData == null)
                         _deserializationHasErrors = true;
-                    _tribesData = result.Result.Value;
                     if (_tribesData != null && _tribesData.Count > 0)
                         _tribeNames = _tribesData.DistinctBy(t => t.TribeID).Select(t => new KeyValuePair<int, string>(t.TribeID != null && t.TribeID.HasValue ? t.TribeID.Value : -1, t.TribeName ?? string.Empty)).Where(s => s.Key != -1 && !string.IsNullOrEmpty(s.Value)).ToDictionary();
                     if (_tribeNames == null)
@@ -2042,6 +2286,7 @@ namespace ASA_Save_Inspector.Pages
             else
                 _deserializationTasks["tribes"] = true;
         }
+        */
 
         private void LoadJsonExportProfile_Click(object sender, RoutedEventArgs e)
         {
@@ -2110,7 +2355,8 @@ namespace ASA_Save_Inspector.Pages
 
             Utils.LockAllPages(true);
             ResetDeserializationTasks();
-            DeserializeAllData(folderPath);
+            //DeserializeAllData(folderPath);
+            DeserializeAllData_WithBufferedStream(folderPath);
             CheckForTasksCompletion();
 
             tb_JsonDataLoaded.Text = $"{ASILang.Get("LoadingJsonData")} {ASILang.Get("PleaseWait")}";
