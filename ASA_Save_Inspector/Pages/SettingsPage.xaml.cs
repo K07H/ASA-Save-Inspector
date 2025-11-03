@@ -67,6 +67,7 @@ namespace ASA_Save_Inspector.Pages
         public string? LanguageCode { get; set; } = ASILang.DEFAULT_LANGUAGE_CODE;
         public string? PythonExeFilePath { get; set; } = string.Empty;
         public bool? DarkTheme { get; set; } = true;
+        public bool? DebugLogging { get; set; } = false;
     }
 
     public class MapBounds
@@ -140,6 +141,7 @@ namespace ASA_Save_Inspector.Pages
 
         public static SettingsPage? _page = null;
         public static bool? _darkTheme = true;
+        public static bool? _debugLogging = false;
 
         public static string? _language = ASILang.DEFAULT_LANGUAGE_CODE;
         public static string? _pythonExePath = null;
@@ -165,8 +167,8 @@ namespace ASA_Save_Inspector.Pages
         public static Dictionary<string, int> _allTribesForDinos = new Dictionary<string, int>();
         public static List<string> _allTribesForDinosSorted = new List<string>();
         public static bool _allTribesForDinosInitialized = false;
-        public static List<string?> _allShortNamesForDinosSorted = new List<string?>();
-        public static bool _allShortNamesForDinosInitialized = false;
+        public static List<string?> _allCleanNamesForDinosSorted = new List<string?>();
+        public static bool _allCleanNamesForDinosInitialized = false;
 
         public static Dictionary<string, int> _allTribesForStructures = new Dictionary<string, int>();
         public static List<string> _allTribesForStructuresSorted = new List<string>();
@@ -359,6 +361,7 @@ namespace ASA_Save_Inspector.Pages
                     _pythonExePath = jsonSettings.PythonExeFilePath;
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
+                    _debugLogging = jsonSettings.DebugLogging;
                     SettingsChanged();
                 }
             }
@@ -386,6 +389,7 @@ namespace ASA_Save_Inspector.Pages
                     _pythonExePath = jsonSettings.PythonExeFilePath;
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
+                    _debugLogging = jsonSettings.DebugLogging;
                     if (_page != null)
                         _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                         {
@@ -408,7 +412,8 @@ namespace ASA_Save_Inspector.Pages
                 {
                     LanguageCode = ASILang.GetLanguageCode(_language),
                     PythonExeFilePath = _pythonExePath,
-                    DarkTheme = _darkTheme
+                    DarkTheme = _darkTheme,
+                    DebugLogging = _debugLogging
                 };
                 string jsonString = JsonSerializer.Serialize<JsonSettings>(settings, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(Utils.SettingsFilePath(), jsonString, Encoding.UTF8);
@@ -896,7 +901,10 @@ namespace ASA_Save_Inspector.Pages
                                                 if (obj != null)
                                                     result.Add(obj);
                                             }
-                                            catch { }
+                                            catch (Exception ex)
+                                            {
+                                                Logger.Instance.Log($"Exception caught when deserializing JSON. Content=[{currentObj}] Exception=[{ex}]", Logger.LogLevel.ERROR);
+                                            }
                                         currentObj = string.Empty;
                                     }
                                     else if (currentObj.Length > 0)
@@ -1874,12 +1882,12 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private static void ComputeAllShortNamesForDinos()
+        private static void ComputeAllCleanNamesForDinos()
         {
             if (_dinosData != null && _dinosData.Count > 0)
             {
-                _allShortNamesForDinosSorted = _dinosData.DistinctBy(d => d.ShortName).Where(d => d.ShortName != null).Select(d => d.ShortName).ToList();
-                _allShortNamesForDinosSorted.Sort();
+                _allCleanNamesForDinosSorted = _dinosData.DistinctBy(d => d.CleanName).Where(d => d.CleanName != null).Select(d => d.CleanName).ToList();
+                _allCleanNamesForDinosSorted.Sort();
             }
         }
 
@@ -1888,12 +1896,12 @@ namespace ASA_Save_Inspector.Pages
             _allTribesForDinosInitialized = false;
             _allTribesForDinos.Clear();
             _allTribesForDinosSorted.Clear();
-            _allShortNamesForDinosInitialized = false;
-            _allShortNamesForDinosSorted.Clear();
+            _allCleanNamesForDinosInitialized = false;
+            _allCleanNamesForDinosSorted.Clear();
             Task.Run(() => ComputeAllTribesForDinos());
-            Task.Run(() => ComputeAllShortNamesForDinos()).ContinueWith((result) =>
+            Task.Run(() => ComputeAllCleanNamesForDinos()).ContinueWith((result) =>
             {
-                _allShortNamesForDinosInitialized = true;
+                _allCleanNamesForDinosInitialized = true;
                 if (DinosPage._page != null)
                     DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => DinosPage._page.InitDinosQuickFilter());
             });

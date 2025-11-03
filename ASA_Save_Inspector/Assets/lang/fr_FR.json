@@ -72,6 +72,8 @@
     "UnableToRestartASI": "Impossible de red\u00E9marrer.",
     "PleaseRestartASIManually": "Veuillez red\u00E9marrer ASI manuellement.",
     "ASISettings": "Configuration d\u0027ASI",
+    "DebugLogging": "Log de d\u00E9bogage :",
+    "DebugLogging_Description": "Si le log de d\u00E9bogage est activ\u00E9, trois fichiers suppl\u00E9mentaires sont cr\u00E9\u00E9s dans le dossier json_exports lors de la cr\u00E9ation des fichiers JSON : skipped_blueprints.json, unknown_blueprints.json et failed_to_parse.json. Ces fichiers JSON fournissent des informations sur les objets qui ont \u00E9t\u00E9 ignor\u00E9s, ceux qui \u00E9taient inconnus et ceux qui n\u0027ont pas pu \u00EAtre analys\u00E9s.",
     "ExportProfiles": "Profils d\u0027extraction",
     "ExportPresets": "Pr\u00E9r\u00E9glages d\u0027extraction",
     "DinoFilters": "Filtres de dinos",

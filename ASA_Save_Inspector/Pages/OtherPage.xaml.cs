@@ -28,6 +28,7 @@ namespace ASA_Save_Inspector.Pages
             AdjustToSizeChange();
 
             cb_AppTheme.IsChecked = (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
+            cb_DebugLogging.IsChecked = (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value);
 
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
@@ -634,6 +635,18 @@ namespace ASA_Save_Inspector.Pages
             btn_RemoveJsonData.IsEnabled = false;
             tb_RemovingJsonData.Visibility = Visibility.Visible;
             Task.Run(() => RemoveOldJsonData());
+        }
+
+        private void cb_DebugLogging_Checked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._debugLogging = true;
+            SettingsPage.SaveSettings();
+        }
+
+        private void cb_DebugLogging_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._debugLogging = false;
+            SettingsPage.SaveSettings();
         }
     }
 }

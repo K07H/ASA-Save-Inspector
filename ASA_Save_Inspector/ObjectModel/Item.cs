@@ -25,7 +25,7 @@
         public int? CraftQueue { get; set; }
         public double? CreationTime { get; set; }
         public int? CustomCosmeticModSkinReplacementID { get; set; }
-        public TypeStringValue? CustomCosmeticModSkinReplacementOriginalClass { get; set; }
+        public TypeObjectValue? CustomCosmeticModSkinReplacementOriginalClass { get; set; }
         public int? CustomCosmeticModSkinVariantID { get; set; }
         public CustomList<CustomItemData?>? CustomItemDatas { get; set; }
         public string? CustomItemDescription { get; set; }
@@ -48,15 +48,16 @@
         public double? HypothermalResistance { get; set; }
         public string? ItemArchetype { get; set; }
         public int? ItemColorID { get; set; }
-        public TypeStringValue? ItemCustomClass { get; set; }
+        public TypeObjectValue? ItemCustomClass { get; set; }
         public ItemID? ItemID { get; set; }
         public int? ItemQualityIndex { get; set; }
         public int? ItemQuantity { get; set; }
         public double? ItemRating { get; set; }
-        public TypeStringValue? ItemSkinTemplate { get; set; }
+        public TypeObjectValue? ItemSkinTemplate { get; set; }
         public int? ItemVersion { get; set; }
         public double? LastAutoDurabilityDecreaseTime { get; set; }
         public double? LastEnterStasisTime { get; set; }
+        public TypeObjectValue? LastOwnerPlayer { get; set; }
         public double? LastSpoilingTime { get; set; }
         public double? LastTorchDurabilityLossTime { get; set; }
         public double? LastUseTime { get; set; }
@@ -66,6 +67,7 @@
         public double? NextSpoilingTime { get; set; }
         public double? OriginalCreationTime { get; set; }
         public Vector? OriginalItemDropLocation { get; set; }
+        public string? OwnerCryopodUUID { get; set; }
         public string? OwnerInventoryUUID { get; set; }
         public int? PreSkinItemColorID { get; set; }
         public double? SavedDurability { get; set; }

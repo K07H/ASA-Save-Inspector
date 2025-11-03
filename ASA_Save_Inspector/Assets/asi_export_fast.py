@@ -318,6 +318,23 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
                         if cryopod.dino is not None:
                             cryopod.dino.is_cryopodded = True
                             all_dinos.append(cryopod.dino)
+                        if cryopod.saddle is not None:
+                            saddle_from_cryopod = JsonApi.primal_item_to_json_obj(cryopod.saddle.object)
+                            # Get blueprint.
+                            saddle_blueprint: str = cryopod.saddle.blueprint.__str__()
+                            delimiter_pos: int = saddle_blueprint.find(" ")
+                            if delimiter_pos > 0 and len(saddle_blueprint) > delimiter_pos:
+                                saddle_blueprint = saddle_blueprint[delimiter_pos + 1:]
+                            saddle_from_cryopod["ItemArchetype"] = saddle_blueprint
+                            # Get owner cryopod UUID.
+                            saddle_owner_cryopod_uuid: str = "00000000000000000000000000000000"
+                            if cryopod.uuid is not None:
+                                saddle_owner_cryopod_uuid = cryopod.uuid.__str__()
+                            saddle_from_cryopod["OwnerCryopodUUID"] = saddle_owner_cryopod_uuid
+                            # Adjust quantity.
+                            saddle_from_cryopod["ItemQuantity"] = 1
+                            # Append saddle to items.
+                            all_items.append(saddle_from_cryopod)
                     elif debug_logging:
                         failed_parsing.append(f"Cryopod {obj.uuid} content.")
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
@@ -428,9 +445,9 @@ if __name__ == '__main__':
     # argv[7]: Export players?
     # argv[8]: Export tribes?
 
-    if len(sys.argv) < 9:
+    if len(sys.argv) < 10:
         print('Wrong number of arguments provided.', flush=True)
-        print('USAGE: asi_export_fast.py [ASA_Save_File_Path] [JSON_Export_Folder_Path] [Export_Dinos] [Export_Pawns] [Export_Items] [Export_Structures] [Export_Players] [Export_Tribes] [Additional_Blueprints]', flush=True)
+        print('USAGE: asi_export_fast.py [ASA_Save_File_Path] [JSON_Export_Folder_Path] [Export_Dinos] [Export_Pawns] [Export_Items] [Export_Structures] [Export_Players] [Export_Tribes] [Debug_Logging] [Additional_Blueprints]', flush=True)
         sys.exit(2) # Exit with command line syntax error code
 
     save_path: Path = Path(sys.argv[1])
@@ -441,20 +458,21 @@ if __name__ == '__main__':
     export_structures: bool = sys.argv[6] == '1'
     export_players: bool = sys.argv[7] == '1'
     export_tribes: bool = sys.argv[8] == '1'
+    debug_logging: bool = sys.argv[9] == '1'
 
     custom_bps_dinos: list[str] = []
     custom_bps_items: list[str] = []
     custom_bps_structures: list[str] = []
-    if len(sys.argv) > 9 and len(sys.argv[9]) > 0:
+    if len(sys.argv) > 10 and len(sys.argv[10]) > 0:
         try:
-            encoded_bps: str = sys.argv[9].replace('_', '/').replace('-', '+').replace(',','=')
+            encoded_bps: str = sys.argv[10].replace('_', '/').replace('-', '+').replace(',','=')
             custom_bps: str = base64.b64decode(encoded_bps).decode('utf-8')
             parsed_custom_bps = parse_custom_blueprints_arg(custom_bps)
             custom_bps_dinos = parsed_custom_bps[0]
             custom_bps_items = parsed_custom_bps[1]
             custom_bps_structures = parsed_custom_bps[2]
         except Exception:
-            print(f"Failed to decode custom blueprints: {sys.argv[9]}", flush=True)
+            print(f"Failed to decode custom blueprints: {sys.argv[10]}", flush=True)
 
     '''
     save_path: Path = Path("D:/BACKUPS/TheIsland/TheIsland_WP.ark")
@@ -465,6 +483,7 @@ if __name__ == '__main__':
     export_structures: bool = True
     export_players: bool = True
     export_tribes: bool = True
+    debug_logging: bool = True
     custom_bps_dinos: list[str] = []
     custom_bps_items: list[str] = []
     custom_bps_structures: list[str] = []
@@ -475,7 +494,6 @@ if __name__ == '__main__':
         sys.exit(0) # Exit with default code
 
     # Configure logging (only show warnings and errors)
-    debug_logging: bool = False
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.API, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.PARSER, False)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.SAVE, False)

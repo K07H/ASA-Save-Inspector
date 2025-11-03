@@ -11,7 +11,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
     {
         public static List<string> DefaultSelectedColumns = new List<string>()
         {
-            "ShortName",
+            "CleanName",
             "TamedName",
             "DinoID1",
             "DinoID2",
@@ -35,7 +35,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "IsTamed",
             "IsUnclaimed",
             "MapCoords",
-            "CryopodCoords"
+            "CryopodCoords",
+            "GeneTraitsString",
         };
 
         public static List<string> DefaultColumnsOrder = new List<string>()
@@ -59,12 +60,14 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Base Speed",
             "ID 1",
             "ID 2",
-            "Owning Tribe ID"
+            "Owning Tribe ID",
+            "Genes",
         };
 
         private static readonly Dictionary<string, string> CleanNames = new Dictionary<string, string>()
         {
-            { "ShortName", "Dino" },
+            { "CleanName", "Dino" },
+            { "ShortName", "Short Name" },
             { "TamedName", "Tamed Name" },
             { "DinoID1", "ID 1" },
             { "DinoID2", "ID 2" },
@@ -80,6 +83,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "IsUnclaimed", "Unclaimed" },
             { "OwningTribeID", "Owning Tribe ID" },
             { "TargetingTeam", "Tribe ID" },
+            { "GeneTraitsString", "Genes" },
             { "BaseHealth", "Base HP" },
             { "BaseStamina", "Base Stam" },
             { "BaseTorpidity", "Base Torpidity" },
@@ -167,6 +171,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "FriendModeEndTime",
             "FriendModeEndTimeReadable",
             "GeneTraits",
+            "GeneTraitsString",
             "Instigator",
             "InventoryUUID",
             "ItemArchetype",
@@ -223,7 +228,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalCreationTimeReadable",
             "OriginalNPCVolumeName",
             "RequiredTameAffinity",
-            //"ShortName",
             "StatValues",
             "TamedAtTime",
             "TamedAtTimeReadable",
@@ -276,9 +280,6 @@ namespace ASA_Save_Inspector.ObjectModel
         private int[]? _addedStats = null;
         private double[]? _statsValues = null;
 
-        //private double? _lat = null;
-        //private double? _long = null;
-
         public void InitStats()
         {
             _baseStats = ParseStatsPoints(BaseStatPoints);
@@ -286,15 +287,6 @@ namespace ASA_Save_Inspector.ObjectModel
             _addedStats = ParseStatsPoints(AddedStatPoints);
             _statsValues = ParseStatsValues(StatValues);
         }
-
-        /*
-        public void InitMapCoords(string? mapName)
-        {
-            KeyValuePair<double, double> coords = Utils.GetMapCoords(mapName, ActorTransformX, ActorTransformY, ActorTransformZ);
-            _lat = coords.Key;
-            _long = coords.Value;
-        }
-        */
 
         public bool IsTamed
         {
@@ -305,6 +297,18 @@ namespace ASA_Save_Inspector.ObjectModel
         public bool IsUnclaimed
         {
             get { return TargetingTeam == 2000000000; }
+            private set { }
+        }
+
+        public string? CleanName
+        {
+            get
+            {
+                string? cleanName = DinoNames.GetNameFromArchetype(ItemArchetype);
+                if (!string.IsNullOrEmpty(cleanName))
+                    return cleanName;
+                return ShortName != null ? ShortName : ItemArchetype;
+            }
             private set { }
         }
 
@@ -331,6 +335,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? MapCoords
         {
             get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            private set { }
+        }
+
+        public string? GeneTraitsString
+        {
+            get { return GeneTraits != null && GeneTraits.Count > 0 ? GeneTraits.ToString() : string.Empty; }
             private set { }
         }
 

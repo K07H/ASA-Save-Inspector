@@ -467,6 +467,13 @@ namespace ASA_Save_Inspector.Pages
                 if (d != null)
                 {
                     var owner = d.Owner();
+                    if (owner == null || !owner.HasValue || owner.Value.Value == null)
+                        if (!string.IsNullOrEmpty(d.OwnerCryopodUUID))
+                        {
+                            Item? cryopod = d.OwnerCryopod();
+                            if (cryopod != null)
+                                owner = cryopod.Owner();
+                        }
                     if (owner != null && owner.HasValue && owner.Value.Key != ArkObjectType.UNKNOWN && owner.Value.Value != null)
                         goToContainerVisibility = Visibility.Visible;
                 }
@@ -2514,6 +2521,13 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null)
                     {
                         var owner = item.Owner();
+                        if (owner == null || !owner.HasValue || owner.Value.Value == null)
+                            if (!string.IsNullOrEmpty(item.OwnerCryopodUUID))
+                            {
+                                Item? cryopod = item.OwnerCryopod();
+                                if (cryopod != null)
+                                    owner = cryopod.Owner();
+                            }
                         if (owner != null && owner.HasValue && owner.Value.Value != null &&
                             (owner.Value.Key == ArkObjectType.PLAYER_PAWN || owner.Value.Key == ArkObjectType.DINO || owner.Value.Key == ArkObjectType.STRUCTURE))
                         {

@@ -577,7 +577,7 @@ namespace ASA_Save_Inspector
             string arkParseRunnerPath = Utils.ArkParseRunnerFilePath();
             string arkParseRunnerContent = string.Format(
 @"
-""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9}{10}
+""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9} {10}{11}
 ", Utils.PythonFilePathFromVenv(), 
    asiExportAllPath, 
    jep.SaveFilePath, 
@@ -588,6 +588,7 @@ namespace ASA_Save_Inspector
    (jep.ExtractedStructures ? "1" : "0"), 
    (jep.ExtractedPlayers ? "1" : "0"), 
    (jep.ExtractedTribes ? "1" : "0"), 
+   (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value ? "1" : "0"), 
    (customBlueprintsB64.Length > 0 ? $" {customBlueprintsB64}" : string.Empty));
 
             try

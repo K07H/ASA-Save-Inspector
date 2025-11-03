@@ -19,7 +19,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "2.0";
+        public const string LANGUAGE_VERSION = "2.3";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -272,7 +272,7 @@ namespace ASA_Save_Inspector
 
         private static readonly Dictionary<string, string> en_GB = new Dictionary<string, string>()
         {
-            { "Language_Version", "2.0" },
+            { "Language_Version", LANGUAGE_VERSION },
             { "Language_Name", "English" },
             { "Language_Code", "en_GB" },
             { "MicrosoftDateTimeFormat", "G" },
@@ -345,6 +345,8 @@ namespace ASA_Save_Inspector
             { "UnableToRestartASI", "Unable to restart." },
             { "PleaseRestartASIManually", "Please restart ASI manually." },
             { "ASISettings", "ASI settings" },
+            { "DebugLogging", "Debug logging:" },
+            { "DebugLogging_Description", "If debug logging is enabled, three additional files are created in the json_exports folder when the JSON files are created: skipped_blueprints.json, unknown_blueprints.json and failed_to_parse.json. These JSON files provide information about which objects were skipped, which objects were unknown, and which objects failed to parse." },
             { "ExportProfiles", "Export profiles" },
             { "ExportPresets", "Export presets" },
             { "DinoFilters", "Dinos filters" },
@@ -655,7 +657,7 @@ namespace ASA_Save_Inspector
 
         private static readonly Dictionary<string, string> fr_FR = new Dictionary<string, string>()
         {
-            { "Language_Version", "2.0" },
+            { "Language_Version", LANGUAGE_VERSION },
             { "Language_Name", "Français" },
             { "Language_Code", "fr_FR" },
             { "MicrosoftDateTimeFormat", "G" },
@@ -728,6 +730,8 @@ namespace ASA_Save_Inspector
             { "UnableToRestartASI", "Impossible de redémarrer." },
             { "PleaseRestartASIManually", "Veuillez redémarrer ASI manuellement." },
             { "ASISettings", "Configuration d'ASI" },
+            { "DebugLogging", "Log de débogage :" },
+            { "DebugLogging_Description", "Si le log de débogage est activé, trois fichiers supplémentaires sont créés dans le dossier json_exports lors de la création des fichiers JSON : skipped_blueprints.json, unknown_blueprints.json et failed_to_parse.json. Ces fichiers JSON fournissent des informations sur les objets qui ont été ignorés, ceux qui étaient inconnus et ceux qui n'ont pas pu être analysés." },
             { "ExportProfiles", "Profils d'extraction" },
             { "ExportPresets", "Préréglages d'extraction" },
             { "DinoFilters", "Filtres de dinos" },

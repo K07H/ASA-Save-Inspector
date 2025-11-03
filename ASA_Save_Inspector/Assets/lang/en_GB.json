@@ -72,6 +72,8 @@
     "UnableToRestartASI": "Unable to restart.",
     "PleaseRestartASIManually": "Please restart ASI manually.",
     "ASISettings": "ASI settings",
+    "DebugLogging": "Debug logging:",
+    "DebugLogging_Description": "If debug logging is enabled, three additional files are created in the json_exports folder when the JSON files are created: skipped_blueprints.json, unknown_blueprints.json and failed_to_parse.json. These JSON files provide information about which objects were skipped, which objects were unknown, and which objects failed to parse.",
     "ExportProfiles": "Export profiles",
     "ExportPresets": "Export presets",
     "DinoFilters": "Dinos filters",

@@ -58,6 +58,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ShortName", "Item" },
             { "bEquippedItem", "Equipped" },
             { "bIsBlueprint", "Blueprint" },
+            { "InCryopod", "In Cryopod" },
             { "CraftedSkillBonus", "Crafted skill bonus" },
             { "CrafterCharacterName", "Crafter" },
             { "CrafterTribeName", "Crafter tribe" },
@@ -69,6 +70,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ItemRating", "Rating" },
             { "SavedDurability", "Saved durability" },
             { "OwnerInventoryUUID", "Owner inv UUID" },
+            { "OwnerCryopodUUID", "Owner cryo UUID" },
             { "ContainerType", "Container type" },
             { "ContainerName", "Container name" },
             { "ContainerTribeID", "Container tribe ID" },
@@ -134,6 +136,12 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public bool InCryopod
+        {
+            get => !string.IsNullOrWhiteSpace(OwnerCryopodUUID);
+            private set { }
+        }
+
         public string? GetItemID() => $"{(ItemID?.ItemID1?.ToString(CultureInfo.InvariantCulture) ?? "0")}{(ItemID?.ItemID2?.ToString(CultureInfo.InvariantCulture) ?? "0")}";
 
         private bool _searchedOwner = false;
@@ -146,6 +154,18 @@ namespace ASA_Save_Inspector.ObjectModel
                 _searchedOwner = true;
             }
             return _owner;
+        }
+
+        private bool _searchedOwnerCryopod = false;
+        private Item? _ownerCryopod = null;
+        public Item? OwnerCryopod()
+        {
+            if (_ownerCryopod == null && !_searchedOwnerCryopod && !string.IsNullOrEmpty(OwnerCryopodUUID))
+            {
+                _ownerCryopod = Utils.FindItemByUUID(this.OwnerCryopodUUID);
+                _searchedOwnerCryopod = true;
+            }
+            return _ownerCryopod;
         }
 
         public DateTime? CreationTimeReadable
@@ -216,6 +236,8 @@ namespace ASA_Save_Inspector.ObjectModel
                     else if (owner.Value.Key == ArkObjectType.STRUCTURE)
                         return "Structure";
                 }
+                if (!string.IsNullOrEmpty(OwnerCryopodUUID))
+                    return "Cryopod";
                 return "Unknown";
             }
             private set { }
@@ -247,6 +269,8 @@ namespace ASA_Save_Inspector.ObjectModel
                             return $"Structure Class={(obj.ShortName ?? string.Empty)}, ID={(obj.StructureID != null && obj.StructureID.HasValue ? obj.StructureID.Value.ToString(CultureInfo.InvariantCulture) : "0")}{(!string.IsNullOrWhiteSpace(obj.BoxName) ? $", Label={obj.BoxName}" : string.Empty)}";
                     }
                 }
+                if (!string.IsNullOrEmpty(OwnerCryopodUUID))
+                    return $"Cryopod ID={OwnerCryopodUUID}";
                 return null;
             }
             private set { }
@@ -257,6 +281,13 @@ namespace ASA_Save_Inspector.ObjectModel
             get
             {
                 KeyValuePair<ArkObjectType, object?>? owner = Owner();
+                if (owner == null || !owner.HasValue || owner.Value.Value == null)
+                    if (!string.IsNullOrEmpty(OwnerCryopodUUID))
+                    {
+                        Item? cryopod = OwnerCryopod();
+                        if (cryopod != null)
+                            owner = cryopod.Owner();
+                    }
                 if (owner != null && owner.HasValue && owner.Value.Value != null)
                 {
                     if (owner.Value.Key == ArkObjectType.PLAYER_PAWN)
@@ -279,7 +310,6 @@ namespace ASA_Save_Inspector.ObjectModel
                     }
                 }
                 return null;
-                //SettingsPage._itemsData.Where(i => string.Compare(this.OwnerInventoryUUID, i.UUID, System.StringComparison.InvariantCulture) == 0);
             }
             private set { }
         }

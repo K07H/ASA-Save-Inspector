@@ -83,7 +83,7 @@ namespace ASA_Save_Inspector.Pages
         private List<string> _propertiesWithManyValues = new List<string>(DinoUtils.DoNotCheckPropertyValuesAmount);
 
         private ObservableCollection<string> _quickFilter_allTribes = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
-        private ObservableCollection<string> _quickFilter_allShortNames = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
+        private ObservableCollection<string> _quickFilter_allCleanNames = new ObservableCollection<string>() { ASILang.Get("ClickHere") };
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -340,7 +340,7 @@ namespace ASA_Save_Inspector.Pages
                     return new MapPoint()
                     {
                         ID = dinoIDStr,
-                        Name = d.ShortName,
+                        Name = d.CleanName,
                         Description = $"{(dinoIDStr != "00" ? $"{ASILang.Get("ID")}: {dinoIDStr}\n" : string.Empty)}{(!string.IsNullOrWhiteSpace(d.TamedName) ? $"{ASILang.Get("Name")}: {d.TamedName}\n" : string.Empty)}{ASILang.Get("Level")}: {(d.CurrentLevel != null && d.CurrentLevel.HasValue ? d.CurrentLevel.Value.ToString(CultureInfo.InvariantCulture) : "0")}",
                         X = minimapCoords.Value,
                         Y = minimapCoords.Key
@@ -2661,14 +2661,14 @@ namespace ASA_Save_Inspector.Pages
 
         public void InitDinosQuickFilter()
         {
-            if (SettingsPage._allShortNamesForDinosInitialized)
+            if (SettingsPage._allCleanNamesForDinosInitialized)
             {
-                _quickFilter_allShortNames.Clear();
-                _quickFilter_allShortNames.Add(ASILang.Get("All").ToUpper());
-                if (SettingsPage._allShortNamesForDinosSorted != null && SettingsPage._allShortNamesForDinosSorted.Count > 0)
-                    foreach (string? shortName in SettingsPage._allShortNamesForDinosSorted)
-                        if (shortName != null)
-                            _quickFilter_allShortNames.Add(shortName);
+                _quickFilter_allCleanNames.Clear();
+                _quickFilter_allCleanNames.Add(ASILang.Get("All").ToUpper());
+                if (SettingsPage._allCleanNamesForDinosSorted != null && SettingsPage._allCleanNamesForDinosSorted.Count > 0)
+                    foreach (string? cleanName in SettingsPage._allCleanNamesForDinosSorted)
+                        if (cleanName != null)
+                            _quickFilter_allCleanNames.Add(cleanName);
                 QuickFilter_Dino_Label = ASILang.Get("ClickHere");
             }
             else
@@ -2704,21 +2704,21 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private static PropertyInfo? _shortNameProp = Utils.GetProperty(typeof(Dino), nameof(Dino.ShortName));
+        private static PropertyInfo? _cleanNameProp = Utils.GetProperty(typeof(Dino), nameof(Dino.CleanName));
 
-        private void QuickFilterDinoSelect(string shortName)
+        private void QuickFilterDinoSelect(string cleanName)
         {
-            if (_shortNameProp == null)
+            if (_cleanNameProp == null)
                 return;
-            RemoveAllFiltersForProp(_shortNameProp);
-            if (SettingsPage._allShortNamesForDinosSorted.Contains(shortName))
-                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_shortNameProp, new Filter()
+            RemoveAllFiltersForProp(_cleanNameProp);
+            if (SettingsPage._allCleanNamesForDinosSorted.Contains(cleanName))
+                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(_cleanNameProp, new Filter()
                 {
                     FilterOperator = FilterOperator.AND,
                     FilterType = FilterType.EXACT_MATCH,
-                    FilterValues = new List<string>() { shortName }
+                    FilterValues = new List<string>() { cleanName }
                 }));
-            QuickFilter_Dino_Label = shortName;
+            QuickFilter_Dino_Label = cleanName;
             FillEditDinoFiltersPopup();
             ApplyFiltersAndSort();
         }
