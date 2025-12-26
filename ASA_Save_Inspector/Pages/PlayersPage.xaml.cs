@@ -289,23 +289,94 @@ namespace ASA_Save_Inspector.Pages
                 orders.Sort();
 
                 List<string?> defaultOrders = new List<string?>();
+
+                // Add saved order.
+                List<ColumnOrder>? savedOrder = LoadColumnsOrder();
+                if (savedOrder != null && savedOrder.Count > 0)
+                    foreach (var saved in savedOrder)
+                        if (saved != null)
+                            defaultOrders.Add(saved.HeaderName);
+
+                // Add default order.
                 foreach (string defaultOrder in PlayerUtils.DefaultColumnsOrder)
-                    if (orders.Contains(defaultOrder))
+                    if (orders.Contains(defaultOrder) && !defaultOrders.Contains(defaultOrder))
                         defaultOrders.Add(defaultOrder);
+
+                // Add remaining unspecified order.
                 foreach (string? otherOrder in orders)
                     if (!defaultOrders.Contains(otherOrder))
                         defaultOrders.Add(otherOrder);
 
+                int j = 0;
                 for (int i = 0; i < defaultOrders.Count; i++)
                 {
                     foreach (DataGridColumn col in dg_Players.Columns)
                         if (col != null && string.Compare(defaultOrders[i], col.Header.ToString(), StringComparison.InvariantCulture) == 0)
                         {
-                            col.DisplayIndex = i;
+                            col.DisplayIndex = j;
+                            j++;
                             break;
                         }
                 }
             }
+        }
+
+        private void SaveColumnsOrder()
+        {
+            if (dg_Players?.Columns == null || dg_Players.Columns.Count <= 0)
+                return;
+            List<ColumnOrder> order = new List<ColumnOrder>();
+            foreach (DataGridColumn col in dg_Players.Columns)
+                if (col != null)
+                {
+                    string? colName = col.Header.ToString();
+                    if (colName != null && col.DisplayIndex >= 0)
+                        order.Add(new ColumnOrder() { HeaderName = colName, DisplayIndex = col.DisplayIndex });
+                }
+            if (order.Count <= 0)
+                return;
+
+            try
+            {
+                order = order.OrderBy(o => o.DisplayIndex).ToList();
+                string jsonString = JsonSerializer.Serialize<List<ColumnOrder>>(order, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.PlayerColumnsOrderFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in SaveColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private List<ColumnOrder>? LoadColumnsOrder()
+        {
+            string columnsOrderFilepath = Utils.PlayerColumnsOrderFilePath();
+            if (string.IsNullOrWhiteSpace(columnsOrderFilepath) || !File.Exists(columnsOrderFilepath))
+                return null;
+
+            string? columnsOrderJson = null;
+            try { columnsOrderJson = File.ReadAllText(columnsOrderFilepath, Encoding.UTF8); }
+            catch (Exception ex)
+            {
+                columnsOrderJson = null;
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            if (string.IsNullOrWhiteSpace(columnsOrderJson))
+                return null;
+            try
+            {
+                List<ColumnOrder>? columnsOrder = JsonSerializer.Deserialize<List<ColumnOrder>>(columnsOrderJson);
+                if (columnsOrder != null && columnsOrder.Count > 0)
+                    return columnsOrder;
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            return null;
         }
 
         private void RefreshDisplayedColumns()
@@ -407,6 +478,8 @@ namespace ASA_Save_Inspector.Pages
                 e.Cancel = true; //e.Column.Visibility = Visibility.Collapsed;
             e.Column.Header = PlayerUtils.GetCleanNameFromPropertyName(e.PropertyName);
         }
+
+        private void dg_Players_ColumnReordered(object sender, DataGridColumnEventArgs e) => SaveColumnsOrder();
 
         #endregion
 

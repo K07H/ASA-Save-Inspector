@@ -48,21 +48,27 @@ namespace ASA_Save_Inspector
             { "dino_filters.json", "DinoFilters" },
             { "dino_groups.json", "DinoGroups" },
             { "dino_columns.json", "DinoColumns" },
+            { "dino_columns_order.json", "DinoColumnsOrder" },
             { "pawn_filters.json", "PawnFilters" },
             { "pawn_groups.json", "PawnGroups" },
             { "pawn_columns.json", "PawnColumns" },
+            { "pawn_columns_order.json", "PawnColumnsOrder" },
             { "structure_filters.json", "StructureFilters" },
             { "structure_groups.json", "StructureGroups" },
             { "structure_columns.json", "StructureColumns" },
+            { "structure_columns_order.json", "StructureColumnsOrder" },
             { "item_filters.json", "ItemFilters" },
             { "item_groups.json", "ItemGroups" },
             { "item_columns.json", "ItemColumns" },
+            { "item_columns_order.json", "ItemColumnsOrder" },
             { "player_filters.json", "PlayerFilters" },
             { "player_groups.json", "PlayerGroups" },
             { "player_columns.json", "PlayerColumns" },
+            { "player_columns_order.json", "PlayerColumnsOrder" },
             { "tribe_filters.json", "TribeFilters" },
             { "tribe_groups.json", "TribeGroups" },
-            { "tribe_columns.json", "TribeColumns" }
+            { "tribe_columns.json", "TribeColumns" },
+            { "tribe_columns_order.json", "TribeColumnsOrder" }
         };
 
         public static string GetDataDir() => Path.Combine(GetBaseDir(), "data");
@@ -84,21 +90,27 @@ namespace ASA_Save_Inspector
         public static string DinoFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "dino_filters.json");
         public static string DinoGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_groups.json");
         public static string DinoColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_columns.json");
+        public static string DinoColumnsOrderFilePath() => Path.Combine(GetDataDir(), "dino_columns_order.json");
         public static string PlayerPawnFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_filters.json");
         public static string PlayerPawnGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_groups.json");
         public static string PlayerPawnColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "pawn_columns.json");
+        public static string PlayerPawnColumnsOrderFilePath() => Path.Combine(GetDataDir(), "pawn_columns_order.json");
         public static string StructureFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "structure_filters.json");
         public static string StructureGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "structure_groups.json");
         public static string StructureColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "structure_columns.json");
+        public static string StructureColumnsOrderFilePath() => Path.Combine(GetDataDir(), "structure_columns_order.json");
         public static string ItemFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "item_filters.json");
         public static string ItemGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "item_groups.json");
         public static string ItemColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "item_columns.json");
+        public static string ItemColumnsOrderFilePath() => Path.Combine(GetDataDir(), "item_columns_order.json");
         public static string PlayerFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "player_filters.json");
         public static string PlayerGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "player_groups.json");
         public static string PlayerColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "player_columns.json");
+        public static string PlayerColumnsOrderFilePath() => Path.Combine(GetDataDir(), "player_columns_order.json");
         public static string TribeFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_filters.json");
         public static string TribeGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_groups.json");
         public static string TribeColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "tribe_columns.json");
+        public static string TribeColumnsOrderFilePath() => Path.Combine(GetDataDir(), "tribe_columns_order.json");
         public static string ExportProfilesFilePath() => Path.Combine(GetDataDir(), "export_profiles.json");
         public static string ExportPresetsFilePath() => Path.Combine(GetDataDir(), "export_presets.json");
         public static string DontCheckForUpdateFilePath() => Path.Combine(GetDataDir(), "skip_update_check.txt");
@@ -313,6 +325,22 @@ namespace ASA_Save_Inspector
                     PlayableMaxX = 9847.0,
                     PlayableMaxY = 9770.0,
                     PlayableMaxZ = 12500.0
+                }
+            },
+            new ArkMapInfo() { MapName = "LostColony", MinimapFilename = "LostColony_Minimap_Margin.jpg", Bounds = new MapBounds()
+                {
+                    OriginMinX = -408000.0,
+                    OriginMinY = -408000.0,
+                    OriginMinZ = -15000.0,
+                    OriginMaxX = 408000.0,
+                    OriginMaxY = 408000.0,
+                    OriginMaxZ = 54695.0,
+                    PlayableMinX = -408000.0,
+                    PlayableMinY = -408000.0,
+                    PlayableMinZ = -15000.0,
+                    PlayableMaxX = 408000.0,
+                    PlayableMaxY = 408000.0,
+                    PlayableMaxZ = 54695.0
                 }
             },
             new ArkMapInfo() { MapName = "Unknown", MinimapFilename = "TheIsland_Minimap_Margin.jpg", Bounds = new MapBounds()
@@ -1151,5 +1179,11 @@ namespace ASA_Save_Inspector
         {
             return _items.GetEnumerator();
         }
+    }
+
+    public class ColumnOrder
+    {
+        public string? HeaderName { get; set; } = null;
+        public int DisplayIndex { get; set; } = -1;
     }
 }

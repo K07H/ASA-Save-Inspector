@@ -353,23 +353,94 @@ namespace ASA_Save_Inspector.Pages
                 orders.Sort();
 
                 List<string?> defaultOrders = new List<string?>();
+
+                // Add saved order.
+                List<ColumnOrder>? savedOrder = LoadColumnsOrder();
+                if (savedOrder != null && savedOrder.Count > 0)
+                    foreach (var saved in savedOrder)
+                        if (saved != null)
+                            defaultOrders.Add(saved.HeaderName);
+
+                // Add default order.
                 foreach (string defaultOrder in ItemUtils.DefaultColumnsOrder)
-                    if (orders.Contains(defaultOrder))
+                    if (orders.Contains(defaultOrder) && !defaultOrders.Contains(defaultOrder))
                         defaultOrders.Add(defaultOrder);
+
+                // Add remaining unspecified order.
                 foreach (string? otherOrder in orders)
                     if (!defaultOrders.Contains(otherOrder))
                         defaultOrders.Add(otherOrder);
 
+                int j = 0;
                 for (int i = 0; i < defaultOrders.Count; i++)
                 {
                     foreach (DataGridColumn col in dg_Items.Columns)
                         if (col != null && string.Compare(defaultOrders[i], col.Header.ToString(), StringComparison.InvariantCulture) == 0)
                         {
-                            col.DisplayIndex = i;
+                            col.DisplayIndex = j;
+                            j++;
                             break;
                         }
                 }
             }
+        }
+
+        private void SaveColumnsOrder()
+        {
+            if (dg_Items?.Columns == null || dg_Items.Columns.Count <= 0)
+                return;
+            List<ColumnOrder> order = new List<ColumnOrder>();
+            foreach (DataGridColumn col in dg_Items.Columns)
+                if (col != null)
+                {
+                    string? colName = col.Header.ToString();
+                    if (colName != null && col.DisplayIndex >= 0)
+                        order.Add(new ColumnOrder() { HeaderName = colName, DisplayIndex = col.DisplayIndex });
+                }
+            if (order.Count <= 0)
+                return;
+
+            try
+            {
+                order = order.OrderBy(o => o.DisplayIndex).ToList();
+                string jsonString = JsonSerializer.Serialize<List<ColumnOrder>>(order, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.ItemColumnsOrderFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in SaveColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        private List<ColumnOrder>? LoadColumnsOrder()
+        {
+            string columnsOrderFilepath = Utils.ItemColumnsOrderFilePath();
+            if (string.IsNullOrWhiteSpace(columnsOrderFilepath) || !File.Exists(columnsOrderFilepath))
+                return null;
+
+            string? columnsOrderJson = null;
+            try { columnsOrderJson = File.ReadAllText(columnsOrderFilepath, Encoding.UTF8); }
+            catch (Exception ex)
+            {
+                columnsOrderJson = null;
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            if (string.IsNullOrWhiteSpace(columnsOrderJson))
+                return null;
+            try
+            {
+                List<ColumnOrder>? columnsOrder = JsonSerializer.Deserialize<List<ColumnOrder>>(columnsOrderJson);
+                if (columnsOrder != null && columnsOrder.Count > 0)
+                    return columnsOrder;
+            }
+            catch (Exception ex)
+            {
+                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            return null;
         }
 
         private void RefreshDisplayedColumns()
@@ -492,6 +563,28 @@ namespace ASA_Save_Inspector.Pages
                 e.Cancel = true; //e.Column.Visibility = Visibility.Collapsed;
             e.Column.Header = ItemUtils.GetCleanNameFromPropertyName(e.PropertyName);
         }
+
+        private void dg_Items_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+        {
+            if (MainWindow._minimap == null)
+                return;
+
+            DataGridRow? row = Utils.FindParent<DataGridRow>((UIElement)e.OriginalSource);
+            if (row != null)
+            {
+                Item? i = row.DataContext as Item;
+                if (i != null && i.UECoords?.Item1 != null && i.UECoords?.Item2 != null && i.UECoords?.Item3 != null && i.UECoords.Item1.HasValue && i.UECoords.Item2.HasValue && i.UECoords.Item3.HasValue)
+                {
+                    string? itemIDStr = i.GetItemID();
+                    var minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, i.UECoords.Item1.Value, i.UECoords.Item2.Value, i.UECoords.Item3.Value);
+                    double x = minimapCoords.Value;
+                    double y = minimapCoords.Key;
+                    Minimap.ShowCallout(itemIDStr, x, y);
+                }
+            }
+        }
+
+        private void dg_Items_ColumnReordered(object sender, DataGridColumnEventArgs e) => SaveColumnsOrder();
 
         #endregion
 
@@ -2521,13 +2614,24 @@ namespace ASA_Save_Inspector.Pages
                     if (item != null)
                     {
                         var owner = item.Owner();
+                        // Handle case of items stored inside cryopod.
                         if (owner == null || !owner.HasValue || owner.Value.Value == null)
                             if (!string.IsNullOrEmpty(item.OwnerCryopodUUID))
                             {
                                 Item? cryopod = item.OwnerCryopod();
-                                if (cryopod != null)
-                                    owner = cryopod.Owner();
+                                if (cryopod != null && cryopod.ItemID != null)
+                                {
+                                    if (GoToItem(cryopod.ItemID.ItemID1, cryopod.ItemID.ItemID2))
+                                        return;
+                                    else
+                                    {
+                                        MainWindow.ShowToast($"{ASILang.Get("CryopodNotFound")} {ASILang.Get("CheckFilters")}", BackgroundColor.WARNING);
+                                        // If cryopod item not found try to fallback redirect to the container of the cryopod.
+                                        owner = cryopod.Owner();
+                                    }
+                                }
                             }
+                        // Go to container.
                         if (owner != null && owner.HasValue && owner.Value.Value != null &&
                             (owner.Value.Key == ArkObjectType.PLAYER_PAWN || owner.Value.Key == ArkObjectType.DINO || owner.Value.Key == ArkObjectType.STRUCTURE))
                         {
@@ -2597,7 +2701,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
                         }
                         else
-                            MainWindow.ShowToast(ASILang.Get("CryopodNotFound"), BackgroundColor.WARNING);
+                            MainWindow.ShowToast(ASILang.Get("OwningContainerNotFound"), BackgroundColor.WARNING);
                     }
                 }
             }

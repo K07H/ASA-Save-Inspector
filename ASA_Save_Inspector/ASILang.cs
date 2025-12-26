@@ -19,7 +19,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "2.3";
+        public const string LANGUAGE_VERSION = "2.4";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -442,6 +442,7 @@ namespace ASA_Save_Inspector
             { "DinoNotFound", "Dino not found." },
             { "StructureNotFound", "Structure not found." },
             { "TribeNotFound", "Tribe not found." },
+            { "OwningContainerNotFound", "Owning container not found." },
             { "QuickFiltering", "Quickly add filters:" },
             { "CheckFilters", "Check filters." },
             { "FilteringByInventoryIDFailed", "Filtering by inventory ID failed." },
@@ -827,6 +828,7 @@ namespace ASA_Save_Inspector
             { "DinoNotFound", "Dino non trouvé." },
             { "StructureNotFound", "Structure non trouvée." },
             { "TribeNotFound", "Tribu non trouvée." },
+            { "OwningContainerNotFound", "Conteneur parent non trouvé." },
             { "QuickFiltering", "Ajout rapide de filtres :" },
             { "CheckFilters", "Vérifiez les filtres." },
             { "FilteringByInventoryIDFailed", "Le filtrage par ID d'inventaire a échoué." },

@@ -178,9 +178,11 @@
                            styling:CustomScrollBar.KeepVerticalExpanded="True"
                            styling:CustomScrollBar.LargeHorizontalScrollBar="True"
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                           ColumnReordered="dg_PlayerPawns_ColumnReordered"
                            Sorting="dg_PlayerPawns_Sorting"
                            PointerReleased="dg_PlayerPawns_PointerReleased"
                            SelectionChanged="dg_PlayerPawns_SelectionChanged"
+                           DoubleTapped="dg_PlayerPawns_DoubleTapped"
                            Margin="0,5,0,24"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">

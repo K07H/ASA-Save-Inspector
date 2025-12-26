@@ -23,7 +23,7 @@
                         <TextBlock TextWrapping="WrapWholeWords"><Run FontWeight="Bold" Text="{x:Bind local:AboutPage.AppName, Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('ASI_Description_Line1'), Mode=OneWay}"/></TextBlock>
                         <TextBlock TextWrapping="WrapWholeWords"><Run Text="{x:Bind asi:ASILang.Get('ASI_Description_Line2'), Mode=OneWay}"/></TextBlock>
                         <TextBlock TextWrapping="WrapWholeWords"><Run Text="{x:Bind asi:ASILang.Get('ASI_Description_Line3'), Mode=OneWay}"/></TextBlock>
-                        <TextBlock TextWrapping="WrapWholeWords"><Hyperlink NavigateUri="https://github.com/K07H/ASASaveInspector">https://github.com/K07H/ASASaveInspector</Hyperlink></TextBlock>
+                        <TextBlock TextWrapping="WrapWholeWords"><Hyperlink NavigateUri="https://github.com/K07H/ASA-Save-Inspector">https://github.com/K07H/ASA-Save-Inspector</Hyperlink></TextBlock>
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

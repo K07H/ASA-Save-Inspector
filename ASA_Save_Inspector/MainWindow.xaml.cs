@@ -139,6 +139,7 @@ namespace ASA_Save_Inspector
 
         private void LoadMapsInfo()
         {
+#if !DEBUG
             string mapsInfoFilepath = Utils.MapsInfoFilePath();
             if (File.Exists(mapsInfoFilepath))
             {
@@ -159,6 +160,7 @@ namespace ASA_Save_Inspector
             }
             else
             {
+#endif
                 Utils.EnsureDataFolderExist();
                 try
                 {
@@ -169,7 +171,9 @@ namespace ASA_Save_Inspector
                 {
                     Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 }
+#if !DEBUG
             }
+#endif
         }
 
         private static bool LastDoubleTap(MapPoint? point)

@@ -190,9 +190,11 @@
                            styling:CustomScrollBar.KeepVerticalExpanded="True"
                            styling:CustomScrollBar.LargeHorizontalScrollBar="True"
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                           ColumnReordered="dg_Items_ColumnReordered"
                            Sorting="dg_Items_Sorting"
                            PointerReleased="dg_Items_PointerReleased"
                            SelectionChanged="dg_Items_SelectionChanged"
+                           DoubleTapped="dg_Items_DoubleTapped"
                            Margin="0,5,0,24"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">

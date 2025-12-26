@@ -263,6 +263,30 @@ namespace ASA_Save_Inspector
                 mapInfo.Layer?.DataHasChanged();
         }
 
+        private void MapShowCallout(string? ID, double x, double y)
+        {
+            if (_featuresProvider == null)
+                return;
+
+            HideCallouts();
+            var features = _featuresProvider.Features.Where(f => ((f.Data as MapPoint)?.X == x && (f.Data as MapPoint)?.Y == y));
+            if (features != null && features.Count() > 0)
+                foreach (var feature in features)
+                    if (feature != null && string.Compare((feature.Data as MapPoint)?.ID, ID, false, CultureInfo.InvariantCulture) == 0)
+                    {
+                        var calloutStyle = feature.Styles.OfType<CalloutStyle>().FirstOrDefault();
+                        if (calloutStyle is not null)
+                            calloutStyle.Enabled = !calloutStyle.Enabled;
+                    }
+            MyMap.RefreshGraphics();
+        }
+
+        public static void ShowCallout(string? ID, double x, double y)
+        {
+            if (_minimap != null)
+                _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.MapShowCallout(ID, x, y); });
+        }
+
         private static ILayer? CreateLayerWithRasterFeature(MRect extent, string minimapFilename)
         {
             RasterFeature? rasterFeature = null;

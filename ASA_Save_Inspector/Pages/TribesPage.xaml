@@ -178,6 +178,7 @@
                            styling:CustomScrollBar.KeepVerticalExpanded="True"
                            styling:CustomScrollBar.LargeHorizontalScrollBar="True"
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                           ColumnReordered="dg_Tribes_ColumnReordered"
                            Sorting="dg_Tribes_Sorting"
                            PointerReleased="dg_Tribes_PointerReleased"
                            SelectionChanged="dg_Tribes_SelectionChanged"

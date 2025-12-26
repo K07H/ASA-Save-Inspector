@@ -3,7 +3,7 @@
   "Code": "fr_FR",
   "FlagFilepath": "/Assets/FlagFRIcon96.png",
   "Items": {
-    "Language_Version": "2.0",
+    "Language_Version": "2.4",
     "Language_Name": "Fran\u00E7ais",
     "Language_Code": "fr_FR",
     "MicrosoftDateTimeFormat": "G",
@@ -169,6 +169,7 @@
     "DinoNotFound": "Dino non trouv\u00E9.",
     "StructureNotFound": "Structure non trouv\u00E9e.",
     "TribeNotFound": "Tribu non trouv\u00E9e.",
+    "OwningContainerNotFound": "Conteneur parent non trouv\u00E9.",
     "QuickFiltering": "Ajout rapide de filtres :",
     "CheckFilters": "V\u00E9rifiez les filtres.",
     "FilteringByInventoryIDFailed": "Le filtrage par ID d\u0027inventaire a \u00E9chou\u00E9.",

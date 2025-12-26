@@ -23,6 +23,7 @@
     <Content Remove="Assets\Astraeos_Minimap_Margin.jpg" />
     <Content Remove="Assets\ClubArk_Minimap_Margin.jpg" />
     <Content Remove="Assets\Extinction_Minimap_Margin.jpg" />
+    <Content Remove="Assets\LostColony_Minimap_Margin.jpg" />
     <Content Remove="Assets\Ragnarok_Minimap_Margin.jpg" />
     <Content Remove="Assets\RedCircle.svg" />
     <Content Remove="Assets\ScorchedEarth_Minimap_Margin.jpg" />
@@ -63,6 +64,7 @@
     <EmbeddedResource Include="Assets\Astraeos_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\ClubArk_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\Extinction_Minimap_Margin.jpg" />
+    <EmbeddedResource Include="Assets\LostColony_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\Ragnarok_Minimap_Margin.jpg" />
     <EmbeddedResource Include="Assets\RedCircle.svg" />
     <EmbeddedResource Include="Assets\ScorchedEarth_Minimap_Margin.jpg" />
@@ -184,9 +186,9 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>2.0.3.0</AssemblyVersion>
-    <FileVersion>2.0.3.0</FileVersion>
-    <Version>2.0.3</Version>
+    <AssemblyVersion>2.0.4.0</AssemblyVersion>
+    <FileVersion>2.0.4.0</FileVersion>
+    <Version>2.0.4</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <NoWarn>WMC1506</NoWarn>

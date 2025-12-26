@@ -3,7 +3,7 @@
   "Code": "en_GB",
   "FlagFilepath": "/Assets/FlagGBIcon96.png",
   "Items": {
-    "Language_Version": "2.0",
+    "Language_Version": "2.4",
     "Language_Name": "English",
     "Language_Code": "en_GB",
     "MicrosoftDateTimeFormat": "G",
@@ -169,6 +169,7 @@
     "DinoNotFound": "Dino not found.",
     "StructureNotFound": "Structure not found.",
     "TribeNotFound": "Tribe not found.",
+    "OwningContainerNotFound": "Owning container not found.",
     "QuickFiltering": "Quickly add filters:",
     "CheckFilters": "Check filters.",
     "FilteringByInventoryIDFailed": "Filtering by inventory ID failed.",

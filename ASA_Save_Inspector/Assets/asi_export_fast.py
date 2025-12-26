@@ -50,9 +50,10 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "/DinoWildInventoryComponent_",
                                   "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C" ]
 
-BLUEPRINTS_NO_EXPORT: list[str] = [ "_AI_Blueprint.",
-                                    "/AI/",
+BLUEPRINTS_NO_EXPORT: list[str] = [ "/AI/",
+                                    "_AI_Blueprint.",
                                     "_AIController",
+                                    "_AI_Controller",
                                     "/DinoCharacterStatus_BP",
                                     "DinoCharacterStatusComponent_",
                                     "DinoCharacterStatusComponent_BP",

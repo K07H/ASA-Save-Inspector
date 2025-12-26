@@ -178,6 +178,7 @@
                            styling:CustomScrollBar.KeepVerticalExpanded="True"
                            styling:CustomScrollBar.LargeHorizontalScrollBar="True"
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
+                           ColumnReordered="dg_Players_ColumnReordered"
                            Sorting="dg_Players_Sorting"
                            PointerReleased="dg_Players_PointerReleased"
                            SelectionChanged="dg_Players_SelectionChanged"
