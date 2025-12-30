@@ -3,22 +3,23 @@ ASA Save Inspector (ASI) is an ARK Survival Ascended save file analyzer.
 
 ASI uses [ArkParse](https://github.com/VincentHenauGithub/ark-save-parser) to extract data from the save file, and provides a modern graphical user interface to analyze the data.
 
-This application is still under development, more features will be added in the future.
+Note: This application is still under development, more features will be added in the future.
 
 ## Table of content
 1. [Features](#1-features)
 2. [Demonstration video](#2-demonstration-video)
 3. [Installation](#3-installation)
 4. [Quick start](#4-quick-start)
-5. [Filters and groups](#5-filters-and-groups)
+5. [Quick filters](#5-quick-filters)
+6. [Filters and groups](#5-filters-and-groups)
    - 5.a [Filters](#5a-filters)
    - 5.b [Groups](#5b-groups)
    - 5.c [Good practices when using Filters and Groups](#5c-good-practices-when-using-filters-and-groups)
    - 5.d [Default filters](#5d-default-filters)
-6. [Feature requests and bug reports](#6-feature-requests-and-bug-reports)
-7. [Contributing](#7-contributing)
-8. [Donations](#8-donations)
-9. [Discord](#9-discord)
+7. [Feature requests and bug reports](#6-feature-requests-and-bug-reports)
+8. [Contributing](#7-contributing)
+9. [Donations](#8-donations)
+10. [Discord](#9-discord)
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
@@ -43,7 +44,10 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
-## 5) Filters and groups
+## 5) Quick filters
+Use the dropdowns to quickly filter by tribe, item, dino or structure type. For more advanced filtering refer to [Filters and groups](#5-filters-and-groups).
+
+## 6) Filters and groups
 ### 5.a) Filters
 Filters are divided into 2 categories: "OR" and "AND".<br>
 When filtering happens, ASI will:
@@ -127,14 +131,14 @@ Some default filters are enabled by default on Dinos and Structures pages:
 
 You can remove these default filters if you want to see wild dinos and structures.
 
-## 6) Feature requests and bug reports
+## 7) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## 7) Contributing
+## 8) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## 8) Donations
+## 9) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## 9) Discord
+## 10) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
