@@ -1,9 +1,9 @@
-﻿using ASA_Save_Inspector.Pages;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using ASA_Save_Inspector.Pages;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {

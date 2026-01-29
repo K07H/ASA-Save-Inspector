@@ -1,13 +1,3 @@
-using ASA_Save_Inspector.ObjectModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.WinUI.UI.Controls;
-using Microsoft.UI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +8,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ASA_Save_Inspector.ObjectModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.WinUI.UI.Controls;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
@@ -165,7 +165,7 @@ namespace ASA_Save_Inspector.Pages
         public static JsonExportProfile? _selectedJsonExportProfile = null;
 
         public static List<JsonExportPreset> _jsonExportPresets = new List<JsonExportPreset>();
-        
+
         public static List<Dino>? _dinosData = null;
         public static List<PlayerPawn>? _playerPawnsData = null;
         public static List<Item>? _itemsData = null;
@@ -524,7 +524,7 @@ namespace ASA_Save_Inspector.Pages
 
             if (ret.Length > 0)
                 ret = Convert.ToBase64String(Encoding.UTF8.GetBytes(ret), Base64FormattingOptions.None).Replace("=", ",", StringComparison.InvariantCulture).Replace("+", "-", StringComparison.InvariantCulture).Replace("/", "_", StringComparison.InvariantCulture);
-            
+
             return ret;
         }
 
@@ -606,7 +606,7 @@ namespace ASA_Save_Inspector.Pages
                 ID = (highestId + 1),
                 SaveFilePath = saveFilePath,
                 MapName = mapName,
-                ExtractName = (string.IsNullOrWhiteSpace(extractName) ? string.Empty :  extractName),
+                ExtractName = (string.IsNullOrWhiteSpace(extractName) ? string.Empty : extractName),
                 CreationDate = DateTime.Now,
                 ExtractedDinos = extractDinos,
                 ExtractedPlayerPawns = extractPlayerPawns,
@@ -1524,8 +1524,8 @@ namespace ASA_Save_Inspector.Pages
                         extractions[i].Key.ExtractedStructures,
                         extractions[i].Key.ExtractedPlayers,
                         extractions[i].Key.ExtractedTribes,
-                        extractions[i].Key.FastExtract, 
-                        extractions, 
+                        extractions[i].Key.FastExtract,
+                        extractions,
                         OnCurrentExtractionComplete);
                     return;
                 }

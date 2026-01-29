@@ -144,9 +144,9 @@ namespace ASA_Save_Inspector
             get
             {
                 return (Property != null && (
-                    string.Compare(Property.PropertyType.ToString(), "System.Int32", StringComparison.InvariantCulture) == 0 || 
-                    string.Compare(Property.PropertyType.ToString(), "System.Int64", StringComparison.InvariantCulture) == 0 || 
-                    string.Compare(Property.PropertyType.ToString(), "System.Single", StringComparison.InvariantCulture) == 0 || 
+                    string.Compare(Property.PropertyType.ToString(), "System.Int32", StringComparison.InvariantCulture) == 0 ||
+                    string.Compare(Property.PropertyType.ToString(), "System.Int64", StringComparison.InvariantCulture) == 0 ||
+                    string.Compare(Property.PropertyType.ToString(), "System.Single", StringComparison.InvariantCulture) == 0 ||
                     string.Compare(Property.PropertyType.ToString(), "System.Double", StringComparison.InvariantCulture) == 0));
             }
             private set { }

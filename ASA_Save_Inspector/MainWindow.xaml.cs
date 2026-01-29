@@ -1,13 +1,3 @@
-using ASA_Save_Inspector.Pages;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Windows.AppLifecycle;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +8,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppLifecycle;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
@@ -164,16 +164,16 @@ namespace ASA_Save_Inspector
             else
             {
 #endif
-                Utils.EnsureDataFolderExist();
-                try
-                {
-                    string jsonString = JsonSerializer.Serialize<List<ArkMapInfo>>(Utils._allMaps, new JsonSerializerOptions() { WriteIndented = true });
-                    File.WriteAllText(Utils.MapsInfoFilePath(), jsonString, Encoding.UTF8);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                }
+            Utils.EnsureDataFolderExist();
+            try
+            {
+                string jsonString = JsonSerializer.Serialize<List<ArkMapInfo>>(Utils._allMaps, new JsonSerializerOptions() { WriteIndented = true });
+                File.WriteAllText(Utils.MapsInfoFilePath(), jsonString, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
 #if !DEBUG
             }
 #endif
@@ -473,7 +473,7 @@ namespace ASA_Save_Inspector
         {
             if (!File.Exists(Utils.DontCheckForUpdateFilePath()))
                 await CheckForUpdate();
-            
+
             // DEPRECATED: Checking for previous ASI data is not required anymore.
             //if (!File.Exists(Utils.DontReimportPreviousDataFilePath()))
             //    CheckPreviousData();
@@ -774,7 +774,7 @@ namespace ASA_Save_Inspector
                 if (!string.IsNullOrEmpty(_previousData.Value.Key) && Directory.Exists(_previousData.Value.Key))
                     Utils.MoveDirectory(_previousData.Value.Key, Utils.JsonExportsFolder());
                 if (_previousData.Value.Value != null && _previousData.Value.Value.Count > 0)
-                    foreach (string configFile in  _previousData.Value.Value)
+                    foreach (string configFile in _previousData.Value.Value)
                         if (!string.IsNullOrEmpty(configFile) && File.Exists(configFile))
                         {
                             string? destFilePath = null;

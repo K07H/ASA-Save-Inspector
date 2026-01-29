@@ -2236,15 +2236,15 @@ namespace ASA_Save_Inspector.Pages
         private void mfi_DefaultFiltersPreset_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("DefaultPreset"), _defaultFiltersPreset);
 
         private void mfi_DefaultFiltersPreset_OilVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("OilVeins"), _defaultFiltersPreset_OilVeins);
-        
+
         private void mfi_DefaultFiltersPreset_WaterVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("WaterVeins"), _defaultFiltersPreset_WaterVeins);
-        
+
         private void mfi_DefaultFiltersPreset_GasVeins_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("GasVeins"), _defaultFiltersPreset_GasVeins);
-        
+
         private void mfi_DefaultFiltersPreset_PowerNodes_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("PowerNodes"), _defaultFiltersPreset_PowerNodes);
 
         private void mfi_DefaultFiltersPreset_BeaverDams_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("BeaverDams"), _defaultFiltersPreset_BeaverDams);
-        
+
         private void mfi_DefaultFiltersPreset_ZPlants_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("ZPlants"), _defaultFiltersPreset_ZPlants);
 
         private void mfi_DefaultFiltersPreset_WyvernNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("WyvernNests"), _defaultFiltersPreset_WyvernNests);
@@ -2252,11 +2252,11 @@ namespace ASA_Save_Inspector.Pages
         private void mfi_DefaultFiltersPreset_GigantoraptorNests_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("GigantoraptorNests"), _defaultFiltersPreset_GigantoraptorNests);
 
         private void mfi_DefaultFiltersPreset_ArtifactCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("ArtifactCrates"), _defaultFiltersPreset_ArtifactCrates);
-        
+
         private void mfi_DefaultFiltersPreset_HordeCrates_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("HordeCrates"), _defaultFiltersPreset_HordeCrates);
 
         private void mfi_DefaultFiltersPreset_TributeTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("TributeTerminals"), _defaultFiltersPreset_TributeTerminals);
-        
+
         private void mfi_DefaultFiltersPreset_CityTerminals_Click(object sender, RoutedEventArgs e) => DefaultFiltersPresetSelected(ASILang.Get("CityTerminals"), _defaultFiltersPreset_CityTerminals);
 
         #endregion

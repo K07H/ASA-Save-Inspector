@@ -1,13 +1,3 @@
-using ASA_Save_Inspector.ObjectModel;
-using ASA_Save_Inspector.ObjectModelUtils;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.WinUI.UI;
-using CommunityToolkit.WinUI.UI.Controls;
-using Microsoft.UI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,6 +11,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ASA_Save_Inspector.ObjectModel;
+using ASA_Save_Inspector.ObjectModelUtils;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.WinUI.UI;
+using CommunityToolkit.WinUI.UI.Controls;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using WinUIEx;
 
 namespace ASA_Save_Inspector.Pages

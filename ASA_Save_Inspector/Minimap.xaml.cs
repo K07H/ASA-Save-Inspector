@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using ASA_Save_Inspector.Pages;
 using Mapsui;
 using Mapsui.Extensions;
@@ -13,11 +18,6 @@ using Mapsui.Widgets.InfoWidgets;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
 
 namespace ASA_Save_Inspector
 {

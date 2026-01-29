@@ -1,11 +1,10 @@
-﻿using ASA_Save_Inspector.Pages;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ASA_Save_Inspector
 {
@@ -69,7 +68,7 @@ namespace ASA_Save_Inspector
                 Logger.Instance.Log($"Failed to get files in language directory at \"{langDir}\". Exception=[{ex}]", Logger.LogLevel.ERROR);
                 return false;
             }
-            
+
             if (jsonFiles == null || jsonFiles.Length <= 0)
             {
                 Logger.Instance.Log($"Language directory is empty at \"{langDir}\".", Logger.LogLevel.ERROR);

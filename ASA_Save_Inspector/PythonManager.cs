@@ -1,7 +1,4 @@
-﻿using ASA_Save_Inspector.Pages;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,6 +8,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 
 namespace ASA_Save_Inspector
 {
@@ -618,7 +618,7 @@ Utils.PythonFilePathFromVenv());
             Utils.EnsureDataFolderExist();
 
             string pythonVenvTestScriptPath = Utils.PythonVenvTestScriptPath();
-            string pythonVenvTestScriptContent = 
+            string pythonVenvTestScriptContent =
 @"
 import sys
 import os
