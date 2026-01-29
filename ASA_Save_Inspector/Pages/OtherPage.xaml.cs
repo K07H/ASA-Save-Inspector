@@ -28,7 +28,16 @@ namespace ASA_Save_Inspector.Pages
             AdjustToSizeChange();
 
             cb_AppTheme.IsChecked = (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
+            cb_AppTheme.Checked += cb_AppTheme_Unchecked;
+            cb_AppTheme.Unchecked += cb_AppTheme_Unchecked;
+
             cb_DebugLogging.IsChecked = (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value);
+            cb_DebugLogging.Checked += cb_DebugLogging_Checked;
+            cb_DebugLogging.Unchecked += cb_DebugLogging_Unchecked;
+
+            cb_LegacySearch.IsChecked = (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value);
+            cb_LegacySearch.Checked += cb_LegacySearch_Checked;
+            cb_LegacySearch.Unchecked += cb_LegacySearch_Unchecked;
 
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
@@ -101,7 +110,7 @@ namespace ASA_Save_Inspector.Pages
                 if (folderPath != null)
                 {
                     double folderSize = Utils.GetDirectorySize(folderPath);
-                    if (folderSize > (20.0d * 1024.0d * 1024.0d * 1024.0d)) // If greater than 20 GB
+                    if (folderSize > (10.0d * 1024.0d * 1024.0d * 1024.0d)) // If greater than 10 GB
                         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemoveJsonData.Visibility = Visibility.Visible);
                     string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
                     DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateJsonExportsFolderSize(folderSizeStr));
@@ -141,16 +150,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void page_SizeChanged(object sender, SizeChangedEventArgs e) => AdjustToSizeChange();
 
-        private string? GetASIDataFolderPath()
-        {
-            string folderPath = Utils.GetDataDir();
-            if (Directory.Exists(folderPath))
-                return folderPath;
-            folderPath = Utils.GetBaseDir();
-            if (Directory.Exists(folderPath))
-                return folderPath;
-            return null;
-        }
+        private string? GetASIDataFolderPath() => (Directory.Exists(Utils.GetDataDir()) ? Utils.GetDataDir() : null);
 
         private string? GetJsonExportsFolderPath()
         {
@@ -202,7 +202,7 @@ namespace ASA_Save_Inspector.Pages
                 catch (Exception ex)
                 {
                     Logger.Instance.Log($"Failed to delete ArkParse folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                    MainWindow.ShowToast(ASILang.Get("ReinstallArkParseFailed"));
+                    MainWindow.ShowToast($"{ASILang.Get("ReinstallArkParseFailed")} {ASILang.Get("SeeLogsForDetails")}");
                 }
             }
         }
@@ -646,6 +646,18 @@ namespace ASA_Save_Inspector.Pages
         private void cb_DebugLogging_Unchecked(object sender, RoutedEventArgs e)
         {
             SettingsPage._debugLogging = false;
+            SettingsPage.SaveSettings();
+        }
+
+        private void cb_LegacySearch_Checked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._legacySearch = true;
+            SettingsPage.SaveSettings();
+        }
+
+        private void cb_LegacySearch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._legacySearch = false;
             SettingsPage.SaveSettings();
         }
     }

@@ -69,32 +69,6 @@ namespace ASA_Save_Inspector.Styling
             ApplyLargeScrollBar(largeScrollBarTarget, orientation, largeScrollBar);
         }
 
-        /*
-        private static void LargeScrollBarTarget_LayoutUpdated(object? sender, object e)
-        {
-            if (DinosPage._dinosDG == null)
-                return;
-            FrameworkElement? fe = DinosPage._dinosDG as FrameworkElement;
-            if (fe == null)
-                return;
-
-            foreach (ScrollBar scrollBar in fe
-                .FindDescendants()
-                .OfType<ScrollBar>())
-            {
-                System.IO.File.AppendAllText("D:\\scrollbardimensions.txt", $"Orientation[{scrollBar.Orientation}] ActualWidth[{scrollBar.ActualWidth}] MinWidth[{scrollBar.MinWidth}] Width[{scrollBar.Width}] ActualHeight[{scrollBar.ActualHeight}] MinHeight[{scrollBar.MinHeight}] Height[{scrollBar.Height}]{Environment.NewLine}");
-
-                List<Thumb> thumbs = FindThumbs(scrollBar, new List<Thumb>());
-                if (thumbs != null && thumbs.Count > 0)
-                    foreach (var thumb in thumbs)
-                        if (thumb != null)
-                        {
-                            System.IO.File.AppendAllText("D:\\thumbdimensions.txt", $"ActualWidth[{thumb.ActualWidth}] MinWidth[{thumb.MinWidth}] Width[{thumb.Width}] ActualHeight[{thumb.ActualHeight}] MinHeight[{thumb.MinHeight}] Height[{thumb.Height}]{Environment.NewLine}");
-                        }
-            }
-        }
-        */
-
         private static void OnKeepExpandedPropertyChanged(FrameworkElement keepExpandedTarget, Orientation orientation, bool keepExpanded)
         {
             keepExpandedTarget.Loaded -= KeepExpandedTarget_Loaded;

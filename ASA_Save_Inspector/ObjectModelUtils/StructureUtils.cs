@@ -137,26 +137,42 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class CustomFolderItem
+    public partial class CustomFolderItem : IComparable, IComparable<CustomFolderItem>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(CustomFolderItem? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"name={(name ?? string.Empty)} inventory_comp_type={(inventory_comp_type != null && inventory_comp_type.HasValue ? inventory_comp_type.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} custom_folder_ids={Utils.JoinObjectsToString(custom_folder_ids)}";
     }
 
-    public partial class WirelessExchangeRefs
+    public partial class WirelessExchangeRefs : IComparable, IComparable<WirelessExchangeRefs>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(WirelessExchangeRefs? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"properties={Utils.JoinObjectsToString(properties)}";
     }
 
-    public partial class StoredTrait
+    public partial class StoredTrait : IComparable, IComparable<StoredTrait>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(StoredTrait? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"class_name={(class_name ?? string.Empty)} name={(name ?? string.Empty)} unique_id={(unique_id != null && unique_id.HasValue ? unique_id.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
     }
 
-    public partial class Structure : INotifyPropertyChanged
+    public partial class Structure : INotifyPropertyChanged, IComparable, IComparable<Structure>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Structure? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         /*
         private double? _lat = null;

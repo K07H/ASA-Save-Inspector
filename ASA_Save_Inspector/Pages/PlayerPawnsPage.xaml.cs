@@ -1,13 +1,3 @@
-using ASA_Save_Inspector.ObjectModel;
-using ASA_Save_Inspector.ObjectModelUtils;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.WinUI.UI;
-using CommunityToolkit.WinUI.UI.Controls;
-using Microsoft.UI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,6 +12,17 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ASA_Save_Inspector.ObjectModel;
+using ASA_Save_Inspector.ObjectModelUtils;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.WinUI.UI;
+using CommunityToolkit.WinUI.UI.Controls;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using WinUIEx;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -45,7 +46,7 @@ namespace ASA_Save_Inspector.Pages
         private static string? _secondaryCurrentSort = null;
         private static bool _secondaryAscendingSort = true;
 
-        private static bool _addedDefaultFilters = false;
+        //private static bool _addedDefaultFilters = false;
         private static List<KeyValuePair<PropertyInfo, Filter>> _filters = new List<KeyValuePair<PropertyInfo, Filter>>();
 
         private static bool _setDefaultSelectedColumns = false;
@@ -154,6 +155,51 @@ namespace ASA_Save_Inspector.Pages
             // Calculate page center.
             AdjustToSizeChange();
 
+            // Close previously opened windows.
+            if (SearchBuilder._searchBuilder != null)
+                SearchBuilder._searchBuilder.Close();
+            if (EditSearchQuery._editSearchQuery != null)
+                EditSearchQuery._editSearchQuery.Close();
+
+            // Init search.
+            if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
+            {
+                tb_Filters.Visibility = Visibility.Visible;
+                btn_AddFilter.Visibility = Visibility.Visible;
+                btn_EditFilters.Visibility = Visibility.Visible;
+                btn_FiltersPresets.Visibility = Visibility.Visible;
+                tb_FiltersGroup.Visibility = Visibility.Visible;
+                btn_AddFiltersGroup.Visibility = Visibility.Visible;
+                btn_EditFiltersGroup.Visibility = Visibility.Visible;
+                btn_FiltersGroupPresets.Visibility = Visibility.Visible;
+
+                tb_CreateFilter.Visibility = Visibility.Collapsed;
+                btn_CreateFilter.Visibility = Visibility.Collapsed;
+                tb_SavedQueries.Visibility = Visibility.Collapsed;
+                cbb_ExistingQueries.Visibility = Visibility.Collapsed;
+                btn_LoadQuery.Visibility = Visibility.Collapsed;
+                btn_DeleteQuery.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                tb_Filters.Visibility = Visibility.Collapsed;
+                btn_AddFilter.Visibility = Visibility.Collapsed;
+                btn_EditFilters.Visibility = Visibility.Collapsed;
+                btn_FiltersPresets.Visibility = Visibility.Collapsed;
+                tb_FiltersGroup.Visibility = Visibility.Collapsed;
+                btn_AddFiltersGroup.Visibility = Visibility.Collapsed;
+                btn_EditFiltersGroup.Visibility = Visibility.Collapsed;
+                btn_FiltersGroupPresets.Visibility = Visibility.Collapsed;
+
+                tb_CreateFilter.Visibility = Visibility.Visible;
+                btn_CreateFilter.Visibility = Visibility.Visible;
+                tb_SavedQueries.Visibility = Visibility.Visible;
+                cbb_ExistingQueries.Visibility = Visibility.Visible;
+                btn_LoadQuery.Visibility = Visibility.Visible;
+                btn_DeleteQuery.Visibility = Visibility.Visible;
+            }
+            SearchBuilder.InitSearch(SearchType.PAWNS);
+
             // Init default presets.
             InitDefaultPresets();
 
@@ -232,7 +278,7 @@ namespace ASA_Save_Inspector.Pages
         {
             _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
-            _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
+            //_defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
         }
 
         public bool GoToPlayerPawn(int? linkedPlayerID)
@@ -240,6 +286,12 @@ namespace ASA_Save_Inspector.Pages
             if (linkedPlayerID != null && linkedPlayerID.HasValue && _lastDisplayedVM != null)
             {
                 PlayerPawn? playerPawn = _lastDisplayedVM.FirstOrDefault(d => (d?.LinkedPlayerDataID == linkedPlayerID), null);
+                if (playerPawn == null) // Player pawn not found. That's probably due to current filters.
+                {
+                    ClearPageFiltersAndGroups(); // Remove current filtering & grouping.
+                    ApplyFiltersAndSort(); // Refresh.
+                    playerPawn = _lastDisplayedVM.FirstOrDefault(d => (d?.LinkedPlayerDataID == linkedPlayerID), null);
+                }
                 if (playerPawn != null)
                 {
                     dg_PlayerPawns.SelectedItem = playerPawn;
@@ -368,7 +420,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -384,7 +436,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 columnsOrderJson = null;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             if (string.IsNullOrWhiteSpace(columnsOrderJson))
@@ -397,7 +449,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             return null;
@@ -419,10 +471,20 @@ namespace ASA_Save_Inspector.Pages
         private void ApplyFiltersAndSort()
         {
             IEnumerable<PlayerPawn>? filtered = null;
-            if (_group != null && _group.Count > 0)
-                filtered = ApplyGroupFiltering();
+            if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
+            {
+                if (_group != null && _group.Count > 0)
+                    filtered = ApplyGroupFiltering();
+                else
+                    filtered = ApplyFiltering(SettingsPage._playerPawnsData, _filters);
+            }
             else
-                filtered = ApplyFiltering(SettingsPage._playerPawnsData, _filters);
+            {
+                if (SearchBuilder._query == null || SearchBuilder._query.Parts == null || SearchBuilder._query.Parts.Count <= 0)
+                    filtered = SettingsPage._playerPawnsData;
+                else
+                    filtered = SearchBuilder.DoSearchQuery(SearchType.PAWNS, true) as IEnumerable<PlayerPawn>;
+            }
             if (filtered != null)
                 ApplySorting(ref filtered);
             Init(ref filtered, false);
@@ -1032,17 +1094,16 @@ namespace ASA_Save_Inspector.Pages
 
         public static void ClearPageFiltersAndGroups()
         {
-#pragma warning disable CS1998
             if (_page != null)
-                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
                 {
                     _page.sp_PlayerPawnFiltersPresetsInGroup.Children.Clear();
                     _page.sp_ExistingPlayerPawnFilters.Children.Clear();
                 });
-#pragma warning restore CS1998
+            SearchBuilder._query = new SearchQuery();
             _group.Clear();
             _filters.Clear();
-            _addedDefaultFilters = false;
+            //_addedDefaultFilters = false;
             InitDefaultPresets();
         }
 
@@ -1741,7 +1802,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1760,7 +1821,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1881,7 +1942,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentFilters_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1978,7 +2039,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1997,7 +2058,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2117,7 +2178,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentColumns_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2208,7 +2269,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2222,7 +2283,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2306,7 +2367,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentGroup_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2417,7 +2478,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetID_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2440,7 +2501,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetCoords_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2488,7 +2549,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToPlayerData_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2510,7 +2571,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2543,7 +2604,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2587,8 +2648,109 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGoToInventoryItems_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
+        #endregion
+
+        #region New search method
+
+        private void btn_CreateFilter_Click(object sender, RoutedEventArgs e)
+        {
+            if (SearchBuilder._searchBuilder != null)
+            {
+                SearchBuilder._searchBuilder.Show();
+                SearchBuilder._searchBuilder.Activate();
+            }
+            else
+            {
+                var s = new SearchBuilder();
+                s.Initialize(SearchType.PAWNS);
+                s.Show();
+            }
+        }
+
+        private void cbb_ExistingQueries_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string? selected = Utils.GetComboBoxSelection(cbb_ExistingQueries, false);
+            if (!string.IsNullOrWhiteSpace(selected) && SearchBuilder._queries != null && SearchBuilder._queries.Queries != null && SearchBuilder._queries.Queries.ContainsKey(selected))
+            {
+                btn_LoadQuery.IsEnabled = true;
+                btn_EditQuery.IsEnabled = true;
+                btn_DeleteQuery.IsEnabled = true;
+            }
+            else
+            {
+                btn_LoadQuery.IsEnabled = false;
+                btn_EditQuery.IsEnabled = false;
+                btn_DeleteQuery.IsEnabled = false;
+            }
+        }
+
+        private void btn_LoadQuery_Click(object sender, RoutedEventArgs e)
+        {
+            string? selected = Utils.GetComboBoxSelection(cbb_ExistingQueries, false);
+            if (string.IsNullOrWhiteSpace(selected))
+            {
+                MainWindow.ShowToast(ASILang.Get("NoFilterSelected"), BackgroundColor.WARNING);
+                return;
+            }
+            if (SearchBuilder._queries != null && SearchBuilder._queries.Queries != null && SearchBuilder._queries.Queries.ContainsKey(selected) && SearchBuilder._queries.Queries[selected] != null)
+            {
+                SearchBuilder._query = SearchBuilder._queries.Queries[selected];
+                ApplyFiltersAndSort();
+                MainWindow.ShowToast(ASILang.Get("FilterLoaded"), BackgroundColor.SUCCESS);
+            }
+            else
+            {
+                MainWindow.ShowToast(ASILang.Get("FilterNotFound"), BackgroundColor.WARNING);
+                return;
+            }
+        }
+
+        public void UpdateSavedSearchQueriesDropdown()
+        {
+            cbb_ExistingQueries.Items.Clear();
+            if (SearchBuilder._queries != null && SearchBuilder._queries.Queries != null && SearchBuilder._queries.Queries.Count > 0)
+                foreach (var q in SearchBuilder._queries.Queries)
+                    cbb_ExistingQueries.Items.Add(q.Key);
+        }
+
+        private void btn_DeleteQuery_Click(object sender, RoutedEventArgs e)
+        {
+            string? selected = Utils.GetComboBoxSelection(cbb_ExistingQueries, false);
+            if (!string.IsNullOrWhiteSpace(selected) && SearchBuilder._queries != null && SearchBuilder._queries.Queries != null && SearchBuilder._queries.Queries.ContainsKey(selected))
+            {
+                SearchBuilder._queries.Queries.Remove(selected);
+                UpdateSavedSearchQueriesDropdown();
+                if (SearchBuilder.SaveSearchQueries())
+                    MainWindow.ShowToast($"{ASILang.Get("FilterSaved")}", BackgroundColor.SUCCESS);
+                else
+                    MainWindow.ShowToast($"{ASILang.Get("SaveFilterFailed")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
+            }
+            else
+                MainWindow.ShowToast(ASILang.Get("FilterNotFound"), BackgroundColor.WARNING);
+        }
+
+        private void btn_EditQuery_Click(object sender, RoutedEventArgs e)
+        {
+            string? selected = Utils.GetComboBoxSelection(cbb_ExistingQueries, false);
+            if (!string.IsNullOrWhiteSpace(selected) && SearchBuilder._queries != null && SearchBuilder._queries.Queries != null && SearchBuilder._queries.Queries.ContainsKey(selected))
+            {
+                if (EditSearchQuery._editSearchQuery != null)
+                {
+                    EditSearchQuery._editSearchQuery.Initialize(selected, SearchBuilder._queries.Queries[selected], true);
+                    EditSearchQuery._editSearchQuery.Show();
+                    EditSearchQuery._editSearchQuery.Activate();
+                }
+                else
+                {
+                    var s = new EditSearchQuery();
+                    s.Initialize(selected, SearchBuilder._queries.Queries[selected], true);
+                    s.Show();
+                }
             }
         }
 

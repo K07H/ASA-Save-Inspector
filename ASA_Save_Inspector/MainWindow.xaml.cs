@@ -79,6 +79,7 @@ namespace ASA_Save_Inspector
             this._navBtnPlayersData = nvi_Players;
             this._navBtnTribesData = nvi_Tribes;
             this._navBtnAbout = nvi_About;
+
             MainWindow._mainWindow = this;
             Activated += MainWindow_Activated;
             App.Current.UnhandledException += Current_UnhandledException;
@@ -89,8 +90,8 @@ namespace ASA_Save_Inspector
                 this._appWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
             // Set title bar title.
-            this.Title = _appName;
-            TitleBarTextBlock.Text = _appName;
+            this.Title = $"{_appName} v{Utils.GetVersionStr()}";
+            TitleBarTextBlock.Text = $"{_appName} v{Utils.GetVersionStr()}";
 
             // Set icon.
             if (_appWindow != null)
@@ -470,8 +471,10 @@ namespace ASA_Save_Inspector
         {
             if (!File.Exists(Utils.DontCheckForUpdateFilePath()))
                 await CheckForUpdate();
-            if (!File.Exists(Utils.DontReimportPreviousDataFilePath()))
-                CheckPreviousData();
+            
+            // DEPRECATED: Checking for previous ASI data is not required anymore.
+            //if (!File.Exists(Utils.DontReimportPreviousDataFilePath()))
+            //    CheckPreviousData();
         }
 
         private KeyValuePair<string?, List<string>?> HasASIData(string dir)

@@ -68,6 +68,14 @@ namespace ASA_Save_Inspector.Pages
         public string? PythonExeFilePath { get; set; } = string.Empty;
         public bool? DarkTheme { get; set; } = true;
         public bool? DebugLogging { get; set; } = false;
+        public bool? LegacySearch { get; set; } = false;
+
+        public string? DefaultColumnsPreset_PlayerPawns { get; set; } = null;
+        public string? DefaultColumnsPreset_Dinos { get; set; } = null;
+        public string? DefaultColumnsPreset_Items { get; set; } = null;
+        public string? DefaultColumnsPreset_Structures { get; set; } = null;
+        public string? DefaultColumnsPreset_Players { get; set; } = null;
+        public string? DefaultColumnsPreset_Tribes { get; set; } = null;
     }
 
     public class MapBounds
@@ -142,6 +150,14 @@ namespace ASA_Save_Inspector.Pages
         public static SettingsPage? _page = null;
         public static bool? _darkTheme = true;
         public static bool? _debugLogging = false;
+        public static bool? _legacySearch = false;
+
+        public static string? _defaultColumnsPreset_PlayerPawns = null;
+        public static string? _defaultColumnsPreset_Dinos = null;
+        public static string? _defaultColumnsPreset_Items = null;
+        public static string? _defaultColumnsPreset_Structures = null;
+        public static string? _defaultColumnsPreset_Players = null;
+        public static string? _defaultColumnsPreset_Tribes = null;
 
         public static string? _language = ASILang.DEFAULT_LANGUAGE_CODE;
         public static string? _pythonExePath = null;
@@ -362,6 +378,13 @@ namespace ASA_Save_Inspector.Pages
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
+                    _legacySearch = jsonSettings.LegacySearch;
+                    _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
+                    _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
+                    _defaultColumnsPreset_Items = jsonSettings.DefaultColumnsPreset_Items;
+                    _defaultColumnsPreset_Structures = jsonSettings.DefaultColumnsPreset_Structures;
+                    _defaultColumnsPreset_Players = jsonSettings.DefaultColumnsPreset_Players;
+                    _defaultColumnsPreset_Tribes = jsonSettings.DefaultColumnsPreset_Tribes;
                     SettingsChanged();
                 }
             }
@@ -390,6 +413,13 @@ namespace ASA_Save_Inspector.Pages
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
+                    _legacySearch = jsonSettings.LegacySearch;
+                    _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
+                    _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
+                    _defaultColumnsPreset_Items = jsonSettings.DefaultColumnsPreset_Items;
+                    _defaultColumnsPreset_Structures = jsonSettings.DefaultColumnsPreset_Structures;
+                    _defaultColumnsPreset_Players = jsonSettings.DefaultColumnsPreset_Players;
+                    _defaultColumnsPreset_Tribes = jsonSettings.DefaultColumnsPreset_Tribes;
                     if (_page != null)
                         _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                         {
@@ -413,7 +443,14 @@ namespace ASA_Save_Inspector.Pages
                     LanguageCode = ASILang.GetLanguageCode(_language),
                     PythonExeFilePath = _pythonExePath,
                     DarkTheme = _darkTheme,
-                    DebugLogging = _debugLogging
+                    DebugLogging = _debugLogging,
+                    LegacySearch = _legacySearch,
+                    DefaultColumnsPreset_PlayerPawns = _defaultColumnsPreset_PlayerPawns,
+                    DefaultColumnsPreset_Dinos = _defaultColumnsPreset_Dinos,
+                    DefaultColumnsPreset_Items = _defaultColumnsPreset_Items,
+                    DefaultColumnsPreset_Structures = _defaultColumnsPreset_Structures,
+                    DefaultColumnsPreset_Players = _defaultColumnsPreset_Players,
+                    DefaultColumnsPreset_Tribes = _defaultColumnsPreset_Tribes
                 };
                 string jsonString = JsonSerializer.Serialize<JsonSettings>(settings, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(Utils.SettingsFilePath(), jsonString, Encoding.UTF8);
@@ -891,13 +928,13 @@ namespace ASA_Save_Inspector.Pages
                                 while ((line = sr.ReadLine()) != null)
                                 {
                                     if (line == objBegin)
-                                        currentObj = "{\r\n";
+                                        currentObj = "{" + Environment.NewLine;
                                     else if (line.StartsWith(objEnd))
                                     {
                                         if (currentObj.Length > 0)
                                             try
                                             {
-                                                T? obj = JsonSerializer.Deserialize<T>(currentObj + "\r\n}");
+                                                T? obj = JsonSerializer.Deserialize<T>(currentObj + Environment.NewLine + "}");
                                                 if (obj != null)
                                                     result.Add(obj);
                                             }
@@ -1020,7 +1057,7 @@ namespace ASA_Save_Inspector.Pages
             int ret = DeleteJsonExportProfile(_selectedJsonExportProfile);
             if (ret == -1)
             {
-                tb_JsonDataLoaded.Text = ASILang.Get("RemoveJsonDataFailed_Details");
+                tb_JsonDataLoaded.Text = $"{ASILang.Get("RemoveJsonDataFailed_Details")} {ASILang.Get("SeeLogsForDetails")}";
                 tb_JsonDataLoaded.Foreground = _errorColor;
                 tb_JsonDataLoaded.Visibility = Visibility.Visible;
                 return;
@@ -2112,7 +2149,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (_deserializationHasErrors)
             {
-                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonData_PartiallyLoaded");
+                tb_JsonDataLoaded.Text = $"{ASILang.Get("LoadJsonData_PartiallyLoaded")} {ASILang.Get("SeeLogsForDetails")}";
                 tb_JsonDataLoaded.Foreground = _warningColor;
             }
             else

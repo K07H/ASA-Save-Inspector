@@ -259,21 +259,42 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class BondedDinoData
+    public partial class BondedDinoData : IComparable, IComparable<BondedDinoData>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(BondedDinoData? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"dino_class={(dino_class ?? string.Empty)} dino_name={(dino_name ?? string.Empty)} id1={(id1 != null && id1.HasValue ? id1.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} id2={(id2 != null && id2.HasValue ? id2.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
     }
 
-    public partial class SaddleStructure
+    public partial class FoliageGenerationInfo : IComparable, IComparable<FoliageGenerationInfo>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(FoliageGenerationInfo? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
+        public override string ToString() => properties != null && properties.Count > 0 ? properties.ToString() : string.Empty;
+    }
+
+    public partial class SaddleStructure : IComparable, IComparable<SaddleStructure>
+    {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(SaddleStructure? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"bone_name={(bone_name ?? string.Empty)} location={(location != null ? location.ToString() : string.Empty)} my_structure={(my_structure ?? string.Empty)} rotation={(rotation != null ? rotation.ToString() : string.Empty)}";
     }
 
-    public partial class Dino : INotifyPropertyChanged
+    public partial class Dino : INotifyPropertyChanged, IComparable, IComparable<Dino>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Dino? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         private int[]? _baseStats = null;
         private int[]? _mutatedStats = null;

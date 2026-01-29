@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="ASA_Save_Inspector.EditSearchQuery"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ASA_Save_Inspector"
+    xmlns:asi="using:ASA_Save_Inspector"
+    xmlns:styling="using:ASA_Save_Inspector.Styling"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winuiex="using:WinUIEx"
+    mc:Ignorable="d"
+    Title="ASA Save Inspector Edit Filter"
+    SizeChanged="page_EditSearchQuery_SizeChanged"
+    Closed="page_EditSearchQuery_Closed"
+    x:Name="page_EditSearchQuery">
+
+    <Window.SystemBackdrop>
+        <local:BlurredBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Background="{StaticResource MyAcrylicBrushDarker}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Popup VerticalOffset="48" HorizontalOffset="0" x:Name="PopupNotification">
+            <Popup.Resources>
+                <Storyboard x:Name="FadeInStoryboard">
+                    <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="b_popupNotification">
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="0" />
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="1" />
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+                <Storyboard x:Name="FadeOutStoryboard">
+                    <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="b_popupNotification">
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="1" />
+                        <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="0" />
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+            </Popup.Resources>
+            <Border x:Name="b_popupNotification" Opacity="0" Width="{Binding ElementName=page_SearchBuilder, Path=WindowWidth, Mode=TwoWay}">
+                <Border x:Name="b_innerPopupNotification" Background="DarkGreen"
+                        MinWidth="100"
+                        Height="Auto"
+                        Padding="10"
+                        Margin="10"
+                        BorderBrush="Transparent"
+                        BorderThickness="2"
+                        CornerRadius="4"
+                        HorizontalAlignment="Right">
+                    <TextBlock x:Name="tb_popupNotificationMsg" Text="Message" TextWrapping="WrapWholeWords" FontSize="16" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Border>
+            </Border>
+        </Popup>
+
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
+                <ColumnDefinition x:Name="IconColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="TitleColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="LeftDragColumn" Width="*"/>
+                <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/>
+            </Grid.ColumnDefinitions>
+            <Image x:Name="TitleBarIcon" Source="ms-appx:///Assets/ASILogo.png" Grid.Column="1" Width="44" Height="44" Margin="8,0,4,0"/>
+            <TextBlock x:Name="TitleBarTextBlock" Text="ASA Save Inspector Edit Filter" Style="{StaticResource CaptionTextBlockStyle}" FontSize="14" Grid.Column="2" VerticalAlignment="Center">
+            </TextBlock>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <StackPanel x:Name="sp_Query" Orientation="Vertical" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+            <Button x:Name="btn_SaveSearchQuery" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" Click="btn_SaveSearchQuery_Click" FontSize="18"/>
+            <Button x:Name="btn_CancelSaveSearchQuery" Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_CancelSaveSearchQuery_Click" FontSize="18" Margin="10,0,0,0" />
+        </StackPanel>
+    </Grid>
+</Window>

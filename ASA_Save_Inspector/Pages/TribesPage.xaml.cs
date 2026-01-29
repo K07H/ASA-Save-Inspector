@@ -344,7 +344,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -360,7 +360,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 columnsOrderJson = null;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             if (string.IsNullOrWhiteSpace(columnsOrderJson))
@@ -373,7 +373,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsOrder. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             return null;
@@ -1686,7 +1686,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1705,7 +1705,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveFiltersPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1826,7 +1826,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentFilters_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1923,7 +1923,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -1942,7 +1942,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2062,7 +2062,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentColumns_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2153,7 +2153,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in LoadGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2167,7 +2167,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in SaveGroupPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2251,7 +2251,7 @@ namespace ASA_Save_Inspector.Pages
             }
             catch (Exception ex)
             {
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.ERROR);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 Logger.Instance.Log($"Exception caught in btn_SaveCurrentGroup_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
@@ -2362,7 +2362,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetID_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2385,7 +2385,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2418,7 +2418,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetAllJson_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }
@@ -2441,7 +2441,7 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 clipboardStr = string.Empty;
-                MainWindow.ShowToast(ASILang.Get("ErrorHappened"), BackgroundColor.WARNING);
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.WARNING);
                 Logger.Instance.Log($"Exception caught in mfi_contextMenuGetLogs_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
                 Utils.AddToClipboard(clipboardStr, false);
             }

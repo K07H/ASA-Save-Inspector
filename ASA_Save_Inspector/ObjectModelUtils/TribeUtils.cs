@@ -65,19 +65,27 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class TribeMember
+    public partial class TribeMember : IComparable, IComparable<TribeMember>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(TribeMember? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString()
         {
             return $"ID={(PlayerDataID != null && PlayerDataID.HasValue ? PlayerDataID.Value.ToString(CultureInfo.InvariantCulture) : "0")} Name={(PlayerCharacterName != null ? PlayerCharacterName : string.Empty)} IsActive={(IsActive != null && IsActive.HasValue && IsActive.Value ? "True" : "False")}";
         }
     }
 
-    public partial class Tribe : INotifyPropertyChanged
+    public partial class Tribe : INotifyPropertyChanged, IComparable, IComparable<Tribe>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Tribe? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         private string? _tribeLogsFormatted = null;
         public string? TribeLogsFormatted()

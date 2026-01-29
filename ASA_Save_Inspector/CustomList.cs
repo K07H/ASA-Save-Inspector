@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace ASA_Save_Inspector
 {
-    public class CustomList<T> : IList<T>, IComparable<T>
+    public class CustomList<T> : IList<T>, IComparable, IComparable<T>
     {
         public List<T> _list = new List<T>();
 
@@ -148,7 +148,12 @@ namespace ASA_Save_Inspector
 
         public int CompareTo(T? other)
         {
-            return this.ToString().CompareTo(other?.ToString());
+            return this.ToString().CompareTo(other != null ? other.ToString() : string.Empty);
+        }
+
+        public int CompareTo(object? obj)
+        {
+            return this.ToString().CompareTo((obj != null ? obj.ToString() : string.Empty));
         }
     }
 }

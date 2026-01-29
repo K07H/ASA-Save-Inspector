@@ -1,9 +1,4 @@
-﻿using ASA_Save_Inspector.ObjectModel;
-using ASA_Save_Inspector.Pages;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -12,7 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using ASA_Save_Inspector.ObjectModel;
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace ASA_Save_Inspector
@@ -27,7 +29,6 @@ namespace ASA_Save_Inspector
 #endif
 
         public static readonly string ASILatestVersionUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest";
-        //public static readonly string ASIArchiveUrl = "https://github.com/K07H/ASA-Save-Inspector/releases/latest/download/ASA_Save_Inspector_vVERSIONSTR_WinX64.zip";
         public static readonly string ASIVersionFileUrl = "https://raw.githubusercontent.com/K07H/ASA-Save-Inspector/refs/heads/main/Version.txt";
         public static readonly string ArkParseArchiveUrl = "https://github.com/K07H/ark-save-parser/archive/refs/heads/main.zip";
         public static readonly string ArkParseVersionFileUrl = "https://github.com/K07H/ark-save-parser/raw/refs/heads/main/ASI_VERSION.txt";
@@ -71,9 +72,11 @@ namespace ASA_Save_Inspector
             { "tribe_columns_order.json", "TribeColumnsOrder" }
         };
 
-        public static string GetDataDir() => Path.Combine(GetBaseDir(), "data");
+        public static string GetLocalAppDataDir() => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        public static string GetASIAppDataDir() => Path.Combine(GetLocalAppDataDir(), "Programs", "ASA Save Inspector");
+        public static string GetDataDir() => Path.Combine(GetLocalAppDataDir(), "Programs", "ASA Save Inspector"); //Path.Combine(GetBaseDir(), "data");
         public static string GetAssetsDir() => Path.Combine(GetBaseDir(), "Assets");
-        public static string GetLangDir() => Path.Combine(GetAssetsDir(), "lang");
+        public static string GetLangDir() => Path.Combine(GetDataDir(), "Languages");
         public static string PythonVenvFolder() => Path.Combine(GetDataDir(), "python_venv");
         public static string ArkParseFolder() => Path.Combine(GetDataDir(), "ark-save-parser-main");
         public static string JsonExportsFolder() => Path.Combine(GetDataDir(), "json_exports");
@@ -87,6 +90,10 @@ namespace ASA_Save_Inspector
         public static string MapsInfoFilePath() => Path.Combine(GetDataDir(), "maps_info.json");
         public static string SettingsFilePath() => Path.Combine(GetDataDir(), "settings.json");
         public static string CustomBlueprintsFilePath() => Path.Combine(GetDataDir(), "custom_blueprints.json");
+        public static string PlayerPawnSearchQueriesFilePath() => Path.Combine(GetDataDir(), "pawn_search_queries.json");
+        public static string DinoSearchQueriesFilePath() => Path.Combine(GetDataDir(), "dino_search_queries.json");
+        public static string StructureSearchQueriesFilePath() => Path.Combine(GetDataDir(), "structure_search_queries.json");
+        public static string ItemSearchQueriesFilePath() => Path.Combine(GetDataDir(), "item_search_queries.json");
         public static string DinoFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "dino_filters.json");
         public static string DinoGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_groups.json");
         public static string DinoColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_columns.json");
@@ -122,6 +129,8 @@ namespace ASA_Save_Inspector
         public static string AsiExportFastOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_fast.py");
         public static string AsiExportFastFilePath() => Path.Combine(GetDataDir(), "asi_export_fast.py");
         public static string PythonVenvSetupFilePath() => Path.Combine(GetDataDir(), "python_venv_setup.bat");
+        public static string PythonVenvTestScriptPath() => Path.Combine(GetDataDir(), "python_venv_test.py");
+        public static string PythonVenvTestBatchPath() => Path.Combine(GetDataDir(), "python_venv_test.bat");
         public static string ArkParseSetupFilePath() => Path.Combine(GetDataDir(), "arkparse_setup.bat");
         public static string ArkParseRunnerFilePath() => Path.Combine(GetDataDir(), "arkparse_runner.bat");
 
@@ -360,6 +369,8 @@ namespace ASA_Save_Inspector
                 }
             },
         };
+
+        public static JsonSerializerOptions IndentedJson = new JsonSerializerOptions { WriteIndented = true };
 
         private static Regex _unicodeEscapedChars = new Regex(@"\\u(?<Value>[a-zA-Z0-9]{4})", RegexOptions.Compiled);
 
@@ -1054,6 +1065,429 @@ namespace ASA_Save_Inspector
                 return null;
 
             return (from dir in foundDirs orderby dir.Value descending select dir.Key);
+        }
+
+        public static bool IsDarkTheme() => (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
+
+        public static readonly Brush _greenNotificationBackground = new SolidColorBrush(Colors.DarkGreen);
+        public static readonly Brush _orangeNotificationBackground = new SolidColorBrush(Colors.DarkOrange);
+        public static readonly Brush _redNotificationBackground = new SolidColorBrush(Colors.DarkRed);
+        public static readonly Brush _grayNotificationBackground = new SolidColorBrush(Colors.DarkGray);
+        public static readonly Brush _darkBlueForeground = new SolidColorBrush(Colors.Blue);
+        public static readonly Brush _lightBlueForeground = new SolidColorBrush(Colors.CornflowerBlue);
+        public static readonly Brush _darkGreenForeground = new SolidColorBrush(Colors.DarkGreen);
+        public static readonly Brush _lightGreenForeground = new SolidColorBrush(Colors.Green);
+        public static Brush BlueForeground() => Utils.IsDarkTheme() ? _lightBlueForeground : _darkBlueForeground;
+        public static Brush GreenForeground() => Utils.IsDarkTheme() ? _lightGreenForeground : _darkGreenForeground;
+
+        public static string GetSearchOperatorAsString(SearchOperator op)
+        {
+            if (op == SearchOperator.NOT_MATCHING)
+                return ASILang.Get("FilterType_NotMatching");
+            else if (op == SearchOperator.EQUALS)
+                return ASILang.Get("FilterType_Equals");
+            else if (op == SearchOperator.NOT_EQUALS)
+                return ASILang.Get("FilterType_NotEquals");
+            else if (op == SearchOperator.STARTING_WITH)
+                return ASILang.Get("FilterType_StartingWith");
+            else if (op == SearchOperator.ENDING_WITH)
+                return ASILang.Get("FilterType_EndingWith");
+            else if (op == SearchOperator.CONTAINING)
+                return ASILang.Get("FilterType_Containing");
+            else if (op == SearchOperator.NOT_CONTAINING)
+                return ASILang.Get("FilterType_NotContaining");
+            else if (op == SearchOperator.LOWER_THAN)
+                return ASILang.Get("FilterType_LowerThan");
+            else if (op == SearchOperator.GREATER_THAN)
+                return ASILang.Get("FilterType_GreaterThan");
+            else
+                return ASILang.Get("FilterType_Matching");
+        }
+
+        public static SearchOperator GetSearchOperatorFromString(string? str)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                return SearchOperator.MATCHING;
+
+            if (string.Compare(str, ASILang.Get("FilterType_NotMatching"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.NOT_MATCHING;
+            else if (string.Compare(str, ASILang.Get("FilterType_Equals"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.EQUALS;
+            else if (string.Compare(str, ASILang.Get("FilterType_NotEquals"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.NOT_EQUALS;
+            else if (string.Compare(str, ASILang.Get("FilterType_StartingWith"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.STARTING_WITH;
+            else if (string.Compare(str, ASILang.Get("FilterType_EndingWith"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.ENDING_WITH;
+            else if (string.Compare(str, ASILang.Get("FilterType_Containing"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.CONTAINING;
+            else if (string.Compare(str, ASILang.Get("FilterType_NotContaining"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.NOT_CONTAINING;
+            else if (string.Compare(str, ASILang.Get("FilterType_LowerThan"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.LOWER_THAN;
+            else if (string.Compare(str, ASILang.Get("FilterType_GreaterThan"), StringComparison.InvariantCulture) == 0)
+                return SearchOperator.GREATER_THAN;
+            else
+                return SearchOperator.MATCHING;
+        }
+
+        private static SearchOperator GetOperatorFromSelectionChanged(SelectionChangedEventArgs e)
+        {
+            if (e != null && e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    return Utils.GetSearchOperatorFromString(selected);
+            }
+            return SearchOperator.MATCHING;
+        }
+
+        private static LogicalOperator GetLogicalOperatorFromSelectionChanged(SelectionChangedEventArgs e)
+        {
+            if (e != null && e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                {
+                    if (string.Compare(selected, ASILang.Get("OperatorOR"), StringComparison.InvariantCulture) == 0)
+                        return LogicalOperator.OR;
+                    else
+                        return LogicalOperator.AND;
+                }
+            }
+            return LogicalOperator.AND;
+        }
+
+        public static void FormatQuery(ref StackPanel mainSp, SearchQuery? query, bool isEditable)
+        {
+            mainSp.Children.Clear();
+
+            if (query == null || query.Parts == null || query.Parts.Count <= 0)
+                return;
+
+            int currentGroup = 0;
+
+            TextBlock? tb0 = new TextBlock()
+            {
+                FontSize = 14.0d,
+                TextWrapping = TextWrapping.Wrap,
+                Text = ASILang.Get("FilterBy"),
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+            };
+            mainSp.Children.Add(tb0);
+            for (int i = 0; i < query.Parts.Count; i++)
+                if (query.Parts[i] != null)
+                {
+                    StackPanel sp = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(5.0d, 5.0d, 0.0d, 0.0d) };
+                    StackPanel spPad = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left };
+                    int j = 0;
+                    while (j < currentGroup)
+                    {
+                        TextBlock padBlock = new TextBlock()
+                        {
+                            FontSize = 14.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = "",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            TextAlignment = TextAlignment.Right,
+                            Width = 40.0d
+                        };
+                        spPad.Children.Add(padBlock);
+                        ++j;
+                    }
+                    while (j < query.Parts[i].Group)
+                    {
+                        TextBlock padBlockGroup = new TextBlock()
+                        {
+                            FontSize = 14.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = "(",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            TextAlignment = TextAlignment.Right,
+                            Width = 40.0d,
+                            Margin = new Thickness(0.0d, 6.0d, 0.0d, 0.0d)
+                        };
+                        spPad.Children.Add(padBlockGroup);
+                        ++j;
+                        ++currentGroup;
+                    }
+                    TextBlock tb1 = new TextBlock()
+                    {
+                        FontSize = 14.0d,
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = query.Parts[i].PropertyCleanName,
+                        Foreground = Utils.GreenForeground(),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                    };
+
+                    ComboBox? cbb2 = null;
+                    TextBlock? tb2 = null;
+                    if (isEditable)
+                    {
+                        cbb2 = new ComboBox()
+                        {
+                            FontSize = 14.0d,
+                            Foreground = Utils.BlueForeground(),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
+                            Tag = i
+                        };
+                        cbb2.Items.Add(ASILang.Get("FilterType_Matching"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_NotMatching"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_Equals"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_NotEquals"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_StartingWith"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_EndingWith"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_Containing"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_NotContaining"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_LowerThan"));
+                        cbb2.Items.Add(ASILang.Get("FilterType_GreaterThan"));
+                        if (query.Parts[i].Operator == SearchOperator.NOT_MATCHING)
+                            cbb2.SelectedIndex = 1;
+                        else if (query.Parts[i].Operator == SearchOperator.EQUALS)
+                            cbb2.SelectedIndex = 2;
+                        else if (query.Parts[i].Operator == SearchOperator.NOT_EQUALS)
+                            cbb2.SelectedIndex = 3;
+                        else if (query.Parts[i].Operator == SearchOperator.STARTING_WITH)
+                            cbb2.SelectedIndex = 4;
+                        else if (query.Parts[i].Operator == SearchOperator.ENDING_WITH)
+                            cbb2.SelectedIndex = 5;
+                        else if (query.Parts[i].Operator == SearchOperator.CONTAINING)
+                            cbb2.SelectedIndex = 6;
+                        else if (query.Parts[i].Operator == SearchOperator.NOT_CONTAINING)
+                            cbb2.SelectedIndex = 7;
+                        else if (query.Parts[i].Operator == SearchOperator.LOWER_THAN)
+                            cbb2.SelectedIndex = 8;
+                        else if (query.Parts[i].Operator == SearchOperator.GREATER_THAN)
+                            cbb2.SelectedIndex = 9;
+                        else // if (query.Parts[i].Operator == SearchOperator.MATCHING)
+                            cbb2.SelectedIndex = 0;
+                        cbb2.SelectionChanged += (o, e) =>
+                        {
+                            ComboBox? cbb = o as ComboBox;
+                            if (cbb != null)
+                            {
+                                int partId = (int)cbb.Tag;
+                                SearchOperator newSearchOperator = GetOperatorFromSelectionChanged(e);
+                                if (EditSearchQuery._editSearchQuery != null)
+                                    EditSearchQuery._editSearchQuery.ModifyQuerySearchOperator(partId, newSearchOperator);
+                            }
+                        };
+                    }
+                    else
+                    {
+                        tb2 = new TextBlock()
+                        {
+                            FontSize = 14.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = Utils.GetSearchOperatorAsString(query.Parts[i].Operator),
+                            Foreground = Utils.BlueForeground(),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                        };
+                    }
+
+                    TextBox? tb3_a = null;
+                    TextBlock? tb3_b = null;
+                    if (isEditable)
+                    {
+                        tb3_a = new TextBox()
+                        {
+                            FontSize = 14.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = query.Parts[i].Value ?? string.Empty,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
+                            IsReadOnly = false,
+                            AcceptsReturn = false,
+                            Tag = i
+                        };
+                        tb3_a.TextChanged += (o, e) =>
+                        {
+                            TextBox? tb = o as TextBox;
+                            if (tb != null)
+                            {
+                                int partId = (int)tb.Tag;
+                                string newValue = tb.Text;
+                                if (EditSearchQuery._editSearchQuery != null)
+                                    EditSearchQuery._editSearchQuery.ModifyQueryValue(partId, newValue);
+                            }
+                        };
+                    }
+                    else
+                    {
+                        tb3_b = new TextBlock()
+                        {
+                            FontSize = 14.0d,
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = query.Parts[i].Value ?? string.Empty,
+                            Foreground = Utils.GreenForeground(),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                        };
+                    }
+
+                    TextBlock? tb4 = null;
+                    TextBlock? tb5 = null;
+                    ComboBox? cbb5 = null;
+                    if (i + 1 < query.Parts.Count)
+                    {
+                        if (currentGroup > query.Parts[i + 1].Group)
+                        {
+                            tb4 = new TextBlock()
+                            {
+                                FontSize = 14.0d,
+                                TextWrapping = TextWrapping.Wrap,
+                                Text = "",
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                            };
+                            string txt = string.Empty;
+                            while (currentGroup > query.Parts[i + 1].Group)
+                            {
+                                txt += ") ";
+                                --currentGroup;
+                            }
+                            tb4.Text = txt;
+                        }
+                        if (isEditable)
+                        {
+                            cbb5 = new ComboBox()
+                            {
+                                FontSize = 14.0d,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
+                                Tag = i + 1
+                            };
+                            cbb5.Items.Add(ASILang.Get("OperatorAND"));
+                            cbb5.Items.Add(ASILang.Get("OperatorOR"));
+                            if (query.Parts[i + 1].LogicalOperator == LogicalOperator.OR)
+                                cbb5.SelectedIndex = 1;
+                            else
+                                cbb5.SelectedIndex = 0;
+                            cbb5.SelectionChanged += (o, e) =>
+                            {
+                                ComboBox? cbb = o as ComboBox;
+                                if (cbb != null)
+                                {
+                                    int partId = (int)cbb.Tag;
+                                    LogicalOperator newLogicalOperator = GetLogicalOperatorFromSelectionChanged(e);
+                                    if (EditSearchQuery._editSearchQuery != null)
+                                        EditSearchQuery._editSearchQuery.ModifyQueryLogicalOperator(partId, newLogicalOperator);
+                                }
+                            };
+                        }
+                        else
+                        {
+                            tb5 = new TextBlock()
+                            {
+                                FontSize = 14.0d,
+                                TextWrapping = TextWrapping.Wrap,
+                                Text = query.Parts[i + 1].LogicalOperator == LogicalOperator.OR ? ASILang.Get("OperatorOR") : ASILang.Get("OperatorAND"),
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                            };
+                        }
+                    }
+                    else
+                    {
+                        if (currentGroup > 0)
+                        {
+                            tb4 = new TextBlock()
+                            {
+                                FontSize = 14.0d,
+                                TextWrapping = TextWrapping.Wrap,
+                                Text = "",
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d)
+                            };
+                            string txt = string.Empty;
+                            while (currentGroup > 0)
+                            {
+                                txt += ") ";
+                                --currentGroup;
+                            }
+                            tb4.Text = txt;
+                        }
+                    }
+                    if (spPad != null && spPad.Children.Count > 0)
+                        sp.Children.Add(spPad);
+                    sp.Children.Add(tb1);
+                    if (isEditable)
+                        sp.Children.Add(cbb2);
+                    else
+                        sp.Children.Add(tb2);
+                    if (isEditable)
+                        sp.Children.Add(tb3_a);
+                    else
+                        sp.Children.Add(tb3_b);
+                    if (tb4 != null)
+                        sp.Children.Add(tb4);
+                    if (isEditable)
+                    {
+                        if (cbb5 != null)
+                            sp.Children.Add(cbb5);
+                    }
+                    else
+                    {
+                        if (tb5 != null)
+                            sp.Children.Add(tb5);
+                    }
+                    mainSp.Children.Add(sp);
+                }
+        }
+
+        public static void LogASIDataFolder()
+        {
+            string dataDirPath = GetDataDir();
+            if (!Directory.Exists(dataDirPath))
+            {
+                Logger.Instance.Log($"{ASILang.Get("CannotFindASIDataFolder")} Path=[{dataDirPath ?? "NULL"}]", Logger.LogLevel.ERROR);
+                return;
+            }
+            string[]? files = null;
+            try { files = Directory.GetFiles(dataDirPath, "*.*", SearchOption.AllDirectories); }
+            catch (Exception ex)
+            {
+                files = null;
+                Logger.Instance.Log($"{ASILang.Get("ListingASIDataFolderError")} Exception=[{ex}]");
+            }
+            if (files == null || files.Length <= 0)
+                return;
+            Logger.Instance.Log($"{ASILang.Get("ListingASIDataFolder")}{Environment.NewLine}{string.Join(Environment.NewLine, files)}", Logger.LogLevel.INFO);
+        }
+
+        public static string? GetComboBoxSelection(object cbb, bool asComboBoxItem)
+        {
+            if (cbb == null)
+                return null;
+            ComboBox? cb = cbb as ComboBox;
+            if (cb == null)
+                return null;
+            if (!asComboBoxItem)
+            {
+                if (cb.SelectedItem == null)
+                    return null;
+                return cb.SelectedItem.ToString();
+            }
+            ComboBoxItem? cbi = cb.SelectedItem as ComboBoxItem;
+            if (cbi == null)
+                return null;
+            return cbi.Content.ToString();
         }
 
         public static void LockAllPages(bool doLock)

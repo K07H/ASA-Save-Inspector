@@ -134,18 +134,25 @@
             </Grid.RowDefinitions>
             <StackPanel x:Name="sp_EditFilters" Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Filters'), Mode=OneWay}"/>:</TextBlock>
+                    <TextBlock x:Name="tb_Filters" FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Filters'), Mode=OneWay}"/>:</TextBlock>
                     <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddFilter'), Mode=OneWay}" Height="32" Click="btn_AddFilter_Click"/>
                     <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditFilters'), Mode=OneWay}" Height="32" Click="btn_EditFilters_Click"/>
                     <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_FiltersPresets_Click"/>
+                    <TextBlock x:Name="tb_CreateFilter" FontSize="14" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('CreateFilter'), Mode=OneWay}"/>
+                    <Button x:Name="btn_CreateFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Create'), Mode=OneWay}" Height="32" Click="btn_CreateFilter_Click"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_EditFiltersGroup" Grid.Row="1" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('FiltersGroups'), Mode=OneWay}"/>:</TextBlock>
+                    <TextBlock x:Name="tb_FiltersGroup" FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('FiltersGroups'), Mode=OneWay}"/>:</TextBlock>
                     <Button x:Name="btn_AddFiltersGroup" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddToGroup'), Mode=OneWay}" Height="32" Click="btn_AddFiltersGroup_Click"/>
                     <Button x:Name="btn_EditFiltersGroup" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditGroup'), Mode=OneWay}" Height="32" Click="btn_EditFiltersGroup_Click"/>
                     <Button x:Name="btn_FiltersGroupPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_GroupPresets_Click"/>
+                    <TextBlock x:Name="tb_SavedQueries" FontSize="14" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('SavedFilters'), Mode=OneWay}"/>
+                    <ComboBox x:Name="cbb_ExistingQueries" Margin="10,0,0,0" SelectionChanged="cbb_ExistingQueries_SelectionChanged"></ComboBox>
+                    <Button x:Name="btn_LoadQuery" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_LoadQuery_Click" IsEnabled="False"/>
+                    <Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_EditQuery_Click" IsEnabled="False"/>
+                    <Button x:Name="btn_DeleteQuery" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_DeleteQuery_Click" IsEnabled="False"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_EditColumns" Grid.Row="0" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="50,0,0,0">
@@ -163,12 +170,12 @@
         </Grid>
         <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{ThemeResource ToolTipBorderThemeBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0">
             <StackPanel Orientation="Vertical">
-                <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" Margin="5,0,0,0"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,5,0,0">
-                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
-                    <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
-                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('Item'), Mode=OneWay}"/>:</TextBlock>
-                    <ComboBox x:Name="cbb_QuickFilter_Item" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Item_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Item_SelectionChanged"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Item'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Item" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Item_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Item_SelectionChanged"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -400,6 +407,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SetDefaultColumnsPreset" Content="{x:Bind asi:ASILang.Get('SetAsDefault'), Mode=OneWay}" IsEnabled="False" Click="btn_SetDefaultColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />

@@ -109,19 +109,51 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class PrimalBuffPersistentData
+    public partial class Config : IComparable, IComparable<Config>
     {
-        public override string ToString()
-        {
-            return $"ForPrimalBuffClass={(ForPrimalBuffClass ?? string.Empty)}, ForPrimalBuffClassString={(ForPrimalBuffClassString ?? string.Empty)}";
-        }
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Config? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
+        public override string ToString() => $"bIsFemale={(bIsFemale != null && bIsFemale.HasValue ? bIsFemale.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, EyebrowIndex={(EyebrowIndex != null && EyebrowIndex.HasValue ? EyebrowIndex.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, HeadHairIndex={(HeadHairIndex != null && HeadHairIndex.HasValue ? HeadHairIndex.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, PercentageOfFacialHairGrowth={(PercentageOfFacialHairGrowth != null && PercentageOfFacialHairGrowth.HasValue ? PercentageOfFacialHairGrowth.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, PercentOfFullHeadHairGrowth={(PercentOfFullHeadHairGrowth != null && PercentOfFullHeadHairGrowth.HasValue ? PercentOfFullHeadHairGrowth.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, PlayerSpawnRegionIndex={(PlayerSpawnRegionIndex != null && PlayerSpawnRegionIndex.HasValue ? PlayerSpawnRegionIndex.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, PlayerVoiceCollectionIndex={(PlayerVoiceCollectionIndex != null && PlayerVoiceCollectionIndex.HasValue ? PlayerVoiceCollectionIndex.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, BodyColors={(BodyColors != null && BodyColors.Count > 0 ? BodyColors.ToString() : string.Empty)}, DynamicMaterialBytes={(DynamicMaterialBytes != null && DynamicMaterialBytes.Count > 0 ? DynamicMaterialBytes.ToString() : string.Empty)}, RawBoneModifier={(RawBoneModifiers != null && RawBoneModifiers.Count > 0 ? RawBoneModifiers.ToString() : string.Empty)}";
     }
 
-    public partial class Player : INotifyPropertyChanged
+    public partial class CharacterStatusComponentNumberOfLevelUpPointsApplied : IComparable, IComparable<CharacterStatusComponentNumberOfLevelUpPointsApplied>
+    {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(CharacterStatusComponentNumberOfLevelUpPointsApplied? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
+        public override string ToString() => $"CraftingSpeed={(CraftingSpeed != null && CraftingSpeed.HasValue ? CraftingSpeed.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Food={(Food != null && Food.HasValue ? Food.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Fortitude={(Fortitude != null && Fortitude.HasValue ? Fortitude.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Health={(Health != null && Health.HasValue ? Health.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, MeleeDamage={(MeleeDamage != null && MeleeDamage.HasValue ? MeleeDamage.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, MovementSpeed={(MovementSpeed != null && MovementSpeed.HasValue ? MovementSpeed.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Oxygen={(Oxygen != null && Oxygen.HasValue ? Oxygen.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Stamina={(Stamina != null && Stamina.HasValue ? Stamina.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Temperature={(Temperature != null && Temperature.HasValue ? Temperature.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Torpidity={(Torpidity != null && Torpidity.HasValue ? Torpidity.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Water={(Water != null && Water.HasValue ? Water.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, Weight={(Weight != null && Weight.HasValue ? Weight.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
+    }
+
+    public partial class Stats
+    {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Stats? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
+        public override string ToString() => $"ExperiencePoints={(CharacterStatusComponent_ExperiencePoints != null && CharacterStatusComponent_ExperiencePoints.HasValue ? CharacterStatusComponent_ExperiencePoints.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, ExtraCharacterLevel={(CharacterStatusComponent_ExtraCharacterLevel != null && CharacterStatusComponent_ExtraCharacterLevel.HasValue ? CharacterStatusComponent_ExtraCharacterLevel.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}, NumberOfLevelUpPointsApplied={(CharacterStatusComponent_NumberOfLevelUpPointsApplied != null ? CharacterStatusComponent_NumberOfLevelUpPointsApplied.ToString() : string.Empty)}, EmoteUnlocks={(EmoteUnlocks != null && EmoteUnlocks.Count > 0 ? EmoteUnlocks.ToString() : string.Empty)}, PerMapExplorerNoteUnlocks={(PerMapExplorerNoteUnlocks != null && PerMapExplorerNoteUnlocks.Count > 0 ? PerMapExplorerNoteUnlocks.ToString() : string.Empty)}, EngramBlueprints{(PlayerState_EngramBlueprints != null && PlayerState_EngramBlueprints.Count > 0 ? PlayerState_EngramBlueprints.ToString() : string.Empty)}, TotalEngramPoints={(PlayerState_TotalEngramPoints != null && PlayerState_TotalEngramPoints.HasValue ? PlayerState_TotalEngramPoints.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
+    }
+
+    public partial class PrimalBuffPersistentData : IComparable, IComparable<PrimalBuffPersistentData>
+    {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(PrimalBuffPersistentData? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
+        public override string ToString() => $"ForPrimalBuffClass={(ForPrimalBuffClass ?? string.Empty)}, ForPrimalBuffClassString={(ForPrimalBuffClassString ?? string.Empty)}";
+    }
+
+    public partial class Player : INotifyPropertyChanged, IComparable, IComparable<Player>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Player? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         public string? Location
         {

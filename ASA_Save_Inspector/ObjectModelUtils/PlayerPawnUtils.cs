@@ -84,16 +84,24 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class PlatformProfileID
+    public partial class PlatformProfileID : IComparable, IComparable<PlatformProfileID>
     {
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(PlatformProfileID? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
+
         public override string ToString() => $"value={(value ?? string.Empty)} value_type={(value_type ?? string.Empty)} unknown={(unknown != null && unknown.HasValue ? unknown.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
     }
 
-    public partial class PlayerPawn : INotifyPropertyChanged
+    public partial class PlayerPawn : INotifyPropertyChanged, IComparable, IComparable<PlayerPawn>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(PlayerPawn? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         public string? ShortName
         {

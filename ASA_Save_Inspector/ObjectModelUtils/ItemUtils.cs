@@ -124,11 +124,15 @@ namespace ASA_Save_Inspector.ObjectModelUtils
 
 namespace ASA_Save_Inspector.ObjectModel
 {
-    public partial class Item : INotifyPropertyChanged
+    public partial class Item : INotifyPropertyChanged, IComparable, IComparable<Item>
     {
 #pragma warning disable CS0067
         public event PropertyChangedEventHandler? PropertyChanged;
 #pragma warning restore CS0067
+
+        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
+
+        public int CompareTo(Item? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         public string? ShortName
         {
