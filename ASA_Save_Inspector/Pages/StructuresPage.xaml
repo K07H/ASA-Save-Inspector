@@ -115,7 +115,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Structures'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Structures'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" HorizontalAlignment="Left"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
             <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>: <Run x:Name="run_MapName" Text="{x:Bind local:StructuresPage.MapName, Mode=OneWay}"/></TextBlock>
             <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:StructuresPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
@@ -170,12 +170,12 @@
         </Grid>
         <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{ThemeResource ToolTipBorderThemeBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0">
             <StackPanel Orientation="Vertical">
-                <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" Margin="5,0,0,0"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,5,0,0">
-                    <TextBlock FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
-                    <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
-                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('Structure'), Mode=OneWay}"/>:</TextBlock>
-                    <ComboBox x:Name="cbb_QuickFilter_Structure" Margin="5,0,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Structure_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Structure_SelectionChanged"/>
+                    <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
+                    <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Structure'), Mode=OneWay}"/>:</TextBlock>
+                    <ComboBox x:Name="cbb_QuickFilter_Structure" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Structure_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Structure_SelectionChanged"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -361,7 +361,7 @@
                             <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
                             <Button x:Name="btn_SaveCurrentFilters" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                             <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                             <DropDownButton.Flyout>
@@ -419,6 +419,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SetDefaultColumnsPreset" Content="{x:Bind asi:ASILang.Get('SetAsDefault'), Mode=OneWay}" IsEnabled="False" Click="btn_SetDefaultColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />

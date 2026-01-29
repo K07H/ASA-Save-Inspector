@@ -2382,7 +2382,7 @@ namespace ASA_Save_Inspector.Pages
 
             SettingsPage._defaultColumnsPreset_Dinos = _selectedColumnsPreset.Name;
             SettingsPage.SaveSettings();
-            MainWindow.ShowToast(ASILang.Get("ColumnsPresetSetAsDefault").Replace("#PRESET_NAME#", _selectedColumnsPreset.Name ?? string.Empty), BackgroundColor.WARNING);
+            MainWindow.ShowToast(ASILang.Get("ColumnsPresetSetAsDefault").Replace("#PRESET_NAME#", _selectedColumnsPreset.Name ?? string.Empty), BackgroundColor.SUCCESS);
             LoadSelectedColumnsPreset(false);
         }
 

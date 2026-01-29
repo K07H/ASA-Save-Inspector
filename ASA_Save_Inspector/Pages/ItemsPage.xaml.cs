@@ -1225,7 +1225,7 @@ namespace ASA_Save_Inspector.Pages
                     {
                         FontSize = 16.0d,
                         TextWrapping = TextWrapping.Wrap,
-                        Text = ASILang.Get("FilterBy"),
+                        Text = ASILang.Get("FilterBy").ToLowerInvariant(),
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -2144,7 +2144,15 @@ namespace ASA_Save_Inspector.Pages
             if (!File.Exists(columnsPresetsPath))
                 return;
 
-            string columnsPresetsJson = File.ReadAllText(columnsPresetsPath, Encoding.UTF8);
+
+            string? columnsPresetsJson = null;
+            try { columnsPresetsJson = File.ReadAllText(columnsPresetsPath, Encoding.UTF8); }
+            catch (Exception ex)
+            {
+                columnsPresetsJson = null;
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
             if (string.IsNullOrWhiteSpace(columnsPresetsJson))
                 return;
 
@@ -2373,7 +2381,7 @@ namespace ASA_Save_Inspector.Pages
 
             SettingsPage._defaultColumnsPreset_Items = _selectedColumnsPreset.Name;
             SettingsPage.SaveSettings();
-            MainWindow.ShowToast(ASILang.Get("ColumnsPresetSetAsDefault").Replace("#PRESET_NAME#", _selectedColumnsPreset.Name ?? string.Empty), BackgroundColor.WARNING);
+            MainWindow.ShowToast(ASILang.Get("ColumnsPresetSetAsDefault").Replace("#PRESET_NAME#", _selectedColumnsPreset.Name ?? string.Empty), BackgroundColor.SUCCESS);
             LoadSelectedColumnsPreset(false);
         }
 

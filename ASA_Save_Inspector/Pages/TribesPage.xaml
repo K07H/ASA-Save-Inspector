@@ -114,7 +114,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Tribes'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Tribes'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" HorizontalAlignment="Left"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Tribes, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
             <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>: <Run x:Name="run_MapName" Text="{x:Bind local:TribesPage.MapName, Mode=OneWay}"/></TextBlock>
             <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:TribesPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
@@ -374,7 +374,7 @@
                             <TextBox x:Name="tb_ColumnsPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_ColumnsPresetName_TextChanged"/>
                             <Button x:Name="btn_SaveCurrentColumns" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentColumns_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" Text="Existing presets:" TextWrapping="Wrap" Margin="0,30,0,0"/>
+                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
                         <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
                             <TextBlock x:Name="tb_ExistingColumnsPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
                             <DropDownButton.Flyout>
@@ -386,6 +386,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SetDefaultColumnsPreset" Content="{x:Bind asi:ASILang.Get('SetAsDefault'), Mode=OneWay}" IsEnabled="False" Click="btn_SetDefaultColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />

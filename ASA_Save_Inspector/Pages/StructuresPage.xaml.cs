@@ -54,7 +54,7 @@ namespace ASA_Save_Inspector.Pages
 
         private static List<KeyValuePair<FilterOperator, JsonFiltersPreset>> _group = new List<KeyValuePair<FilterOperator, JsonFiltersPreset>>();
 
-        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
+        private static JsonColumnsPreset _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>(StructureUtils.DefaultSelectedColumns) };
 
         private static JsonFiltersPreset _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
 
@@ -247,7 +247,18 @@ namespace ASA_Save_Inspector.Pages
             // Set default selected columns.
             if (!_setDefaultSelectedColumns)
             {
-                if (_selectedColumns != null && StructureUtils.DefaultSelectedColumns != null && StructureUtils.DefaultSelectedColumns.Count > 0)
+                bool fallbackToDefault = true;
+                if (!string.IsNullOrEmpty(SettingsPage._defaultColumnsPreset_Structures))
+                    foreach (var preset in _columnsPresets)
+                        if (preset != null && !string.IsNullOrEmpty(preset.Name) && preset.Columns != null && preset.Columns.Count > 0)
+                            if (string.Compare(SettingsPage._defaultColumnsPreset_Structures, preset.Name, StringComparison.InvariantCulture) == 0)
+                            {
+                                fallbackToDefault = false;
+                                foreach (var c in preset.Columns)
+                                    _selectedColumns.Add(c);
+                                break;
+                            }
+                if (fallbackToDefault && _selectedColumns != null && StructureUtils.DefaultSelectedColumns != null && StructureUtils.DefaultSelectedColumns.Count > 0)
                     foreach (string c in StructureUtils.DefaultSelectedColumns)
                         _selectedColumns.Add(c);
                 _setDefaultSelectedColumns = true;
@@ -320,7 +331,7 @@ namespace ASA_Save_Inspector.Pages
 
         private static void InitDefaultPresets()
         {
-            _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
+            //_defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>() };
 
             //_defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
             _defaultFiltersPreset_OilVeins = new JsonFiltersPreset() { Name = ASILang.Get("OilVeins"), Filters = new List<JsonFilter>() };
@@ -1284,7 +1295,7 @@ namespace ASA_Save_Inspector.Pages
                     {
                         FontSize = 16.0d,
                         TextWrapping = TextWrapping.Wrap,
-                        Text = ASILang.Get("FilterBy"),
+                        Text = ASILang.Get("FilterBy").ToLowerInvariant(),
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = new Thickness(0.0d, 0.0d, 5.0d, 0.0d)
@@ -2261,7 +2272,14 @@ namespace ASA_Save_Inspector.Pages
             if (!File.Exists(columnsPresetsPath))
                 return;
 
-            string columnsPresetsJson = File.ReadAllText(columnsPresetsPath, Encoding.UTF8);
+            string? columnsPresetsJson = null;
+            try { columnsPresetsJson = File.ReadAllText(columnsPresetsPath, Encoding.UTF8); }
+            catch (Exception ex)
+            {
+                columnsPresetsJson = null;
+                MainWindow.ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
+                Logger.Instance.Log($"Exception caught in LoadColumnsPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
             if (string.IsNullOrWhiteSpace(columnsPresetsJson))
                 return;
 
@@ -2304,6 +2322,7 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
+            btn_SetDefaultColumnsPreset.IsEnabled = false;
 
             if (preset == null)
                 return;
@@ -2312,6 +2331,7 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = preset.Name;
             btn_LoadColumnsPreset.IsEnabled = true;
             btn_RemoveColumnsPreset.IsEnabled = (string.Compare(preset.Name, ASILang.Get("DefaultPreset"), StringComparison.InvariantCulture) != 0);
+            btn_SetDefaultColumnsPreset.IsEnabled = true;
         }
 
         private void FillColumnsPresetsDropDown()
@@ -2345,6 +2365,7 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
             btn_LoadColumnsPreset.IsEnabled = false;
             btn_RemoveColumnsPreset.IsEnabled = false;
+            btn_SetDefaultColumnsPreset.IsEnabled = false;
 
             LoadColumnsPresets();
             FillColumnsPresetsDropDown();
@@ -2393,6 +2414,7 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
+                    btn_SetDefaultColumnsPreset.IsEnabled = false;
 
                     JsonColumnsPreset newPreset = new JsonColumnsPreset()
                     {
@@ -2417,11 +2439,12 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private void btn_LoadColumnsPreset_Click(object sender, RoutedEventArgs e)
+        private void LoadSelectedColumnsPreset(bool showToasts)
         {
             if (_selectedColumnsPreset == null || _selectedColumnsPreset.Columns == null || _selectedColumnsPreset.Columns.Count <= 0)
             {
-                MainWindow.ShowToast(ASILang.Get("ColumnsPresetIsEmpty"), BackgroundColor.WARNING);
+                if (showToasts)
+                    MainWindow.ShowToast(ASILang.Get("ColumnsPresetIsEmpty"), BackgroundColor.WARNING);
                 return;
             }
 
@@ -2429,8 +2452,11 @@ namespace ASA_Save_Inspector.Pages
             foreach (var column in _selectedColumnsPreset.Columns)
                 if (column != null)
                     _selectedColumns.Add(column);
-            MainWindow.ShowToast(ASILang.Get("ColumnsPresetLoaded"), BackgroundColor.SUCCESS);
+            if (showToasts)
+                MainWindow.ShowToast(ASILang.Get("ColumnsPresetLoaded"), BackgroundColor.SUCCESS);
         }
+
+        private void btn_LoadColumnsPreset_Click(object sender, RoutedEventArgs e) => LoadSelectedColumnsPreset(true);
 
         private void btn_RemoveColumnsPreset_Click(object sender, RoutedEventArgs e)
         {
@@ -2456,6 +2482,7 @@ namespace ASA_Save_Inspector.Pages
                     tb_ExistingColumnsPreset.Text = ASILang.Get("ClickHere");
                     btn_LoadColumnsPreset.IsEnabled = false;
                     btn_RemoveColumnsPreset.IsEnabled = false;
+                    btn_SetDefaultColumnsPreset.IsEnabled = false;
 
                     _columnsPresets.RemoveAt(toDel);
                     SaveColumnsPresets();
@@ -2464,6 +2491,25 @@ namespace ASA_Save_Inspector.Pages
                 else
                     MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{_selectedColumnsPreset.Name}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
             }
+        }
+
+        private void btn_SetDefaultColumnsPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedColumnsPreset == null || string.IsNullOrEmpty(_selectedColumnsPreset.Name))
+            {
+                MainWindow.ShowToast(ASILang.Get("NoColumnsPresetSelected"), BackgroundColor.WARNING);
+                return;
+            }
+            if (_selectedColumnsPreset.Columns == null || _selectedColumnsPreset.Columns.Count <= 0)
+            {
+                MainWindow.ShowToast(ASILang.Get("ColumnsPresetIsEmpty"), BackgroundColor.WARNING);
+                return;
+            }
+
+            SettingsPage._defaultColumnsPreset_Structures = _selectedColumnsPreset.Name;
+            SettingsPage.SaveSettings();
+            MainWindow.ShowToast(ASILang.Get("ColumnsPresetSetAsDefault").Replace("#PRESET_NAME#", _selectedColumnsPreset.Name ?? string.Empty), BackgroundColor.SUCCESS);
+            LoadSelectedColumnsPreset(false);
         }
 
         private void tb_ColumnsPresetName_TextChanged(object sender, TextChangedEventArgs e)
@@ -2476,6 +2522,7 @@ namespace ASA_Save_Inspector.Pages
             tb_ExistingColumnsPreset.Text = ASILang.Get("DefaultPreset");
             btn_LoadColumnsPreset.IsEnabled = true;
             btn_RemoveColumnsPreset.IsEnabled = false;
+            btn_SetDefaultColumnsPreset.IsEnabled = true;
             _selectedColumnsPreset = _defaultColumnsPreset;
         }
 

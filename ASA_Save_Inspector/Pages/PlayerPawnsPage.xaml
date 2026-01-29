@@ -114,7 +114,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Pawns'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Pawns'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" HorizontalAlignment="Left"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_PlayerPawns, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
             <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>: <Run x:Name="run_MapName" Text="{x:Bind local:PlayerPawnsPage.MapName, Mode=OneWay}"/></TextBlock>
             <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:PlayerPawnsPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
@@ -396,6 +396,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Button x:Name="btn_LoadColumnsPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadColumnsPreset_Click" FontSize="16" />
                             <Button x:Name="btn_RemoveColumnsPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
+                            <Button x:Name="btn_SetDefaultColumnsPreset" Content="{x:Bind asi:ASILang.Get('SetAsDefault'), Mode=OneWay}" IsEnabled="False" Click="btn_SetDefaultColumnsPreset_Click" FontSize="16" Margin="10,0,0,0" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />

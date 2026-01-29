@@ -115,7 +115,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Items'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}"/>
+        <TextBlock x:Name="tb_Title" Grid.Row="0" Grid.Column="0" Margin="42,0,0,0" Text="{x:Bind asi:ASILang.Get('Items'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" HorizontalAlignment="Left"/>
         <StackPanel Margin="0,0,20,0" Grid.Row="0" Grid.Column="1" MaxWidth="{Binding ElementName=page_Items, Path=WindowWidth, Mode=TwoWay}" Orientation="Vertical" HorizontalAlignment="Stretch">
             <TextBlock x:Name="tb_CurrentMapName" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('MapName'), Mode=OneWay}"/>: <Run x:Name="run_MapName" Text="{x:Bind local:ItemsPage.MapName, Mode=OneWay}"/></TextBlock>
             <TextBlock x:Name="tb_SaveGameDateTime" FontSize="14" HorizontalAlignment="Right"><Run Text="{x:Bind asi:ASILang.Get('SaveDatetime'), Mode=OneWay}"/>: <Run x:Name="run_SaveGameDatetime" Text="{x:Bind local:ItemsPage.SaveGameDatetime, Mode=OneWay}"/></TextBlock>
