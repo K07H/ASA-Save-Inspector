@@ -1865,7 +1865,14 @@ namespace ASA_Save_Inspector.Pages
         private static int _nbProcessedItemsSubsets = 0;
         private static List<Item> _processedItemsSubsets = new List<Item>();
 
-        private static string GetTribeNameOrId(Dino d) => SettingsPage._tribeNames.ContainsKey(d.OwningTribeID) ? SettingsPage._tribeNames[d.OwningTribeID] : (!string.IsNullOrEmpty(d.TribeName) ? d.TribeName : d.OwningTribeID.ToString(CultureInfo.InvariantCulture));
+        private static string GetTribeNameOrId(Dino d)
+        {
+            if (SettingsPage._tribeNames != null && SettingsPage._tribeNames.ContainsKey(d.OwningTribeID))
+                return SettingsPage._tribeNames[d.OwningTribeID];
+            if (!string.IsNullOrEmpty(d.TribeName))
+                return d.TribeName;
+            return d.OwningTribeID.ToString(CultureInfo.InvariantCulture);
+        }
 
         private static void GotAllTribeIdsForDinos(List<Dino> dinos)
         {
@@ -1945,11 +1952,16 @@ namespace ASA_Save_Inspector.Pages
         }
 
         private static string GetTribeNameOrId_Fallback(Structure s) => !string.IsNullOrEmpty(s.OwnerName) ? s.OwnerName : (!string.IsNullOrEmpty(s.OwningPlayerName) ? s.OwningPlayerName : (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture) : string.Empty));
-        private static string GetTribeNameOrId(Structure s) => s.TargetingTeam != null && s.TargetingTeam.HasValue && SettingsPage._tribeNames.ContainsKey(s.TargetingTeam.Value) ? SettingsPage._tribeNames[s.TargetingTeam.Value] : GetTribeNameOrId_Fallback(s);
+        private static string GetTribeNameOrId(Structure s)
+        {
+            if (s.TargetingTeam != null && s.TargetingTeam.HasValue && SettingsPage._tribeNames != null && SettingsPage._tribeNames.ContainsKey(s.TargetingTeam.Value))
+                return SettingsPage._tribeNames[s.TargetingTeam.Value];
+            return GetTribeNameOrId_Fallback(s);
+        }
 
         private static void GotAllTribeIdsForStructures(List<Structure> structures)
         {
-            _allTribesForStructures = structures.DistinctBy(d => d.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), s.TargetingTeam.Value)).DistinctBy(e => e.Key).ToDictionary();
+            _allTribesForStructures = structures.DistinctBy(d => d.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
             if (_allTribesForStructures != null && _allTribesForStructures.Count > 0)
             {
                 _allTribesForStructuresSorted = _allTribesForStructures.Select(t => t.Key).ToList();
@@ -2024,11 +2036,11 @@ namespace ASA_Save_Inspector.Pages
             });
         }
 
-        private static string GetTribeNameOrId(Item i) => i.ContainerTribeID != null && i.ContainerTribeID.HasValue && SettingsPage._tribeNames.ContainsKey(i.ContainerTribeID.Value) ? SettingsPage._tribeNames[i.ContainerTribeID.Value] : (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value.ToString(CultureInfo.InvariantCulture) : "0");
+        private static string GetTribeNameOrId(Item i) => i.ContainerTribeID != null && i.ContainerTribeID.HasValue && SettingsPage._tribeNames != null && SettingsPage._tribeNames.ContainsKey(i.ContainerTribeID.Value) ? SettingsPage._tribeNames[i.ContainerTribeID.Value] : (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value.ToString(CultureInfo.InvariantCulture) : "0");
 
         private static void GotAllTribeIdsForItems(List<Item> items)
         {
-            _allTribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), i.ContainerTribeID.Value)).DistinctBy(e => e.Key).ToDictionary();
+            _allTribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
             if (_allTribesForItems != null && _allTribesForItems.Count > 0)
             {
                 _allTribesForItemsSorted = _allTribesForItems.Select(t => t.Key).ToList();

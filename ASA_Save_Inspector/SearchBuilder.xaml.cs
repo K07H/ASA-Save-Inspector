@@ -34,7 +34,9 @@ namespace ASA_Save_Inspector
         PAWNS = 0,
         DINOS = 1,
         STRUCTURES = 2,
-        ITEMS = 3
+        ITEMS = 3,
+        PLAYERS = 4,
+        TRIBES = 5
     }
 
     public enum LogicalOperator
@@ -442,6 +444,10 @@ namespace ASA_Save_Inspector
                 _savedQueriesFilePath = Utils.StructureSearchQueriesFilePath();
             else if (type == SearchType.ITEMS)
                 _savedQueriesFilePath = Utils.ItemSearchQueriesFilePath();
+            else if (type == SearchType.PLAYERS)
+                _savedQueriesFilePath = Utils.PlayerSearchQueriesFilePath();
+            else if (type == SearchType.TRIBES)
+                _savedQueriesFilePath = Utils.TribeSearchQueriesFilePath();
             else
                 _savedQueriesFilePath = null;
             LoadSearchQueries();
@@ -516,6 +522,10 @@ namespace ASA_Save_Inspector
                 return SettingsPage._structuresData;
             else if (type == SearchType.ITEMS)
                 return SettingsPage._itemsData;
+            else if (type == SearchType.PLAYERS)
+                return SettingsPage._playersData;
+            else if (type == SearchType.TRIBES)
+                return SettingsPage._tribesData;
             else
                 return SettingsPage._playerPawnsData;
         }
@@ -633,6 +643,8 @@ namespace ASA_Save_Inspector
             string? value = (_operator == SearchOperator.MATCHING || _operator == SearchOperator.NOT_MATCHING) ? cbb_Value.SelectedItem?.ToString() : tb_Value.Text;
             if (string.IsNullOrEmpty(value))
                 return;
+            if (_query == null)
+                return;
 
             string? logicalOperator = Utils.GetComboBoxSelection(cbb_LogicalOperator, true);
             LogicalOperator lo = (!string.IsNullOrEmpty(logicalOperator) && string.Compare(logicalOperator, ASILang.Get("OperatorOR"), StringComparison.InvariantCulture) == 0) ? LogicalOperator.OR : LogicalOperator.AND;
@@ -680,6 +692,16 @@ namespace ASA_Save_Inspector
                 {
                     if (SettingsPage._itemsData != null)
                         results = SettingsPage._itemsData.AsQueryable().Where(expression);
+                }
+                else if (type == SearchType.PLAYERS)
+                {
+                    if (SettingsPage._playersData != null)
+                        results = SettingsPage._playersData.AsQueryable().Where(expression);
+                }
+                else if (type == SearchType.TRIBES)
+                {
+                    if (SettingsPage._tribesData != null)
+                        results = SettingsPage._tribesData.AsQueryable().Where(expression);
                 }
                 else
                 {
@@ -751,6 +773,10 @@ namespace ASA_Save_Inspector
                 return typeof(Structure);
             else if (type == SearchType.ITEMS)
                 return typeof(Item);
+            else if (type == SearchType.PLAYERS)
+                return typeof(Player);
+            else if (type == SearchType.TRIBES)
+                return typeof(Tribe);
             else
                 return typeof(PlayerPawn);
         }
@@ -850,6 +876,16 @@ namespace ASA_Save_Inspector
                 if (ItemsPage._page != null)
                     ItemsPage._page.UpdateSavedSearchQueriesDropdown();
             }
+            else if (type == SearchType.PLAYERS)
+            {
+                if (PlayersPage._page != null)
+                    PlayersPage._page.UpdateSavedSearchQueriesDropdown();
+            }
+            else if (type == SearchType.TRIBES)
+            {
+                if (TribesPage._page != null)
+                    TribesPage._page.UpdateSavedSearchQueriesDropdown();
+            }
         }
 
         private void UpdateSavedSearchQueriesDropdownLocal()
@@ -920,6 +956,8 @@ namespace ASA_Save_Inspector
                 ShowNotificationMsg(ASILang.Get("FilterNameAlreadyExists"), BackgroundColor.WARNING);
                 return;
             }
+            if (_query == null)
+                return;
 
             if (_queries == null)
                 _queries = new SearchQueries();

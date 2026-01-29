@@ -94,6 +94,8 @@ namespace ASA_Save_Inspector
         public static string DinoSearchQueriesFilePath() => Path.Combine(GetDataDir(), "dino_search_queries.json");
         public static string StructureSearchQueriesFilePath() => Path.Combine(GetDataDir(), "structure_search_queries.json");
         public static string ItemSearchQueriesFilePath() => Path.Combine(GetDataDir(), "item_search_queries.json");
+        public static string PlayerSearchQueriesFilePath() => Path.Combine(GetDataDir(), "player_search_queries.json");
+        public static string TribeSearchQueriesFilePath() => Path.Combine(GetDataDir(), "tribe_search_queries.json");
         public static string DinoFiltersPresetsFilePath() => Path.Combine(GetDataDir(), "dino_filters.json");
         public static string DinoGroupsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_groups.json");
         public static string DinoColumnsPresetsFilePath() => Path.Combine(GetDataDir(), "dino_columns.json");

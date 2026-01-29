@@ -107,7 +107,9 @@ namespace ASA_Save_Inspector
             PythonManager.GetPythonExePaths();
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
 
+#pragma warning disable CS4014
             CheckForUpdateAndPreviousData();
+#pragma warning restore CS4014
         }
 
         public void LanguageChanged()

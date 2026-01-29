@@ -330,7 +330,7 @@
                 </Border>
             </Border>
         </Popup>
-        
+
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ModifyColumnsPopup">
             <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
