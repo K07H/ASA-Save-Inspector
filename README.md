@@ -33,7 +33,7 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 1. Download and install the following two requirements:<br>
 [.NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)<br>
 [Python 3](https://www.python.org/downloads/)<br>
-2. Download the latest release here: https://github.com/K07H/ASA-Save-Inspector/releases<br>
+2. Download the latest installer here: [https://github.com/K07H/ASA-Save-Inspector/releases](https://github.com/K07H/ASA-Save-Inspector/releases/latest)<br>
 *You can choose either x64 or x86 installer (if you don't know which one to download, simply get the x64 one).*
 3. Once the installer is downloaded, launch it and follow the installation guide.
 
