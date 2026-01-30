@@ -194,6 +194,7 @@ namespace ASA_Save_Inspector.Pages
                 tb_SavedQueries.Visibility = Visibility.Collapsed;
                 cbb_ExistingQueries.Visibility = Visibility.Collapsed;
                 btn_LoadQuery.Visibility = Visibility.Collapsed;
+                btn_EditQuery.Visibility = Visibility.Collapsed;
                 btn_DeleteQuery.Visibility = Visibility.Collapsed;
             }
             else
@@ -212,6 +213,7 @@ namespace ASA_Save_Inspector.Pages
                 tb_SavedQueries.Visibility = Visibility.Visible;
                 cbb_ExistingQueries.Visibility = Visibility.Visible;
                 btn_LoadQuery.Visibility = Visibility.Visible;
+                btn_EditQuery.Visibility = Visibility.Visible;
                 btn_DeleteQuery.Visibility = Visibility.Visible;
             }
             SearchBuilder.InitSearch(SearchType.ITEMS);
@@ -222,6 +224,7 @@ namespace ASA_Save_Inspector.Pages
             // Set default selected columns.
             if (!_setDefaultSelectedColumns)
             {
+                LoadColumnsPresets();
                 bool fallbackToDefault = true;
                 if (!string.IsNullOrEmpty(SettingsPage._defaultColumnsPreset_Items))
                     foreach (var preset in _columnsPresets)

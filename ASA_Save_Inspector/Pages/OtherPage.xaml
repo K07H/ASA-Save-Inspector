@@ -17,19 +17,24 @@
         <StackPanel Margin="4">
             <TextBlock Text="{x:Bind asi:ASILang.Get('Other'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
             <StackPanel Orientation="Vertical" Margin="10,15,0,0">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('ApplicationTheme'), Mode=OneWay}"/>:</TextBlock>
-                    <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Margin="15,2,0,0" Content="{x:Bind asi:ASILang.Get('ApplicationTheme_Dark'), Mode=OneTime}" VerticalAlignment="Center"/>
-                </StackPanel>
-                <Button x:Name="btn_OpenMinimap" Content="{x:Bind asi:ASILang.Get('OpenMiniMap'), Mode=OneWay}" Click="btn_OpenMinimap_Click" Margin="0,10,0,0" />
+                <Button x:Name="btn_OpenMinimap" Content="{x:Bind asi:ASILang.Get('OpenMiniMap'), Mode=OneWay}" Click="btn_OpenMinimap_Click" />
                 <Button x:Name="btn_OpenAppDataFolder" Content="{x:Bind asi:ASILang.Get('OpenASIDataFolder'), Mode=OneWay}" Click="btn_OpenAppDataFolder_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_AddCustomBlueprints" Content="{x:Bind asi:ASILang.Get('CustomBlueprints'), Mode=OneWay}" Click="btn_ConfigureCustomBlueprints_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_ForceReinstallArkParse" Content="{x:Bind asi:ASILang.Get('ForceReinstallArkParse'), Mode=OneWay}" Click="btn_ForceReinstallArkParse_Click" Margin="0,10,0,0" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('ApplicationTheme'), Mode=OneWay}"/>:</TextBlock>
+                    <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Margin="15,2,0,0" Content="{x:Bind asi:ASILang.Get('ApplicationTheme_Dark'), Mode=OneTime}" VerticalAlignment="Center"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('LegacySearch'), Mode=OneWay}"/>
                     <CheckBox x:Name="cb_LegacySearch" FontSize="16" IsChecked="False" Margin="15,2,0,0" Content="" VerticalAlignment="Center"/>
                 </StackPanel>
                 <TextBlock VerticalAlignment="Center" FontStyle="Italic" FontSize="14" TextWrapping="WrapWholeWords" Text="{x:Bind asi:ASILang.Get('LegacySearch_Description'), Mode=OneWay}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('NoPythonVenv'), Mode=OneWay}"/>
+                    <CheckBox x:Name="cb_NoPythonVenv" FontSize="16" IsChecked="False" Margin="15,2,0,0" Content="" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock VerticalAlignment="Center" FontStyle="Italic" FontSize="14" TextWrapping="WrapWholeWords" Text="{x:Bind asi:ASILang.Get('NoPythonVenv_Description'), Mode=OneWay}"/>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('DebugLogging'), Mode=OneWay}"/>
                     <CheckBox x:Name="cb_DebugLogging" FontSize="16" IsChecked="False" Margin="15,2,0,0" Content="" VerticalAlignment="Center"/>

@@ -313,7 +313,7 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
                         all_dinos.append(dino)
                     elif debug_logging:
                         failed_parsing.append(f"Dino {obj.uuid} with class {obj.blueprint}.")
-                elif "PrimalItem_WeaponEmptyCryopod_C" in obj.blueprint:
+                elif "PrimalItem_WeaponEmptyCryopod" in obj.blueprint:
                     cryopod = parse_single_cryopod(obj, save)
                     if cryopod is not None:
                         if cryopod.dino is not None:

@@ -184,6 +184,9 @@ namespace ASA_Save_Inspector
 #pragma warning disable CS1998, CS4014
         public static async Task<bool> SetupPythonVenv()
         {
+            if (!SettingsPage.UsePythonVenv())
+                return await ActivatePythonVenv();
+
             if (Directory.Exists(Utils.PythonVenvFolder()))
             {
                 Logger.Instance.Log(ASILang.Get("PythonVenvAlreadySetup"));
@@ -300,7 +303,12 @@ namespace ASA_Save_Inspector
                     process = null;
                 }
                 if (exitCode == 0)
+                {
                     AddDetailsToInstallingPopup(ASILang.Get("ArkParseInstallSuccess"), false, false, true);
+                    if (RequiresArkParseReinstall())
+                        try { File.Delete(Utils.ArkParseRequiresReinstallFilePath()); }
+                        catch (Exception exb) { Logger.Instance.Log($"Exception caught while deleting file at \"{Utils.ArkParseRequiresReinstallFilePath()}\". Exception=[{exb}]", Logger.LogLevel.ERROR); }
+                }
                 else
                     AddDetailsToInstallingPopup(ASILang.Get("ArkParseInstallFail"), false, true);
                 Logger.Instance.Log($"{ASILang.Get("PythonExitCode")}: {exitCode.ToString(CultureInfo.InvariantCulture)}", Logger.LogLevel.INFO);
@@ -316,22 +324,35 @@ namespace ASA_Save_Inspector
             }
         }
 
+        public static bool RequiresArkParseReinstall() => File.Exists(Utils.ArkParseRequiresReinstallFilePath());
+
         public static async Task<bool> UpdateOrInstallArkParse()
         {
             if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value)
                 Utils.LogASIDataFolder();
 
-            if (!File.Exists(Utils.PythonFilePathFromVenv()))
+            if (SettingsPage.UsePythonVenv())
             {
-                HideInstallingPopup();
-                return false;
+                if (!File.Exists(Utils.PythonFilePathFromVenv()))
+                {
+                    HideInstallingPopup();
+                    return false;
+                }
+            }
+            else
+            {
+                if (!File.Exists(SettingsPage._pythonExePath))
+                {
+                    HideInstallingPopup();
+                    return false;
+                }
             }
 
             if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value)
-                AddPythonVenvTestFile();
+                AddPythonTestFile();
 
             AddArkParseSetup();
-            if (!(await DownloadAndExtractArkParse()))
+            if (!(await DownloadAndExtractArkParse()) && !RequiresArkParseReinstall())
             {
                 HideInstallingPopup();
                 return false;
@@ -355,6 +376,12 @@ namespace ASA_Save_Inspector
         private static bool _pythonVenvActivated = false;
         public static async Task<bool> ActivatePythonVenv()
         {
+            if (!SettingsPage.UsePythonVenv())
+            {
+                await UpdateOrInstallArkParse();
+                return true;
+            }
+
             if (!File.Exists(Utils.ActivatePythonVenvFilePath()))
             {
                 AddDetailsToInstallingPopup($"{ASILang.Get("PythonVenvActivationScriptNotFound").Replace("#FILEPATH#", $"\"{Utils.ActivatePythonVenvFilePath()}\"", StringComparison.InvariantCulture)}", false, true);
@@ -547,9 +574,18 @@ namespace ASA_Save_Inspector
 
         public static bool AddArkParseSetup()
         {
-            // Don't proceed if python venv is NOT present.
-            if (!File.Exists(Utils.PythonFilePathFromVenv()))
-                return false;
+            if (SettingsPage.UsePythonVenv())
+            {
+                // Don't proceed if python venv is NOT present.
+                if (!File.Exists(Utils.PythonFilePathFromVenv()))
+                    return false;
+            }
+            else
+            {
+                // Don't proceed if python global exe is NOT present.
+                if (!File.Exists(SettingsPage._pythonExePath))
+                    return false;
+            }
 
             Utils.EnsureDataFolderExist();
             string arkParseSetupPath = Utils.ArkParseSetupFilePath();
@@ -557,7 +593,7 @@ namespace ASA_Save_Inspector
             if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value)
                 arkParseSetupContent = string.Format(
 @"
-set ""PYTHONPATH={0}""
+{0}
 echo PATH environment variable
 echo %PATH%
 echo PYTHONPATH environment variable
@@ -570,18 +606,18 @@ echo %PYTHONPATH%
 ""{1}"" -m pip list -v
 ""{1}"" -m pip freeze --path ""{0}""
 ",
-Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"),
-Utils.PythonFilePathFromVenv(),
-Utils.PythonVenvTestScriptPath());
+SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
+SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
+Utils.PythonTestScriptPath());
             else
                 arkParseSetupContent = string.Format(
 @"
-set ""PYTHONPATH={0}""
+{0}
 ""{1}"" -m ensurepip --upgrade
 ""{1}"" -m pip install --upgrade pip
 ",
-Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"),
-Utils.PythonFilePathFromVenv());
+SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
+SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
 
             if (string.IsNullOrWhiteSpace(arkParseSetupContent))
             {
@@ -605,7 +641,7 @@ Utils.PythonFilePathFromVenv());
 ""{0}"" -m pip install --upgrade pandas
 ""{0}"" -m pip install -e .
 ",
-Utils.PythonFilePathFromVenv());
+SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
 
             try { File.WriteAllText(arkParseSetupPath, arkParseSetupContent, Encoding.ASCII); }
             catch (Exception ex) { Logger.Instance.Log($"{ASILang.Get("ArkParseAddSetupError")} (B) Exception=[{ex}]", Logger.LogLevel.ERROR); }
@@ -613,12 +649,12 @@ Utils.PythonFilePathFromVenv());
             return File.Exists(arkParseSetupPath);
         }
 
-        public static bool AddPythonVenvTestFile()
+        public static bool AddPythonTestFile()
         {
             Utils.EnsureDataFolderExist();
 
-            string pythonVenvTestScriptPath = Utils.PythonVenvTestScriptPath();
-            string pythonVenvTestScriptContent =
+            string pythonTestScriptPath = Utils.PythonTestScriptPath();
+            string pythonTestScriptContent =
 @"
 import sys
 import os
@@ -627,17 +663,27 @@ print(""sys.path: "" + str(sys.path))
 print(""PYTHONPATH: "" + str(os.getenv(""PYTHONPATH"")))
 ";
 
-            try { File.WriteAllText(pythonVenvTestScriptPath, pythonVenvTestScriptContent, Encoding.ASCII); }
-            catch (Exception ex) { Logger.Instance.Log($"{ASILang.Get("PythonVenvAddTestError")} (A) Exception=[{ex}]", Logger.LogLevel.ERROR); }
+            try { File.WriteAllText(pythonTestScriptPath, pythonTestScriptContent, Encoding.ASCII); }
+            catch (Exception ex) { Logger.Instance.Log($"{ASILang.Get("PythonAddTestError")} (A) Exception=[{ex}]", Logger.LogLevel.ERROR); }
 
-            return File.Exists(pythonVenvTestScriptPath);
+            return File.Exists(pythonTestScriptPath);
         }
 
         public static bool AddArkParseRunner(JsonExportProfile? jep)
         {
-            // Don't proceed if python venv is NOT present.
-            if (!File.Exists(Utils.PythonFilePathFromVenv()))
-                return false;
+            if (SettingsPage.UsePythonVenv())
+            {
+                // Don't proceed if python venv is NOT present.
+                if (!File.Exists(Utils.PythonFilePathFromVenv()))
+                    return false;
+            }
+            else
+            {
+                // Don't proceed if python global exe is NOT present.
+                if (!File.Exists(SettingsPage._pythonExePath))
+                    return false;
+            }
+
             if (jep == null)
                 return false;
             if (string.IsNullOrWhiteSpace(jep.SaveFilePath) || !File.Exists(jep.SaveFilePath))
@@ -682,27 +728,27 @@ print(""PYTHONPATH: "" + str(os.getenv(""PYTHONPATH"")))
             string customBlueprintsB64 = (SettingsPage.GetCustomBlueprintsB64() ?? string.Empty);
             string arkParseRunnerPath = Utils.ArkParseRunnerFilePath();
             string? arkParseRunnerContent = null;
-            if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value && File.Exists(Utils.PythonVenvTestScriptPath()))
+            if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value && File.Exists(Utils.PythonTestScriptPath()))
                 arkParseRunnerContent = string.Format(
 @"
-set ""PYTHONPATH={0}""
+{0}
 echo PATH environment variable
 echo %PATH%
 echo PYTHONPATH environment variable
 echo %PYTHONPATH%
 ""{1}"" ""{2}""
 ",
-Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"),
-Utils.PythonFilePathFromVenv(),
-Utils.PythonVenvTestScriptPath());
+SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
+SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
+Utils.PythonTestScriptPath());
             else
                 arkParseRunnerContent = string.Format(
 @"
-set ""PYTHONPATH={0}""
+{0}
 ",
-Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"));
+SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty);
 
-            if (string.IsNullOrWhiteSpace(arkParseRunnerContent))
+            if (string.IsNullOrWhiteSpace(arkParseRunnerContent) && SettingsPage.UsePythonVenv())
             {
                 Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} (C)", Logger.LogLevel.ERROR);
                 return false;
@@ -712,7 +758,7 @@ Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"));
 @"
 ""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9} {10}{11}
 ",
-Utils.PythonFilePathFromVenv(),
+SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
 asiExportAllPath,
 jep.SaveFilePath,
 finalExportFolderPath,
@@ -844,11 +890,12 @@ finalExportFolderPath,
             }
         }
 
-        public static async void InstallArkParse()
+        public static async void InstallPythonVenv()
         {
             ShowInstallingPopup($"{ASILang.Get("ArkParseInstallingUpdating")} {ASILang.Get("PleaseWait")}");
 
-            AddPythonVenvSetup();
+            if (SettingsPage.UsePythonVenv())
+                AddPythonVenvSetup();
             await SetupPythonVenv();
         }
 
@@ -934,11 +981,23 @@ finalExportFolderPath,
 
         public static async Task<bool> RunArkParse(string saveFilePath, string mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
         {
-            if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
+            if (SettingsPage.UsePythonVenv())
             {
-                Logger.Instance.Log($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckASISettings")}", Logger.LogLevel.WARNING);
-                MainWindow.ShowToast($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckSettings")}", BackgroundColor.WARNING);
-                return false;
+                if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
+                {
+                    Logger.Instance.Log($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckASISettings")}", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckSettings")}", BackgroundColor.WARNING);
+                    return false;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(SettingsPage._pythonExePath) || !File.Exists(SettingsPage._pythonExePath))
+                {
+                    Logger.Instance.Log($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckASISettings")}", Logger.LogLevel.WARNING);
+                    MainWindow.ShowToast($"{ASILang.Get("PythonExeNotSet")} {ASILang.Get("CheckSettings")}", BackgroundColor.WARNING);
+                    return false;
+                }
             }
 
             ShowInstallingPopup($"{ASILang.Get("ArkParseExtractingJsonData")} {ASILang.Get("PleaseWait")}");
@@ -952,7 +1011,7 @@ finalExportFolderPath,
             AddJsonExportProfileToSettingsPageDropDown(jep);
 
             if (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value)
-                AddPythonVenvTestFile();
+                AddPythonTestFile();
             AddArkParseRunner(jep);
             string arkParseRunnerPath = Utils.ArkParseRunnerFilePath();
             if (string.IsNullOrWhiteSpace(arkParseRunnerPath) || !File.Exists(arkParseRunnerPath))

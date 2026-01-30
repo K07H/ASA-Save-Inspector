@@ -31,13 +31,17 @@ namespace ASA_Save_Inspector.Pages
             cb_AppTheme.Checked += cb_AppTheme_Unchecked;
             cb_AppTheme.Unchecked += cb_AppTheme_Unchecked;
 
-            cb_DebugLogging.IsChecked = (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value);
-            cb_DebugLogging.Checked += cb_DebugLogging_Checked;
-            cb_DebugLogging.Unchecked += cb_DebugLogging_Unchecked;
-
             cb_LegacySearch.IsChecked = (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value);
             cb_LegacySearch.Checked += cb_LegacySearch_Checked;
             cb_LegacySearch.Unchecked += cb_LegacySearch_Unchecked;
+
+            cb_NoPythonVenv.IsChecked = (SettingsPage._noPythonVenv != null && SettingsPage._noPythonVenv.HasValue && SettingsPage._noPythonVenv.Value);
+            cb_NoPythonVenv.Checked += Cb_NoPythonVenv_Checked;
+            cb_NoPythonVenv.Unchecked += Cb_NoPythonVenv_Unchecked;
+
+            cb_DebugLogging.IsChecked = (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value);
+            cb_DebugLogging.Checked += cb_DebugLogging_Checked;
+            cb_DebugLogging.Unchecked += cb_DebugLogging_Unchecked;
 
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
@@ -660,5 +664,27 @@ namespace ASA_Save_Inspector.Pages
             SettingsPage._legacySearch = false;
             SettingsPage.SaveSettings();
         }
+
+        private void AddArkParseForceReinstallFile()
+        {
+            if (!File.Exists(Utils.ArkParseRequiresReinstallFilePath()))
+                try { File.WriteAllText(Utils.ArkParseRequiresReinstallFilePath(), "1", System.Text.Encoding.UTF8); }
+                catch (Exception ex) { Logger.Instance.Log($"Exception caught while creating file at \"{Utils.ArkParseRequiresReinstallFilePath()}\". Exception=[{ex}]"); }
+        }
+
+        private void Cb_NoPythonVenv_Checked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._noPythonVenv = true;
+            SettingsPage.SaveSettings();
+            AddArkParseForceReinstallFile();
+        }
+
+        private void Cb_NoPythonVenv_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SettingsPage._noPythonVenv = false;
+            SettingsPage.SaveSettings();
+            AddArkParseForceReinstallFile();
+        }
+
     }
 }

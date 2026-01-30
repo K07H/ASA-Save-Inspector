@@ -623,6 +623,8 @@ namespace ASA_Save_Inspector
         private void UpdateBtnsStates()
         {
             bool hasQueryParts = (_query != null && _query.Parts != null && _query.Parts.Count > 0);
+            if (cbb_LogicalOperator.Visibility == Visibility.Collapsed && hasQueryParts)
+                cbb_LogicalOperator.SelectedIndex = 0; // Default to AND operator.
             cbb_LogicalOperator.Visibility = hasQueryParts ? Visibility.Visible : Visibility.Collapsed;
             btn_RemovePreviouslyAdded.IsEnabled = hasQueryParts;
         }
@@ -806,7 +808,7 @@ namespace ASA_Save_Inspector
             */
         }
 
-        private void btn_CancelQuery_Click(object sender, RoutedEventArgs e) => this.Close();
+        private void btn_CloseQueryBuilder_Click(object sender, RoutedEventArgs e) => this.Close();
 
         private void btn_LoadQuery_Click(object sender, RoutedEventArgs e)
         {
@@ -891,6 +893,10 @@ namespace ASA_Save_Inspector
 
         public static void LoadSearchQueries()
         {
+            if (_queries != null)
+                _queries.Queries.Clear();
+            _queries = null;
+
             if (!string.IsNullOrWhiteSpace(_savedQueriesFilePath) && File.Exists(_savedQueriesFilePath))
             {
                 string? savedQueriesTxt = null;

@@ -65,7 +65,7 @@ namespace ASA_Save_Inspector.Pages
         public bool? DarkTheme { get; set; } = true;
         public bool? DebugLogging { get; set; } = false;
         public bool? LegacySearch { get; set; } = false;
-
+        public bool? NoPythonVenv { get; set; } = false;
         public string? DefaultColumnsPreset_PlayerPawns { get; set; } = null;
         public string? DefaultColumnsPreset_Dinos { get; set; } = null;
         public string? DefaultColumnsPreset_Items { get; set; } = null;
@@ -145,8 +145,9 @@ namespace ASA_Save_Inspector.Pages
 
         public static SettingsPage? _page = null;
         public static bool? _darkTheme = true;
-        public static bool? _debugLogging = false;
         public static bool? _legacySearch = false;
+        public static bool? _noPythonVenv = false;
+        public static bool? _debugLogging = false;
 
         public static string? _defaultColumnsPreset_PlayerPawns = null;
         public static string? _defaultColumnsPreset_Dinos = null;
@@ -375,6 +376,7 @@ namespace ASA_Save_Inspector.Pages
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
                     _legacySearch = jsonSettings.LegacySearch;
+                    _noPythonVenv = jsonSettings.NoPythonVenv;
                     _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
                     _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
                     _defaultColumnsPreset_Items = jsonSettings.DefaultColumnsPreset_Items;
@@ -410,6 +412,7 @@ namespace ASA_Save_Inspector.Pages
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
                     _legacySearch = jsonSettings.LegacySearch;
+                    _noPythonVenv = jsonSettings.NoPythonVenv;
                     _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
                     _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
                     _defaultColumnsPreset_Items = jsonSettings.DefaultColumnsPreset_Items;
@@ -441,6 +444,7 @@ namespace ASA_Save_Inspector.Pages
                     DarkTheme = _darkTheme,
                     DebugLogging = _debugLogging,
                     LegacySearch = _legacySearch,
+                    NoPythonVenv = _noPythonVenv,
                     DefaultColumnsPreset_PlayerPawns = _defaultColumnsPreset_PlayerPawns,
                     DefaultColumnsPreset_Dinos = _defaultColumnsPreset_Dinos,
                     DefaultColumnsPreset_Items = _defaultColumnsPreset_Items,
@@ -527,6 +531,8 @@ namespace ASA_Save_Inspector.Pages
 
             return ret;
         }
+
+        public static bool UsePythonVenv() => (SettingsPage._noPythonVenv == null || !SettingsPage._noPythonVenv.HasValue || !SettingsPage._noPythonVenv.Value);
 
         public void JsonExportProfileSelected(JsonExportProfile? jsonProfile)
         {
@@ -716,7 +722,7 @@ namespace ASA_Save_Inspector.Pages
             {
                 tb_PythonSelect.Text = _pythonExePath;
                 SaveSettings();
-                PythonManager.InstallArkParse();
+                PythonManager.InstallPythonVenv();
                 if (_page != null)
                     _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                     {
@@ -890,10 +896,21 @@ namespace ASA_Save_Inspector.Pages
 
         private void btn_ExtractWithSaveFile_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_pythonExePath) || !File.Exists(_pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
+            if (UsePythonVenv())
             {
-                tb_CannotExtractWithArkParse.Visibility = Visibility.Visible;
-                return;
+                if (string.IsNullOrWhiteSpace(_pythonExePath) || !File.Exists(_pythonExePath) || !File.Exists(Utils.PythonFilePathFromVenv()))
+                {
+                    tb_CannotExtractWithArkParse.Visibility = Visibility.Visible;
+                    return;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(_pythonExePath) || !File.Exists(_pythonExePath))
+                {
+                    tb_CannotExtractWithArkParse.Visibility = Visibility.Visible;
+                    return;
+                }
             }
 
             tb_CannotExtractWithArkParse.Visibility = Visibility.Collapsed;

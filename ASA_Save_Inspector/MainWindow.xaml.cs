@@ -133,9 +133,12 @@ namespace ASA_Save_Inspector
         private void Current_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             Logger.Instance.Log($"An unhandled exception got caught. Exception=[{e.Exception}]", Logger.LogLevel.ERROR);
-            var t = PythonManager.DeactivatePythonVenv();
-            if (t != null)
-                t.Wait(5000);
+            if (SettingsPage.UsePythonVenv())
+            {
+                var t = PythonManager.DeactivatePythonVenv();
+                if (t != null)
+                    t.Wait(4000);
+            }
             Logger.Instance.Log("ASA Save Inspector has stopped.");
             App.Current.Exit();
         }
@@ -425,9 +428,12 @@ namespace ASA_Save_Inspector
 
         private void w_MainWindow_Closed(object sender, WindowEventArgs args)
         {
-            var t = PythonManager.DeactivatePythonVenv();
-            if (t != null)
-                t.Wait(4000);
+            if (SettingsPage.UsePythonVenv())
+            {
+                var t = PythonManager.DeactivatePythonVenv();
+                if (t != null)
+                    t.Wait(4000);
+            }
             Logger.Instance.Log(ASILang.Get("ASIStopped"));
             App.Current.Exit();
         }

@@ -117,7 +117,7 @@
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Top" HorizontalAlignment="Center">
             <Button x:Name="btn_TryQuery" Content="{x:Bind asi:ASILang.Get('Search'), Mode=OneWay}" Margin="0,0,10,0" Click="btn_TryQuery_Click" Visibility="Collapsed"/>
             <Button x:Name="btn_SaveQuery" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" Margin="0,0,10,0" Click="btn_SaveQuery_Click"/>
-            <Button x:Name="btn_CancelQuery" Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_CancelQuery_Click"/>
+            <Button x:Name="btn_CloseQueryBuilder" Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseQueryBuilder_Click"/>
             <TextBlock FontSize="14" VerticalAlignment="Center" Margin="40,0,0,0" Text="{x:Bind asi:ASILang.Get('SavedFilters'), Mode=OneWay}" Visibility="Collapsed" />
             <ComboBox x:Name="cbb_ExistingQueries" Margin="10,0,0,0" SelectionChanged="cbb_ExistingQueries_SelectionChanged" Visibility="Collapsed"></ComboBox>
             <Button x:Name="btn_LoadQuery" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_LoadQuery_Click" Visibility="Collapsed" IsEnabled="False"/>

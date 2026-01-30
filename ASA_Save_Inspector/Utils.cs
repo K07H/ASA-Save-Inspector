@@ -131,10 +131,10 @@ namespace ASA_Save_Inspector
         public static string AsiExportFastOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_fast.py");
         public static string AsiExportFastFilePath() => Path.Combine(GetDataDir(), "asi_export_fast.py");
         public static string PythonVenvSetupFilePath() => Path.Combine(GetDataDir(), "python_venv_setup.bat");
-        public static string PythonVenvTestScriptPath() => Path.Combine(GetDataDir(), "python_venv_test.py");
-        public static string PythonVenvTestBatchPath() => Path.Combine(GetDataDir(), "python_venv_test.bat");
+        public static string PythonTestScriptPath() => Path.Combine(GetDataDir(), "python_test.py");
         public static string ArkParseSetupFilePath() => Path.Combine(GetDataDir(), "arkparse_setup.bat");
         public static string ArkParseRunnerFilePath() => Path.Combine(GetDataDir(), "arkparse_runner.bat");
+        public static string ArkParseRequiresReinstallFilePath() => Path.Combine(GetDataDir(), "reinstall_arkparse.txt");
 
         public static readonly string[] FilterableTypes = new string[]
         {
