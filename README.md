@@ -10,16 +10,15 @@ Note: This application is still under development, more features will be added i
 2. [Demonstration video](#2-demonstration-video)
 3. [Installation](#3-installation)
 4. [Quick start](#4-quick-start)
-5. [Quick filters](#5-quick-filters)
-6. [Filters and groups](#6-filters-and-groups)
-   - 6.a [Filters](#6a-filters)
-   - 6.b [Groups](#6b-groups)
-   - 6.c [Good practices when using Filters and Groups](#6c-good-practices-when-using-filters-and-groups)
-   - 6.d [Default filters](#6d-default-filters)
-7. [Feature requests and bug reports](#7-feature-requests-and-bug-reports)
-8. [Contributing](#8-contributing)
-9. [Donations](#9-donations)
-10. [Discord](#10-discord)
+5. [Filters and groups](#5-filters-and-groups)
+   - 5.a [Filters](#5a-filters)
+   - 5.b [Groups](#5b-groups)
+   - 5.c [Good practices when using Filters and Groups](#5c-good-practices-when-using-filters-and-groups)
+   - 5.d [Default filters](#5d-default-filters)
+6. [Feature requests and bug reports](#6-feature-requests-and-bug-reports)
+7. [Contributing](#7-contributing)
+8. [Donations](#8-donations)
+9. [Discord](#9-discord)
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
@@ -43,14 +42,11 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
-## 5) Quick filters
-Use the dropdowns to quickly filter by tribe, item, dino or structure type. For more advanced filtering refer to [Filters and groups](#5-filters-and-groups).
+## 5) Filters and groups
 
-## 6) Filters and groups
+**This entire section 5 is now deprecated in ASI v3.** The filtering system as been fully reworked.
 
-This entire section 6) is now deprecated in ASI v3. The filtering system as been fully reworked.
-
-### 6.a) Filters
+### 5.a) Filters
 Filters are divided into 2 categories: "OR" and "AND".<br>
 When filtering happens, ASI will:
 1. filter the items using the "OR" filters, this gives the first subset.
@@ -69,7 +65,7 @@ The filters order does not matter. The result would be exactly the same if I had
 
 Currently set filters can be saved into a preset if you plan to use them later, or if you want to use groups (see below).
 
-### 6.b) Groups
+### 5.b) Groups
 Groups are divided into 2 categories: "OR" and "AND".<br>
 A group is composed of 1 or more filters preset.<br>
 When grouping happens, ASI will:
@@ -92,7 +88,7 @@ The filters presets order in the group does not matter. The result would be exac
 - OR "Filters preset 3".
 - AND "Filters preset 1".
 
-### 6.c) Good practices when using Filters and Groups
+### 5.c) Good practices when using Filters and Groups
 When you create a filters preset, it's a good practice to make sure all filters inside your preset have the same operator (either "OR", or "AND").<br>
 This will help you later on when using groups, because having different operators inside filters presets can quickly produce ambiguous results when you start combining your filters presets in a group (unless you understand exactly what's happening during filtering and grouping phases).
 
@@ -126,21 +122,21 @@ OR  FiltersPreset1  OR  FiltersPreset2  OR  FiltersPreset3<br>
 This will produce the following result:<br>
 (a AND b AND c) OR (j AND k) OR (x)<br>
 
-### 6.d) Default filters
+### 5.d) Default filters
 Some default filters are enabled by default on Dinos and Structures pages:
 * Dinos page: Only displays tamed dinos by default (IsTamed is True).
 * Structures page: Only displays structures belonging to a tribe (Tribe ID is greater than 49999).
 
 You can remove these default filters if you want to see wild dinos and structures.
 
-## 7) Feature requests and bug reports
+## 6) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## 8) Contributing
+## 7) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## 9) Donations
+## 8) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## 10) Discord
+## 9) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
