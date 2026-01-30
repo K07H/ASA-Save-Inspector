@@ -25,6 +25,12 @@
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
+        "Entry"
+        {
+        "MsmKey" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
     }
     "Configurations"
     {
@@ -152,6 +158,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FDF8228C89B2462E89FEEA646AABAFD7"
+            {
+            "SourcePath" = "8:..\\MSI_Banner.png"
+            "TargetName" = "8:MSI_Banner.png"
+            "Tag" = "8:"
+            "Folder" = "8:_A28A7D2174034FE08BE4BC4B2020D1D4"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -219,15 +245,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:ASA Save Inspector"
-        "ProductCode" = "8:{C60F2147-51AD-4B37-A9DB-31AB015C49E9}"
-        "PackageCode" = "8:{4F2DE318-7FFE-4890-929F-425858AF159F}"
+        "ProductCode" = "8:{6CA6E982-82A4-44BA-8A13-F7944B2CBF47}"
+        "PackageCode" = "8:{DFE9DE61-BB1B-4708-BEC3-1F5D7549E23A}"
         "UpgradeCode" = "8:{B65B2160-517F-460B-B390-1A122F173571}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.5.0"
+        "ProductVersion" = "8:3.0.0"
         "Manufacturer" = "8:OSubMarin (LC-IT S.)"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:https://discord.gg/dPgTprNyn9"
@@ -395,7 +421,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "ShowProgress"
@@ -439,7 +466,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "UpdateText"
@@ -450,8 +478,8 @@
                             "Type" = "3:15"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1258"
+                            "Setting" = "3:2"
+                            "Value" = "8:Join us on Discord: [ARPHELPLINK]"
                             "DefaultValue" = "8:#1258"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -483,7 +511,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "ShowProgress"
@@ -527,7 +556,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -549,7 +579,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "CopyrightWarning"
@@ -597,7 +628,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -628,7 +660,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "InstallAllUsersVisible"
@@ -663,7 +696,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "CopyrightWarning"
@@ -711,7 +745,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -754,7 +789,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_FDF8228C89B2462E89FEEA646AABAFD7"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -769,7 +805,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_D4D391FF0FF44E41A93AD0750ECB68CB"
             {
-            "SourcePath" = "8:..\\ASA_Save_Inspector\\obj\\x64\\Release\\net8.0-windows10.0.19041.0\\win-x64\\apphost.exe"
+            "SourcePath" = "8:..\\ASA_Save_Inspector\\obj\\x86\\Release\\net8.0-windows10.0.19041.0\\win-x86\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A28A7D2174034FE08BE4BC4B2020D1D4"

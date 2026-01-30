@@ -217,7 +217,7 @@ namespace ASA_Save_Inspector.Pages
                 btn_DeleteQuery.Visibility = Visibility.Visible;
             }
             SearchBuilder.InitSearch(SearchType.DINOS);
-            
+
             // Init default presets.
             //InitDefaultPresets();
 
