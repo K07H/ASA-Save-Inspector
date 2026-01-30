@@ -11,7 +11,7 @@ Note: This application is still under development, more features will be added i
 3. [Installation](#3-installation)
 4. [Quick start](#4-quick-start)
 5. [Quick filters](#5-quick-filters)
-6. [Filters and groups](#5-filters-and-groups)
+6. [Filters and groups](#6-filters-and-groups)
    - 6.a [Filters](#6a-filters)
    - 6.b [Groups](#6b-groups)
    - 6.c [Good practices when using Filters and Groups](#6c-good-practices-when-using-filters-and-groups)
