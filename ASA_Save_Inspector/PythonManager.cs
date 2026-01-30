@@ -635,8 +635,8 @@ SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._py
 ""{0}"" -m pip install --upgrade rcon
 ""{0}"" -m pip install numpy
 ""{0}"" -m pip install --upgrade numpy
-""{0}"" -m pip install matplotlib
-""{0}"" -m pip install --upgrade matplotlib
+""{0}"" -m pip install matplotlib --prefer-binary
+""{0}"" -m pip install --upgrade matplotlib --prefer-binary
 ""{0}"" -m pip install pandas
 ""{0}"" -m pip install --upgrade pandas
 ""{0}"" -m pip install -e .
