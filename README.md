@@ -33,10 +33,9 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 1. Download and install the following two requirements:<br>
 [.NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)<br>
 [Python 3](https://www.python.org/downloads/)<br>
-2. Download the latest release archive here: https://github.com/K07H/ASA-Save-Inspector/releases<br>
-*You can choose x64, x86 or ARM-x64 (if you don't know which one to download, simply get the x64 one).*
-3. Once the archive is downloaded, extract it. This will give you a folder containing the executable.
-4. Double click on the executable to launch ASA Save Inspector.
+2. Download the latest release here: https://github.com/K07H/ASA-Save-Inspector/releases<br>
+*You can choose either x64 or x86 installer (if you don't know which one to download, simply get the x64 one).*
+3. Once the installer is downloaded, launch it and follow the installation guide.
 
 ## 4) Quick start
 1. Launch ASA Save Inspector, then click on "Settings" in the left menu.
