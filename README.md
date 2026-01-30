@@ -48,6 +48,9 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 Use the dropdowns to quickly filter by tribe, item, dino or structure type. For more advanced filtering refer to [Filters and groups](#5-filters-and-groups).
 
 ## 6) Filters and groups
+
+This entire section 6) is now deprecated in ASI v3. The filtering system as been fully reworked.
+
 ### 6.a) Filters
 Filters are divided into 2 categories: "OR" and "AND".<br>
 When filtering happens, ASI will:
