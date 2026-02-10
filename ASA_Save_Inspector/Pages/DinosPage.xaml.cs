@@ -3037,6 +3037,27 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
+        public static bool ApplyCurrentQuery()
+        {
+            if (_page == null)
+            {
+                MainWindow.ShowToast(ASILang.Get("PageNotFound") + " (Dinos)", BackgroundColor.WARNING);
+                return false;
+            }
+
+            _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                if (SearchBuilder._query != null && SearchBuilder._query.Parts != null && SearchBuilder._query.Parts.Count > 0)
+                {
+                    _page.ApplyFiltersAndSort();
+                    MainWindow.ShowToast(ASILang.Get("FilterLoaded"), BackgroundColor.SUCCESS);
+                }
+                else
+                    MainWindow.ShowToast(ASILang.Get("EmptyFilter"), BackgroundColor.WARNING);
+            });
+            return true;
+        }
+
         private void btn_LoadQuery_Click(object sender, RoutedEventArgs e)
         {
             string? selected = Utils.GetComboBoxSelection(cbb_ExistingQueries, false);

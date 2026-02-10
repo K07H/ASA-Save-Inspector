@@ -9,11 +9,6 @@
         public int? id2 { get; set; }
     }
 
-    public partial class FoliageGenerationInfo
-    {
-        public CustomList<object?>? properties { get; set; }
-    }
-
     public partial class SaddleStructure
     {
         public string? bone_name { get; set; }
@@ -35,10 +30,13 @@
         public bool? AtePremiumFood { get; set; }
         public CustomList<TypeStringValue?>? AttachedCarts { get; set; }
         public CustomList<int?>? AttachedCartsIDs { get; set; }
+        public bool? AutoFrightenInTurretMode { get; set; }
+        public int? AutoMesmerizeDragWeightIndex { get; set; }
         public double? BabyAge { get; set; }
         public TypeStringValue? BabyCuddleFood { get; set; }
         public NameStringValue? BabyCuddleType { get; set; }
         public Vector? BabyCuddleWalkStartingLocation { get; set; }
+        public double? BabyGestationProgress { get; set; }
         public double? BabyNextCuddleTime { get; set; }
         public Properties? BackpackSaveData { get; set; }
         public NameStringValue? BackplateMode { get; set; }
@@ -48,24 +46,30 @@
         public bool? bAttemptTeleportToSurface { get; set; }
         public bool? bAutoChargeActive { get; set; }
         public bool? bBabyInitiallyUnclaimed { get; set; }
+        public bool? bBonesHidden { get; set; }
         public bool? bCanBeDamaged { get; set; }
         public bool? bChargeInfusedWebsModeOn { get; set; }
+        public bool? bCheatForceTameRide { get; set; }
         public bool? bClimberRestoreToAttached { get; set; }
         public bool? bCollectVictimItems { get; set; }
         public bool? bCuddleRequestRefreshed { get; set; }
         public bool? bDinoHasBonded { get; set; }
+        public bool? bDisableHarvesting { get; set; }
         public bool? bDontWander { get; set; }
         public bool? bDroppedItemCollectionEnabled { get; set; }
+        public TypeStringValue? BeeHiveRef { get; set; }
         public bool? bEnableTamedMating { get; set; }
         public bool? bEnableTamedWandering { get; set; }
         public bool? bForceActivateAtMaxCharge { get; set; }
         public bool? bForceDisablingTaming { get; set; }
         public bool? bForcePreventExitingWater { get; set; }
         public bool? bHadStaticBase { get; set; }
+        public bool? bHadStaticMapActorBase { get; set; }
         public bool? bIgnoreAllWhistles { get; set; }
         public bool? bIgnoreAllyLook { get; set; }
         public bool? bIgnoreNPCCountVolumes_0x0 { get; set; }
         public bool? bIncrementedZoneManagerDirectLink { get; set; }
+        public bool? bIrrigationEnabled { get; set; }
         public bool? bIsAWildFollowerKnownServerside { get; set; }
         public bool? bIsBaby { get; set; }
         public bool? bIsBotIdle { get; set; }
@@ -74,24 +78,32 @@
         public bool? bIsDead { get; set; }
         public bool? bIsFemale { get; set; }
         public bool? bIsFlying { get; set; }
+        public bool? bIsHidden { get; set; }
         public bool? bIsInRaftMode { get; set; }
         public bool? bIsInTurretMode { get; set; }
         public bool? bIsLatched { get; set; }
+        public bool? bIsLatchedDownward { get; set; }
         public bool? bIsLazing { get; set; }
+        public bool? bIsLifeStealing { get; set; }
         public bool? bIsNaturallySleeping { get; set; }
         public bool? bIsNursing { get; set; }
+        public bool? Bison { get; set; }
         public bool? bIsParentWildDino { get; set; }
+        public bool? bIsRiding { get; set; }
         public bool? bIsSleeping { get; set; }
         public bool? bIsSmallLion { get; set; }
         public bool? bIsUnderground { get; set; }
         public bool? bIsUsingCamo { get; set; }
         public double? BiteCorpseTime { get; set; }
+        public int? blazeMode { get; set; }
         public bool? bNeutered { get; set; }
+        public bool? bNoKillXP { get; set; }
         public bool? bNurseVisualActive { get; set; }
         public CustomList<BondedDinoData?>? BondedDinoData { get; set; }
         public bool? bOnlyTargetConscious { get; set; }
         public bool? bPassiveFlee { get; set; }
         public bool? bPreventHibernation { get; set; }
+        public bool? bRestoreToLatched { get; set; }
         public bool? bRestoreToSeeking { get; set; }
         public bool? bSavedWhenStasised { get; set; }
         public bool? bServerInitializedDino { get; set; }
@@ -99,7 +111,10 @@
         public bool? bTamedAIAllowSpecialAttacks { get; set; }
         public bool? bTargetingIgnoredByWildDinos { get; set; }
         public bool? bTargetingIgnoreWildDinos { get; set; }
+        public bool? bThreatSenseOn { get; set; }
         public bool? bTimersAreInUTC { get; set; }
+        public bool? bWarnOfHighLevelDinos { get; set; }
+        public bool? bWarnOfPlayers { get; set; }
         public TypeStringValue? CharacterSavedDynamicBase { get; set; }
         public Vector? CharacterSavedDynamicBaseRelativeLocation { get; set; }
         public Quaternion? CharacterSavedDynamicBaseRelativeRotation { get; set; }
@@ -116,28 +131,44 @@
         public string? CurrentBackpackType { get; set; }
         public int? CurrentBotMode { get; set; }
         public NameStringValue? CurrentDefaultWhistleSkill { get; set; }
+        public double? CurrentEyeHealth { get; set; }
+        public double? CurrentFeathers { get; set; }
+        public int? currentHuntingMode { get; set; }
+        public double? CurrentLeftEyeHealth { get; set; }
         public int? CurrentLevel { get; set; }
         public NameStringValue? CurrentMoralSupportState { get; set; }
         public TypeStringValue? CurrentNest { get; set; }
         public int? CurrentResinProjType { get; set; }
+        public int? CurrentRiderBonusPlayerID { get; set; }
+        public int? CurrentRiderBonusStacks { get; set; }
+        public double? CurrentRightEyeHealth { get; set; }
         public NameStringValue? CurrentShortDistanceSubBehavior { get; set; }
+        public double? currentSleepDebt { get; set; }
         public int? CurrentSpecificHarvestResourceIndex { get; set; }
+        public TypeStringValue? CurrentSpike { get; set; }
         public double? CurrentTameAffinity { get; set; }
+        public int? CurrentTertiaryAbility { get; set; }
+        public int? CurrentThrallMode { get; set; }
         public double? CurrentTrackDistance { get; set; }
         public int? currentWebWeaponAmmo { get; set; }
         public CustomList<double?>? DigestionPool { get; set; }
         public CustomList<DinoAncestor?>? DinoAncestors { get; set; }
         public CustomList<DinoAncestor?>? DinoAncestorsMale { get; set; }
+        public TypeStringValue? DinoBeingRidden { get; set; }
         public double? DinoDownloadedAtTime { get; set; }
         public int? DinoID1 { get; set; }
         public int? DinoID2 { get; set; }
         public TypeStringValue? DirectLinkNPCZoneManager { get; set; }
         public Vector? DockingBayLocation { get; set; }
         public bool? DontDoMaterialSpawning { get; set; }
+        public int? DynamicMaterialBytes { get; set; }
         public double? EmotionLevel { get; set; }
+        public int? EMPRoarDisdainStacks { get; set; }
+        public bool? EnablePoopSearch { get; set; }
         public CustomList<string?>? EventTags { get; set; }
+        public int? ExLivesUsed { get; set; }
         public int? FireSourceIndex { get; set; }
-        public FoliageGenerationInfo? FoliageGenerationInfo { get; set; }
+        public Properties? FoliageGenerationInfo { get; set; }
         public CustomList<int?>? FoliageInventorySavedQuantities { get; set; }
         public int? FollowStoppingDistance { get; set; }
         public double? ForcedWildBabyAge { get; set; }
@@ -145,6 +176,7 @@
         public Properties? FriendStartTransform { get; set; }
         public double? FuelLevel { get; set; }
         public double? FuelPercent { get; set; }
+        public int? FuelReserve { get; set; }
         public CustomList<string?>? GeneTraits { get; set; }
         public int? GestationEggNumberOfLevelUpPointsApplied { get; set; }
         public int? GestationEggNumberOfMutationsApplied { get; set; }
@@ -154,6 +186,7 @@
         public TypeStringValue? HardLimitWildDinoToVolume { get; set; }
         public CustomList<int?>? HarvestResourceLevels { get; set; }
         public bool? HasSpawnedAHiveBefore { get; set; }
+        public double? HeatLevel { get; set; }
         public string? ImprinterName { get; set; }
         public string? ImprinterPlayerUniqueNetId { get; set; }
         public TypeStringValue? Instigator { get; set; }
@@ -167,6 +200,7 @@
         public double? LastBeaverDamSpawn { get; set; }
         public double? LastEggSpawnChanceTime { get; set; }
         public double? LastEnterStasisTime { get; set; }
+        public double? LastEyeHealthDepletedTime { get; set; }
         public double? LastFeatherPluckTime { get; set; }
         public TypeIntValue? LastFriend { get; set; }
         public int? LastFriendTeam { get; set; }
@@ -174,18 +208,24 @@
         public TypeStringValue? LastLatchedISMC { get; set; }
         public int? LastLatchedISMCBodyIndex { get; set; }
         public double? LastMilkProductionTime { get; set; }
+        public double? LastNoZombieFollowersTime { get; set; }
         public double? LastReincarnateTime { get; set; }
+        public int? LastSelectedFoodIndex { get; set; }
         public double? LastSkinnedTime { get; set; }
+        public double? LastSpikeSpawnTime { get; set; }
         public int? LastStackCount { get; set; }
         public double? LastStaminaUpdate { get; set; }
         public double? LastTameConsumedFoodTime { get; set; }
+        public double? LastTamingProgressTime { get; set; }
         public double? LastTimeFinishedTraining { get; set; }
         public double? LastTimeHarvested { get; set; }
         public double? LastTimeSheared { get; set; }
+        public double? LastTimeSpawnedOrRecruitedZombieFollowers { get; set; }
         public double? LastTimeSwimming_Algae { get; set; }
         public double? LastTimeUpdatedCharacterStatusComponent { get; set; }
         public double? LastTimeUpdatedCorpseDestructionTime { get; set; }
         public CustomList<double?>? LastTimeUsedSkillsArray { get; set; }
+        public double? LastTransferMilkProductionCooldownPercent { get; set; }
         public double? LastUnstasisStructureTime { get; set; }
         public double? LastUpdate { get; set; }
         public double? LastUpdatedBabyAgeAtTime { get; set; }
@@ -197,8 +237,11 @@
         public Vector? LatchingSurfaceNormal { get; set; }
         public Properties? LatchTargetTransform { get; set; }
         public string? LatestUploadedFromServerName { get; set; }
+        public int? LightConeAngleIndex { get; set; }
         public int? LimitWildDinoToVolumenIndex { get; set; }
         public string? LimitWildDinoToVolumenTag { get; set; }
+        public int? ManuallySetEyelightIndex { get; set; }
+        public TypeStringValue? Materialsset { get; set; }
         public int? MoschLevelUpsAvailable { get; set; }
         public string? MutatedStatPoints { get; set; }
         public TypeStringValue? MyAIData { get; set; }
@@ -206,7 +249,10 @@
         public TypeStringValue? MyDeathHarvestingComponent { get; set; }
         public TypeStringValue? MyDockingBay { get; set; }
         public TypeStringValue? MyTrack { get; set; }
+        public double? NetworkCreationTime { get; set; }
         public double? NextAllowedMatingTime { get; set; }
+        public CustomList<DinoAncestor?>? NextBabyDinoAncestors { get; set; }
+        public CustomList<DinoAncestor?>? NextBabyDinoAncestorsMale { get; set; }
         public double? NumOfFishHarvestedSoFarRare { get; set; }
         public double? NumOfFishHarvestedSoFarReg { get; set; }
         public int? NumTimesTrained { get; set; }
@@ -218,11 +264,15 @@
         public int? OwningPlayerID { get; set; }
         public string? OwningPlayerName { get; set; }
         public TypeStringValue? PaintingComponent { get; set; }
+        public int? PatrolGroupID { get; set; }
+        public Vector? PatrolGroupOffset { get; set; }
         public int? pickPocketingMode { get; set; }
+        public CustomList<TypeIntValue?>? PlacedIceBridges { get; set; }
         public string? PreviousUploadedFromServerName { get; set; }
         public int? ProductionMode { get; set; }
         public int? RandomMutationsFemale { get; set; }
         public int? RandomMutationsMale { get; set; }
+        public double? RawBoneModifiers { get; set; }
         public double? RequiredTameAffinity { get; set; }
         public int? RequiredTamingFoodIndex { get; set; }
         public double? ReserveFuelPercent { get; set; }
@@ -233,7 +283,12 @@
         public int? SaveDestroyWildDinosUnderVersion { get; set; }
         public double? SavedLastConsumeStoredXPCooldown { get; set; }
         public int? SavedLastValidTameVersion { get; set; }
+        public CustomList<TypeStringValue?>? SavedPassengerPerSeat { get; set; }
+        public TypeStringValue? SeatingStructure { get; set; }
+        public int? SeatingStructureSeatNumber { get; set; }
         public string? ShortName { get; set; }
+        public TypeStringValue? StaticMeshMaterial { get; set; }
+        public TypeStringValue? StaticMeshset { get; set; }
         public string? StatValues { get; set; }
         public double? StoredXP { get; set; }
         public TypeObjectValue? SubmarineStructure { get; set; }
@@ -258,11 +313,14 @@
         public string? TribeName { get; set; }
         public bool? TrunkHasWater { get; set; }
         public int? UndergroundVisState { get; set; }
+        public double? Unknown_4 { get; set; }
+        public int? Unknown_58 { get; set; }
         public double? UnknownName_00000004 { get; set; }
         public int? UnknownName_0000003A { get; set; }
         public TypeIntValue? UnknownProperty { get; set; }
         public double? UntamedPoopTimeCache { get; set; }
         public string? UploadedFromServerName { get; set; }
+        public bool? UseAutoMesmerize { get; set; }
         public string? UUID { get; set; }
         public double? WanderRadiusMultiplier { get; set; }
         public NameStringValue? WarningMode { get; set; }
@@ -273,6 +331,7 @@
         public TypeStringValue? WildLimitTargetVolume { get; set; }
         public double? WildRandomScale { get; set; }
         public Properties? WildRidingStartTransform { get; set; }
+        public CustomList<TypeStringValue?>? ZombieFollowers { get; set; }
     }
 
 }

@@ -346,9 +346,26 @@ namespace ASA_Save_Inspector.Pages
             PropertyInfo? prop = Utils.GetProperty(typeof(Item), "OwnerInventoryUUID");
             if (prop != null)
             {
-                _group.Clear();
-                _filters.Clear();
-                _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = inventoryUUID }));
+                if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
+                {
+                    _group.Clear();
+                    _filters.Clear();
+                    _filters.Add(new KeyValuePair<PropertyInfo, Filter>(prop, new Filter() { FilterOperator = FilterOperator.AND, FilterType = FilterType.CONTAINING, FilterValue = inventoryUUID }));
+                }
+                else
+                {
+                    SearchBuilder._query = new SearchQuery() { Parts = new List<SearchQueryPart>() {
+                        new SearchQueryPart()
+                        {
+                            Type = SearchType.ITEMS,
+                            LogicalOperator = LogicalOperator.AND,
+                            Operator = SearchOperator.MATCHING,
+                            PropertyName = "OwnerInventoryUUID",
+                            PropertyCleanName = ItemUtils.GetCleanNameFromPropertyName("OwnerInventoryUUID"),
+                            Value = inventoryUUID
+                        }
+                    } };
+                }
                 ApplyFiltersAndSort();
             }
             return true;
@@ -3008,6 +3025,27 @@ namespace ASA_Save_Inspector.Pages
                 btn_EditQuery.IsEnabled = false;
                 btn_DeleteQuery.IsEnabled = false;
             }
+        }
+
+        public static bool ApplyCurrentQuery()
+        {
+            if (_page == null)
+            {
+                MainWindow.ShowToast(ASILang.Get("PageNotFound") + " (Items)", BackgroundColor.WARNING);
+                return false;
+            }
+
+            _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                if (SearchBuilder._query != null && SearchBuilder._query.Parts != null && SearchBuilder._query.Parts.Count > 0)
+                {
+                    _page.ApplyFiltersAndSort();
+                    MainWindow.ShowToast(ASILang.Get("FilterLoaded"), BackgroundColor.SUCCESS);
+                }
+                else
+                    MainWindow.ShowToast(ASILang.Get("EmptyFilter"), BackgroundColor.WARNING);
+            });
+            return true;
         }
 
         private void btn_LoadQuery_Click(object sender, RoutedEventArgs e)

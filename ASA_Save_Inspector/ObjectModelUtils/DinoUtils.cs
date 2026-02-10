@@ -179,23 +179,33 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "LastEggSpawnChanceTimeReadable",
             "LastEnterStasisTime",
             "LastEnterStasisTimeReadable",
+            "LastEyeHealthDepletedTime",
+            "LastEyeHealthDepletedTimeReadable",
             "LastFeatherPluckTime",
             "LastFeatherPluckTimeReadable",
             "LastInAllyRangeSerialized",
             "LastMilkProductionTime",
             "LastMilkProductionTimeReadable",
+            "LastNoZombieFollowersTime",
+            "LastNoZombieFollowersTimeReadable",
             "LastReincarnateTime",
             "LastReincarnateTimeReadable",
             "LastSkinnedTime",
             "LastSkinnedTimeReadable",
+            "LastSpikeSpawnTime",
+            "LastSpikeSpawnTimeReadable",
             "LastTameConsumedFoodTime",
             "LastTameConsumedFoodTimeReadable",
+            "LastTamingProgressTime",
+            "LastTamingProgressTimeReadable",
             "LastTimeFinishedTraining",
             "LastTimeFinishedTrainingReadable",
             "LastTimeHarvested",
             "LastTimeHarvestedReadable",
             "LastTimeSheared",
             "LastTimeShearedReadable",
+            "LastTimeSpawnedOrRecruitedZombieFollowers",
+            "LastTimeSpawnedOrRecruitedZombieFollowersReadable",
             "LastTimeSwimming_Algae",
             "LastTimeSwimming_AlgaeReadable",
             "LastTimeUpdatedCharacterStatusComponent",
@@ -221,6 +231,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "MapCoords",
             "MutatedStatPoints",
             "MyCharacterStatusComponent",
+            "NetworkCreationTime",
+            "NetworkCreationTimeReadable",
             "NextAllowedMatingTime",
             "NextAllowedMatingTimeReadable",
             "NumTimesTrained",
@@ -266,15 +278,6 @@ namespace ASA_Save_Inspector.ObjectModel
         public int CompareTo(BondedDinoData? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         public override string ToString() => $"dino_class={(dino_class ?? string.Empty)} dino_name={(dino_name ?? string.Empty)} id1={(id1 != null && id1.HasValue ? id1.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} id2={(id2 != null && id2.HasValue ? id2.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)}";
-    }
-
-    public partial class FoliageGenerationInfo : IComparable, IComparable<FoliageGenerationInfo>
-    {
-        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
-
-        public int CompareTo(FoliageGenerationInfo? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
-
-        public override string ToString() => properties != null && properties.Count > 0 ? properties.ToString() : string.Empty;
     }
 
     public partial class SaddleStructure : IComparable, IComparable<SaddleStructure>
@@ -582,6 +585,12 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? LastEyeHealthDepletedTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastEyeHealthDepletedTime); }
+            private set { }
+        }
+
         public DateTime? LastFeatherPluckTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastFeatherPluckTime); }
@@ -591,6 +600,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public DateTime? LastMilkProductionTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastMilkProductionTime); }
+            private set { }
+        }
+
+        public DateTime? LastNoZombieFollowersTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastNoZombieFollowersTime); }
             private set { }
         }
 
@@ -606,9 +621,21 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? LastSpikeSpawnTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastSpikeSpawnTime); }
+            private set { }
+        }
+
         public DateTime? LastTameConsumedFoodTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastTameConsumedFoodTime); }
+            private set { }
+        }
+
+        public DateTime? LastTamingProgressTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTamingProgressTime); }
             private set { }
         }
 
@@ -627,6 +654,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public DateTime? LastTimeShearedReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastTimeSheared); }
+            private set { }
+        }
+
+        public DateTime? LastTimeSpawnedOrRecruitedZombieFollowersReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastTimeSpawnedOrRecruitedZombieFollowers); }
             private set { }
         }
 
@@ -702,6 +735,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public DateTime? LastWildNestSpawnTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastWildNestSpawnTime); }
+            private set { }
+        }
+
+        public DateTime? NetworkCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NetworkCreationTime); }
             private set { }
         }
 

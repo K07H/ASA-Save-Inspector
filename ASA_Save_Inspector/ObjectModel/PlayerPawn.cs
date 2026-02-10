@@ -27,6 +27,8 @@
         public string? ClassName { get; set; }
         public TypeStringValue? CurrentWeapon { get; set; }
         public ItemID? CurrentWeaponItemID { get; set; }
+        public int? DynamicFaceIndex { get; set; }
+        public int? DynamicFaceMaterialBytes { get; set; }
         public int? DynamicMaterialBytes { get; set; }
         public int? DynamicOverrideHairDyeBytes { get; set; }
         public int? EyebrowCustomCosmeticModID { get; set; }
@@ -44,6 +46,7 @@
         public TypeStringValue? MyCharacterStatusComponent { get; set; }
         public int? NumAscensions { get; set; }
         public int? NumAscensionsAb { get; set; }
+        public int? NumAscensionsExt { get; set; }
         public int? NumAscensionsScorched { get; set; }
         public int? NumChibiLevelUps { get; set; }
         public double? OriginalCreationTime { get; set; }
@@ -57,10 +60,12 @@
         public TypeStringValue? Player_Voice_Collection { get; set; }
         public string? PlayerName { get; set; }
         public double? RawBoneModifiers { get; set; }
+        public CustomList<string?>? SavedDeathAnim { get; set; }
         public double? SavedLastTimeHadController { get; set; }
         public CustomList<string?>? SavedSleepAnim { get; set; }
         public TypeStringValue? SeatingStructure { get; set; }
         public int? SeatingStructureSeatNumber { get; set; }
+        public CustomList<Properties?>? SkillCooldowns { get; set; }
         public int? TargetingTeam { get; set; }
         public string? TribeName { get; set; }
         public string? UUID { get; set; }

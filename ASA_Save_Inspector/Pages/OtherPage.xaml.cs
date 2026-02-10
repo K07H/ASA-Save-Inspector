@@ -28,7 +28,7 @@ namespace ASA_Save_Inspector.Pages
             AdjustToSizeChange();
 
             cb_AppTheme.IsChecked = (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
-            cb_AppTheme.Checked += cb_AppTheme_Unchecked;
+            cb_AppTheme.Checked += cb_AppTheme_Checked;
             cb_AppTheme.Unchecked += cb_AppTheme_Unchecked;
 
             cb_LegacySearch.IsChecked = (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value);

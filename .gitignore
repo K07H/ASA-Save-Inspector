@@ -17,3 +17,7 @@ ASI_certificate.txt
 ASA_Save_Inspector/ASA_Save_Inspector.csproj.user
 *.pubxml.user
 UpgradeLog.htm
+/ASA_Save_Inspector_ObjectModel
+/json2csharp
+/ObjectModel
+ASI_ObjectModel.sln

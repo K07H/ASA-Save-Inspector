@@ -83,6 +83,10 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "ItemArchetype",
             "LastActivatedTime",
             "LastActivatedTimeReadable",
+            "LastAppliedEffectTime",
+            "LastAppliedEffectTimeReadable",
+            "LastAttachedDinoTime",
+            "LastAttachedDinoTimeReadable",
             "LastAutoDurabilityDecreaseTime",
             "LastAutoDurabilityDecreaseTimeReadable",
             "LastCheckedFuelTime",
@@ -97,6 +101,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "LastEnterStasisTimeReadable",
             "LastFireTime",
             "LastFireTimeReadable",
+            "LastHarvestedTime",
+            "LastHarvestedTimeReadable",
             "LastInAllyRangeTimeSerialized",
             "LastInAllyRangeTimeSerializedReadable",
             "LastInventoryRefreshTime",
@@ -108,6 +114,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "MapCoords",
             "NetDestructionTime",
             "NetDestructionTimeReadable",
+            "NetOrigCreationTime",
+            "NetOrigCreationTimeReadable",
             "NextAllowedUseTime",
             "NextAllowedUseTimeReadable",
             "NextBoostActivationTime",
@@ -144,15 +152,6 @@ namespace ASA_Save_Inspector.ObjectModel
         public int CompareTo(CustomFolderItem? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
 
         public override string ToString() => $"name={(name ?? string.Empty)} inventory_comp_type={(inventory_comp_type != null && inventory_comp_type.HasValue ? inventory_comp_type.Value.ToString(CultureInfo.InvariantCulture) : string.Empty)} custom_folder_ids={Utils.JoinObjectsToString(custom_folder_ids)}";
-    }
-
-    public partial class WirelessExchangeRefs : IComparable, IComparable<WirelessExchangeRefs>
-    {
-        public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
-
-        public int CompareTo(WirelessExchangeRefs? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
-
-        public override string ToString() => $"properties={Utils.JoinObjectsToString(properties)}";
     }
 
     public partial class StoredTrait : IComparable, IComparable<StoredTrait>
@@ -228,6 +227,18 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? LastAppliedEffectTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastAppliedEffectTime); }
+            private set { }
+        }
+
+        public DateTime? LastAttachedDinoTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastAttachedDinoTime); }
+            private set { }
+        }
+
         public DateTime? LastAutoDurabilityDecreaseTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastAutoDurabilityDecreaseTime); }
@@ -270,6 +281,12 @@ namespace ASA_Save_Inspector.ObjectModel
             private set { }
         }
 
+        public DateTime? LastHarvestedTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(LastHarvestedTime); }
+            private set { }
+        }
+
         public DateTime? LastInAllyRangeTimeSerializedReadable
         {
             get { return Utils.GetDateTimeFromGameTime(LastInAllyRangeTimeSerialized); }
@@ -291,6 +308,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public DateTime? NetDestructionTimeReadable
         {
             get { return Utils.GetDateTimeFromGameTime(NetDestructionTime); }
+            private set { }
+        }
+
+        public DateTime? NetOrigCreationTimeReadable
+        {
+            get { return Utils.GetDateTimeFromGameTime(NetOrigCreationTime); }
             private set { }
         }
 

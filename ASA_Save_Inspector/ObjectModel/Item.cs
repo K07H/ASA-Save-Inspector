@@ -3,6 +3,7 @@
 
     public partial class Item
     {
+        public NameStringValue? AccessorySlotOverride { get; set; }
         public double? Armor { get; set; }
         public int? AssociatedDinoID1 { get; set; }
         public int? AssociatedDinoID2 { get; set; }
@@ -13,23 +14,33 @@
         public bool? bEquippedItem { get; set; }
         public bool? bForcePreventGrinding { get; set; }
         public bool? bHideFromInventoryDisplay { get; set; }
+        public bool? bHideFromRemoteInventoryDisplay { get; set; }
         public bool? bIsBlueprint { get; set; }
         public bool? bIsClubArkReward { get; set; }
+        public bool? bIsEngram { get; set; }
+        public bool? bIsEquipped { get; set; }
+        public bool? bIsFromClubArk { get; set; }
         public bool? bIsInitialItem { get; set; }
+        public bool? bIsSlot { get; set; }
         public bool? bNetInfoFromClient { get; set; }
         public bool? bSavedWhenStasised { get; set; }
+        public int? ChibiLevel { get; set; }
+        public double? ChibiXP { get; set; }
         public string? ClassName { get; set; }
         public double? CraftedSkillBonus { get; set; }
         public string? CrafterCharacterName { get; set; }
         public string? CrafterTribeName { get; set; }
+        public double? CraftingSkill { get; set; }
         public int? CraftQueue { get; set; }
         public double? CreationTime { get; set; }
+        public CustomList<object?>? CustomColors { get; set; }
         public int? CustomCosmeticModSkinReplacementID { get; set; }
         public TypeObjectValue? CustomCosmeticModSkinReplacementOriginalClass { get; set; }
         public int? CustomCosmeticModSkinVariantID { get; set; }
         public CustomList<CustomItemData?>? CustomItemDatas { get; set; }
         public string? CustomItemDescription { get; set; }
         public string? CustomItemName { get; set; }
+        public CustomList<object?>? CustomResourceRequirements { get; set; }
         public double? Damage { get; set; }
         public string? DroppedByName { get; set; }
         public int? DroppedByPlayerID { get; set; }
@@ -49,11 +60,13 @@
         public string? ItemArchetype { get; set; }
         public int? ItemColorID { get; set; }
         public TypeObjectValue? ItemCustomClass { get; set; }
+        public double? ItemDurability { get; set; }
         public ItemID? ItemID { get; set; }
         public int? ItemQualityIndex { get; set; }
         public int? ItemQuantity { get; set; }
         public double? ItemRating { get; set; }
         public TypeObjectValue? ItemSkinTemplate { get; set; }
+        public double? ItemStatClampsMultiplier { get; set; }
         public int? ItemVersion { get; set; }
         public double? LastAutoDurabilityDecreaseTime { get; set; }
         public double? LastEnterStasisTime { get; set; }

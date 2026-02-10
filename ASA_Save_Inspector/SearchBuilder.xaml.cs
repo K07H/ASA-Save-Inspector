@@ -487,7 +487,7 @@ namespace ASA_Save_Inspector
                 {
                     if (!string.IsNullOrEmpty(p.Name))
                     {
-                        string? cleanName = DinoUtils.GetCleanNameFromPropertyName(p.Name);
+                        string? cleanName = GetCleanNameFromPropName(p.Name);
                         if (!string.IsNullOrEmpty(cleanName))
                         {
                             toAdd.Add(cleanName);
@@ -504,6 +504,24 @@ namespace ASA_Save_Inspector
                 }
                 toAdd.Clear();
             }
+        }
+
+        private string? GetCleanNameFromPropName(string propName)
+        {
+            string? result = null;
+            if (_searchType == SearchType.PAWNS)
+                result = PlayerPawnUtils.GetCleanNameFromPropertyName(propName);
+            else if (_searchType == SearchType.DINOS)
+                result = DinoUtils.GetCleanNameFromPropertyName(propName);
+            else if (_searchType == SearchType.STRUCTURES)
+                result = StructureUtils.GetCleanNameFromPropertyName(propName);
+            else if (_searchType == SearchType.ITEMS)
+                result = ItemUtils.GetCleanNameFromPropertyName(propName);
+            else if (_searchType == SearchType.PLAYERS)
+                result = PlayerUtils.GetCleanNameFromPropertyName(propName);
+            else if (_searchType == SearchType.TRIBES)
+                result = TribeUtils.GetCleanNameFromPropertyName(propName);
+            return result;
         }
 
         private IEnumerable<object?>? GetData(SearchType type)
@@ -1014,6 +1032,33 @@ namespace ASA_Save_Inspector
 
             UpdateBtnsStates();
             ShowQuery();
+        }
+
+        private void btn_ApplyQuery_Click(object sender, RoutedEventArgs e)
+        {
+            if (_query == null || _query.Parts == null || _query.Parts.Count <= 0)
+            {
+                SearchBuilder.ShowToast(ASILang.Get("EmptyFilter"), BackgroundColor.WARNING);
+                return;
+            }
+
+            if (_searchType == SearchType.PAWNS)
+                PlayerPawnsPage.ApplyCurrentQuery();
+            else if (_searchType == SearchType.DINOS)
+                DinosPage.ApplyCurrentQuery();
+            else if (_searchType == SearchType.STRUCTURES)
+                StructuresPage.ApplyCurrentQuery();
+            else if (_searchType == SearchType.ITEMS)
+                ItemsPage.ApplyCurrentQuery();
+            else if (_searchType == SearchType.PLAYERS)
+                PlayersPage.ApplyCurrentQuery();
+            else if (_searchType == SearchType.TRIBES)
+                TribesPage.ApplyCurrentQuery();
+            else
+            {
+                SearchBuilder.ShowToast(ASILang.Get("PageNotFound"), BackgroundColor.WARNING);
+                return;
+            }
         }
     }
 }

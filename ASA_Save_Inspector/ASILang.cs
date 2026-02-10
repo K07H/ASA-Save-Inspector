@@ -18,7 +18,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "3.0";
+        public const string LANGUAGE_VERSION = "3.1";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -308,6 +308,7 @@ namespace ASA_Save_Inspector
             { "Load", "Load" },
             { "Edit", "Edit" },
             { "Remove", "Remove" },
+            { "Apply", "Apply" },
             { "Actions", "Actions" },
             { "Yes", "Yes" },
             { "No", "No" },
@@ -388,6 +389,8 @@ namespace ASA_Save_Inspector
             { "Filtering", "Filtering" },
             { "Filters", "Filters" },
             { "CreateFilter", "Create filter:" },
+            { "ApplyFilter", "Apply this filter" },
+            { "SaveFilter", "Save this filter" },
             { "AddFilter", "Add filter" },
             { "EditFilters", "Edit filters" },
             { "Preset", "Preset" },
@@ -627,6 +630,7 @@ namespace ASA_Save_Inspector
             { "NoValidID_Structure", "Structure does not have a valid ID." },
             { "NoValidID_Player", "Player does not have a valid ID." },
             { "UnknownContainerType", "Unknown container type." },
+            { "PageNotFound", "Page not found." },
             { "PlayersDataPageNotFound", "Players data page not found." },
             { "TribesDataPageNotFound", "Tribes data page not found." },
             { "PrivousInstallsFound_Title", "Previous installs found" },
@@ -738,6 +742,7 @@ namespace ASA_Save_Inspector
             { "Load", "Charger" },
             { "Edit", "Editer" },
             { "Remove", "Supprimer" },
+            { "Apply", "Appliquer" },
             { "Actions", "Actions" },
             { "Yes", "Oui" },
             { "No", "Non" },
@@ -818,6 +823,8 @@ namespace ASA_Save_Inspector
             { "Filtering", "Filtrage" },
             { "Filters", "Filtres" },
             { "CreateFilter", "Créer un filtre :" },
+            { "ApplyFilter", "Appliquer ce filtre" },
+            { "SaveFilter", "Sauvegarder ce filtre" },
             { "AddFilter", "Ajouter filtre" },
             { "EditFilters", "Modifier filtres" },
             { "Preset", "Préréglage" },
@@ -1057,6 +1064,7 @@ namespace ASA_Save_Inspector
             { "NoValidID_Structure", "La structure n'a pas d'identifiant correct." },
             { "NoValidID_Player", "Le joueur n'a pas d'identifiant correct." },
             { "UnknownContainerType", "Le type du conteneur est inconnu." },
+            { "PageNotFound", "Page non trouvée." },
             { "PlayersDataPageNotFound", "Page de données des joueurs non trouvée." },
             { "TribesDataPageNotFound", "Page de données des tribus non trouvée." },
             { "PrivousInstallsFound_Title", "Présence d'anciennes versions" },

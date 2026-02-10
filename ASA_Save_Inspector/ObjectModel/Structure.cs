@@ -8,11 +8,6 @@
         public string? name { get; set; }
     }
 
-    public partial class WirelessExchangeRefs
-    {
-        public CustomList<object?>? properties { get; set; }
-    }
-
     public partial class StoredTrait
     {
         public string? class_name { get; set; }
@@ -32,23 +27,34 @@
         public int? AISetting { get; set; }
         public bool? AllowPublicUse { get; set; }
         public int? AmmoCount { get; set; }
+        public TypeStringValue? AssociatedStructure { get; set; }
+        public int? AttachedDinoID1 { get; set; }
+        public int? AttachedDinoID2 { get; set; }
+        public CustomList<CustomItemData?>? AttachedDinos { get; set; }
         public int? AssociatedDinoID1 { get; set; }
         public int? AssociatedDinoID2 { get; set; }
         public CustomList<TypeStringValue?>? AttachedStructures { get; set; }
         public int? AttachedToDinoID1 { get; set; }
         public double? AttenuationPercent { get; set; }
         public int? AutoCloseTimeSetting { get; set; }
+        public TypeStringValue? AutoCraftItemClass { get; set; }
         public int? AutoOpenSetting { get; set; }
+        public bool? AutoRestInRangeEnabled { get; set; }
+        public CustomList<Properties?>? AvailableLocationsBytes { get; set; }
         public bool? bAdminOnlyAccess { get; set; }
         public bool? bAllowEquppingItem { get; set; }
+        public bool? bAllowPublicRetraction { get; set; }
         public bool? bAllowRemovalFromInventory { get; set; }
+        public bool? bAutoActivateBoost { get; set; }
         public bool? bAutoCraftActivated { get; set; }
         public bool? bCanBeDamaged { get; set; }
         public bool? bCanSlot { get; set; }
         public bool? bConnectedToNonPipe { get; set; }
         public bool? bContainerActivated { get; set; }
+        public bool? bDinoLinked { get; set; }
         public int? BedID { get; set; }
         public string? BedName { get; set; }
+        public string? BedOwnerName { get; set; }
         public Properties? BeeData { get; set; }
         public bool? bEnableSorting { get; set; }
         public bool? bEquippedItem { get; set; }
@@ -60,6 +66,7 @@
         public bool? bHasItems { get; set; }
         public bool? bHasPoop { get; set; }
         public bool? bHasResetDecayTime { get; set; }
+        public bool? bHasRisen { get; set; }
         public bool? bHasWater { get; set; }
         public bool? bHideFromInventoryDisplay { get; set; }
         public bool? bHideFromRemoteInventoryDisplay { get; set; }
@@ -71,15 +78,19 @@
         public bool? bIsEngram { get; set; }
         public bool? bIsFertilized { get; set; }
         public bool? bIsFlipped { get; set; }
+        public bool? bIsFlooded { get; set; }
         public bool? bIsFoundation { get; set; }
         public bool? bIsFrameHidden { get; set; }
+        public bool? bIsHarvestingMode { get; set; }
         public bool? bIsInitialItem { get; set; }
         public bool? bIsLocked { get; set; }
         public bool? bIsPinLocked { get; set; }
         public bool? bIsPowered { get; set; }
+        public bool? bIsRetracted { get; set; }
         public bool? bIsSecondaryAnchor { get; set; }
         public bool? bIsSeeded { get; set; }
         public bool? bIsSnapshotACapture { get; set; }
+        public bool? bIsTargetListInclusion { get; set; }
         public bool? bIsUnderwater { get; set; }
         public bool? bIsWatered { get; set; }
         public int? BlacklistedItemCount { get; set; }
@@ -97,9 +108,11 @@
         public bool? bUsingStructureColors { get; set; }
         public bool? bWasPlacementSnapped { get; set; }
         public int? ClockBoostState { get; set; }
+        public bool? CollectCartConsumable { get; set; }
         public int? ConstructorPlayerDataID { get; set; }
         public int? ConstructorTargetingTeam { get; set; }
         public CustomList<TypeStringValue?>? CraftingItems { get; set; }
+        public double? CropFruitFertilizerCache { get; set; }
         public double? CropPhaseFertilizerCache { get; set; }
         public double? CropRefreshInterval { get; set; }
         public double? CropRefreshTimeCache { get; set; }
@@ -116,6 +129,7 @@
         public int? CurrentOpenMode { get; set; }
         public int? CurrentPinCode { get; set; }
         public CustomList<int?>? CurrentPinCodes { get; set; }
+        public double? CurrentRangeToVisualize { get; set; }
         public TypeStringValue? CurrentSnapshot { get; set; }
         public NameStringValue? CurrentState { get; set; }
         public string? CurrentVariantTag { get; set; }
@@ -125,15 +139,21 @@
         public int? CustomCosmeticModSkinVariantID { get; set; }
         public CustomList<CustomItemData?>? CustomItemDatas { get; set; }
         public TypeStringValue? DefaultDestinationTeleporter { get; set; }
+        public Rotator? DefaultRotation { get; set; }
         public int? DefaultWithdrawIndex { get; set; }
         public int? DinoFeedingListType { get; set; }
+        public int? DinoID1 { get; set; }
+        public int? DinoID2 { get; set; }
         public CustomList<TypeStringValue?>? DinoTargetList { get; set; }
         public int? DisplayDefaultItemInventoryCount { get; set; }
         public int? DoorOpenState { get; set; }
         public double? EffectRadius { get; set; }
         public TypeStringValue? ElevatorBase { get; set; }
         public CustomList<TypeStringValue?>? EquippedItems { get; set; }
+        public CustomList<LinearColor?>? FeatherColors { get; set; }
         public CustomList<TypeStringValue?>? FeedingDinoList { get; set; }
+        public Vector? FinalLocation { get; set; }
+        public bool? FinishedScanning { get; set; }
         public Vector? FirstCorner { get; set; }
         public CustomList<string?>? FoliageTypeSoftRef { get; set; }
         public TypeStringValue? FuelItemTrueClass { get; set; }
@@ -149,15 +169,21 @@
         public Properties? InventoryWeapon { get; set; }
         public bool? IsMeshCropPlot { get; set; }
         public bool? IsPlacedInWindow { get; set; }
+        public bool? IsPlacedOnRaft { get; set; }
         public bool? IsRangeHidden { get; set; }
         public bool? IsRoofHidden { get; set; }
+        public bool? IsUndergroundTerminal { get; set; }
         public string? ItemArchetype { get; set; }
         public ItemID? ItemID { get; set; }
+        public CustomList<ItemID?>? ItemIDs { get; set; }
         public int? ItemQuantity { get; set; }
         public CustomList<TypeStringValue?>? ItemSlots { get; set; }
         public int? ItemStatValues { get; set; }
         public int? ItemVersion { get; set; }
+        public Vector? LandingPosition { get; set; }
         public double? LastActivatedTime { get; set; }
+        public double? LastAppliedEffectTime { get; set; }
+        public double? LastAttachedDinoTime { get; set; }
         public double? LastAutoDurabilityDecreaseTime { get; set; }
         public double? LastCheckedFuelTime { get; set; }
         public double? LastCropRefreshTime { get; set; }
@@ -165,6 +191,7 @@
         public double? LastDeactivatedTime { get; set; }
         public double? LastEnterStasisTime { get; set; }
         public double? LastFireTime { get; set; }
+        public double? LastHarvestedTime { get; set; }
         public double? LastInAllyRangeTimeSerialized { get; set; }
         public double? LastInventoryRefreshTime { get; set; }
         public double? LastLongReloadStartTime { get; set; }
@@ -174,14 +201,19 @@
         public string? LinkedPlayerName { get; set; }
         public CustomList<string?>? LinkedStructureUUIDs { get; set; }
         public Properties? LocalOnlySkinCustomPersistentData { get; set; }
+        public TypeStringValue? MainTerminal { get; set; }
         public double? MaxHealth { get; set; }
         public int? MaxItemCount { get; set; }
+        public NameStringValue? Mode { get; set; }
         public bool? multiuseAnyoneCanAcquire { get; set; }
         public bool? multiuseOnlyAlliesCanAcquire { get; set; }
+        public TypeStringValue? MyCropStructure { get; set; }
         public int? MyCustomCosmeticStructureSkinID { get; set; }
         public int? MyCustomCosmeticStructureSkinVariantID { get; set; }
+        public TypeStringValue? MyStructureHarvestingComponent { get; set; }
         public TypeStringValue? MyTrain { get; set; }
         public double? NetDestructionTime { get; set; }
+        public double? NetOrigCreationTime { get; set; }
         public double? NextAllowedUseTime { get; set; }
         public double? NextBoostActivationTime { get; set; }
         public double? NextBoostDeactivationTime { get; set; }
@@ -194,17 +226,22 @@
         public int? OriginalPlacerPlayerID { get; set; }
         public double? OriginalRespecStartTime { get; set; }
         public TypeStringValue? Owner { get; set; }
+        public TypeStringValue? OwnerBot { get; set; }
+        public TypeStringValue? OwnerBotClass { get; set; }
         public TypeStringValue? OwnerCropPlot { get; set; }
         public string? OwnerInventoryUUID { get; set; }
         public string? OwnerName { get; set; }
+        public TypeStringValue? OwnerStructure { get; set; }
         public int? OwningPlayerID { get; set; }
         public string? OwningPlayerName { get; set; }
         public TypeStringValue? PaintingComponent { get; set; }
         public TypeStringValue? ParentStructure { get; set; }
         public double? PitctViewRotation { get; set; }
+        public bool? Placed { get; set; }
         public TypeStringValue? PlacedOnFloorStructure { get; set; }
         public double? PlantBoundsZ { get; set; }
         public TypeStringValue? PlantedCrop { get; set; }
+        public CustomList<int?>? PointsNeedTickUpdate { get; set; }
         public CustomList<TypeStringValue?>? PortholeLinks { get; set; }
         public CustomList<int?>? PortholeSaveState { get; set; }
         public CustomList<int?>? PortholeState { get; set; }
@@ -213,8 +250,12 @@
         public TypeStringValue? PrimarySnappedStructureParent { get; set; }
         public int? RadiusSetting { get; set; }
         public int? RangeSetting { get; set; }
+        public int? RemainingAvailableCellQuantity { get; set; }
         public int? Repeat { get; set; }
+        public CustomList<Properties?>? ReplicatedDinoInfo { get; set; }
         public TypeStringValue? ReplicatedFuelItemClass { get; set; }
+        public CustomList<Properties?>? ReplicatedNetInfos { get; set; }
+        public int? ReplicatedShards { get; set; }
         public TypeStringValue? ReplicatedStructureMySkinClass { get; set; }
         public int? ResourceCount { get; set; }
         public TypeStringValue? SaddleDino { get; set; }
@@ -223,6 +264,7 @@
         public int? SavedItemVersion { get; set; }
         public TypeStringValue? SelectedResourceClass { get; set; }
         public int? SelectedRotationIndex { get; set; }
+        public CustomList<int?>? SelectedRotationIndexes { get; set; }
         public TypeStringValue? SelectedStructureTypeToAffect { get; set; }
         public TypeStringValue? ServerHotbar { get; set; }
         public int? Shuffle { get; set; }
@@ -234,8 +276,12 @@
         public int? SnapshotPoseIndex { get; set; }
         public CustomList<int?>? SortingInputAmounts { get; set; }
         public CustomList<TypeStringValue?>? SortingInputs { get; set; }
+        public TypeStringValue? SpawnedForDino { get; set; }
+        public int? SpawnedForDinoID1 { get; set; }
+        public int? SpawnedForDinoID2 { get; set; }
         public Vector? StartLocation { get; set; }
         public int? StayOpenSetting { get; set; }
+        public Properties? StoredCreatureData { get; set; }
         public CustomList<StoredTrait?>? StoredTraits { get; set; }
         public int? StructureColors { get; set; }
         public int? StructureID { get; set; }
@@ -246,19 +292,23 @@
         public int? TempSlotIndex { get; set; }
         public CustomList<TypeStringValue?>? TetheredDinos { get; set; }
         public int? TilledCurrentCount { get; set; }
+        public CustomList<double?>? TimesItemsAdded { get; set; }
         public double? timeStateStarted { get; set; }
+        public double? TopAndBottomRotation { get; set; }
+        public int? TotalAvailableCellQuantity { get; set; }
         public Properties? TrackData_FirstPoint { get; set; }
         public bool? TrackData_FromIncline { get; set; }
         public bool? TrackData_IsFlipped { get; set; }
         public bool? TrackData_ToIncline { get; set; }
         public int? TribeGroupInventoryRank { get; set; }
         public int? TribeGroupStructureRank { get; set; }
+        public CustomList<Properties?>? UnavailableLocationsBytes { get; set; }
         public string? UUID { get; set; }
         public double? VolumePercent { get; set; }
         public int? WarningSetting { get; set; }
         public bool? WasInitiallyPlaced { get; set; }
         public double? WaterAmount { get; set; }
-        public WirelessExchangeRefs? WirelessExchangeRefs { get; set; }
+        public Properties? WirelessExchangeRefs { get; set; }
         public CustomList<int?>? WithdrawAmounts { get; set; }
         public double? YawViewRotation { get; set; }
     }
