@@ -18,7 +18,7 @@ Note: This application is still under development, more features will be added i
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
-- Visualize game objects on a map (double clicking on a map marker will select the associated game object in the app's main window).
+- Visualize game objects on a map (see "Other" tab to open the map).
 - Quickly export some game objects to JSON (using right click on the game object lines).
 
 ## 2) Demonstration video
