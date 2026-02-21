@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ public sealed partial class EditSearchQuery : Window
 
     public string? _queryName = null;
     public SearchQuery? _query = null;
+    public bool _isEditable = false;
+    public SearchType _searchType = SearchType.PAWNS;
 
     public EditSearchQuery()
     {
@@ -38,8 +41,8 @@ public sealed partial class EditSearchQuery : Window
             this._appWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
         // Set title bar title.
-        this.Title = $"{MainWindow._appName} v{Utils.GetVersionStr()} - {ASILang.Get("EditFilters")}";
-        TitleBarTextBlock.Text = $"{MainWindow._appName} v{Utils.GetVersionStr()} - {ASILang.Get("EditFilters")}";
+        this.Title = $"{MainWindow._appName} v{Utils.GetVersionStr()} - {ASILang.Get("EditFilter")}";
+        TitleBarTextBlock.Text = $"{MainWindow._appName} v{Utils.GetVersionStr()} - {ASILang.Get("EditFilter")}";
 
         // Set icon.
         if (_appWindow != null)
@@ -113,23 +116,31 @@ public sealed partial class EditSearchQuery : Window
             this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
             {
                 await Task.Delay(duration - 600);
-                FadeOutStoryboard.Begin();
+                try { FadeOutStoryboard.Begin(); }
+                catch { }
                 await Task.Delay(600);
-                if (PopupNotification.IsOpen)
+                bool isOpen = false;
+                try { isOpen = PopupNotification.IsOpen; }
+                catch { isOpen = false; }
+                if (isOpen)
                 {
-                    b_popupNotification.Opacity = 0;
-                    PopupNotification.IsOpen = false;
+                    try { b_popupNotification.Opacity = 0; }
+                    catch { }
+                    try { PopupNotification.IsOpen = false; }
+                    catch { }
                 }
             });
         }
     }
 
-    public void Initialize(string? queryName, SearchQuery query, bool isEditable)
+    public void Initialize(string? queryName, SearchQuery query, bool isEditable, SearchType searchType)
     {
         _queryName = queryName;
-        _query = query;
+        _query = SearchQuery.GetCopy(query);
+        _isEditable = isEditable;
+        _searchType = searchType;
 
-        Utils.FormatQuery(ref sp_Query, query, isEditable);
+        Utils.FormatQuery(ref sp_Query, _query, _isEditable, false, _searchType, SearchBuilder.GetTypeFromSearchType(_searchType));
     }
 
     public void ModifyQuerySearchOperator(int partId, SearchOperator newSearchOperator)
@@ -137,10 +148,17 @@ public sealed partial class EditSearchQuery : Window
         if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
             return;
 
+        SearchOperator prevSearchOperator = _query.Parts[partId].Operator;
+        bool wasMatchingOperator = (prevSearchOperator == SearchOperator.MATCHING || prevSearchOperator == SearchOperator.NOT_MATCHING);
+        bool becomesMatchingOperator = (newSearchOperator == SearchOperator.MATCHING || newSearchOperator == SearchOperator.NOT_MATCHING);
+
         _query.Parts[partId].Operator = newSearchOperator;
 
+        if ((wasMatchingOperator && !becomesMatchingOperator) || (!wasMatchingOperator && becomesMatchingOperator))
+            Utils.FormatQuery(ref sp_Query, _query, _isEditable, false, _searchType, SearchBuilder.GetTypeFromSearchType(_searchType));
+
 #if DEBUG
-        MainWindow.ShowToast($"Changed operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+        ShowNotificationMsg($"Changed operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
 #endif
     }
 
@@ -164,7 +182,26 @@ public sealed partial class EditSearchQuery : Window
         _query.Parts[partId].LogicalOperator = newLogicalOperator;
 
 #if DEBUG
-        MainWindow.ShowToast($"Changed logical operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+        ShowNotificationMsg($"Changed logical operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+#endif
+    }
+
+    public void RemoveQueryPart(int partId)
+    {
+        if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
+            return;
+
+        if (_query.Parts.Count <= 1)
+        {
+            ShowNotificationMsg(ASILang.Get("FilterRequiresOneCondition"), BackgroundColor.ERROR, 3000);
+            return;
+        }
+
+        _query.Parts.RemoveAt(partId);
+        Utils.FormatQuery(ref sp_Query, _query, _isEditable, false, _searchType, SearchBuilder.GetTypeFromSearchType(_searchType));
+
+#if DEBUG
+        ShowNotificationMsg($"Removed query part {partId}.", BackgroundColor.SUCCESS, 1500);
 #endif
     }
 

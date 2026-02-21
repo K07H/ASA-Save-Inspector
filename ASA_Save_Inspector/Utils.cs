@@ -14,8 +14,10 @@ using ASA_Save_Inspector.Pages;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
+using WinUIEx;
 
 namespace ASA_Save_Inspector
 {
@@ -1160,7 +1162,18 @@ namespace ASA_Save_Inspector
             return LogicalOperator.AND;
         }
 
-        public static void FormatQuery(ref StackPanel mainSp, SearchQuery? query, bool isEditable)
+        private static string GetDropdownValueFromSelectionChanged(SelectionChangedEventArgs e)
+        {
+            if (e != null && e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string? selected = e.AddedItems[0] as string;
+                if (selected != null)
+                    return selected;
+            }
+            return string.Empty;
+        }
+
+        public static void FormatQuery(ref StackPanel mainSp, SearchQuery? query, bool isEditable, bool isBuilderWindow, SearchType searchType, Type searchObjType)
         {
             mainSp.Children.Clear();
 
@@ -1168,6 +1181,25 @@ namespace ASA_Save_Inspector
                 return;
 
             int currentGroup = 0;
+
+            Dictionary<string, string> allProperties = new Dictionary<string, string>();
+            if (searchObjType != null)
+            {
+                PropertyInfo[]? properties = searchObjType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                if (properties != null && properties.Count() > 0)
+                {
+                    List<string> toAdd = new List<string>();
+                    foreach (var p in properties)
+                    {
+                        if (!string.IsNullOrEmpty(p.Name))
+                        {
+                            string? cleanName = SearchBuilder.GetCleanNameFromPropName(searchType, p.Name);
+                            if (!string.IsNullOrEmpty(cleanName))
+                                allProperties[cleanName] = p.Name;
+                        }
+                    }
+                }
+            }
 
             TextBlock? tb0 = new TextBlock()
             {
@@ -1182,6 +1214,9 @@ namespace ASA_Save_Inspector
             for (int i = 0; i < query.Parts.Count; i++)
                 if (query.Parts[i] != null)
                 {
+                    Grid grd = new Grid();
+                    grd.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Auto });
+                    grd.ColumnDefinitions.Add(new ColumnDefinition());
                     StackPanel sp = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(5.0d, 5.0d, 0.0d, 0.0d) };
                     StackPanel spPad = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left };
                     int j = 0;
@@ -1278,8 +1313,16 @@ namespace ASA_Save_Inspector
                             {
                                 int partId = (int)cbb.Tag;
                                 SearchOperator newSearchOperator = GetOperatorFromSelectionChanged(e);
-                                if (EditSearchQuery._editSearchQuery != null)
-                                    EditSearchQuery._editSearchQuery.ModifyQuerySearchOperator(partId, newSearchOperator);
+                                if (isBuilderWindow)
+                                {
+                                    if (SearchBuilder._searchBuilder != null)
+                                        SearchBuilder._searchBuilder.ModifyQuerySearchOperator(partId, newSearchOperator);
+                                }
+                                else // Edit window
+                                {
+                                    if (EditSearchQuery._editSearchQuery != null)
+                                        EditSearchQuery._editSearchQuery.ModifyQuerySearchOperator(partId, newSearchOperator);
+                                }
                             }
                         };
                     }
@@ -1297,33 +1340,113 @@ namespace ASA_Save_Inspector
                         };
                     }
 
+                    ComboBox? cbb3 = null;
                     TextBox? tb3_a = null;
                     TextBlock? tb3_b = null;
                     if (isEditable)
                     {
-                        tb3_a = new TextBox()
+                        bool addAsTextBox = true;
+                        if (searchObjType != null && (query.Parts[i].Operator == SearchOperator.MATCHING || query.Parts[i].Operator == SearchOperator.NOT_MATCHING))
                         {
-                            FontSize = 14.0d,
-                            TextWrapping = TextWrapping.Wrap,
-                            Text = query.Parts[i].Value ?? string.Empty,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
-                            IsReadOnly = false,
-                            AcceptsReturn = false,
-                            Tag = i
-                        };
-                        tb3_a.TextChanged += (o, e) =>
-                        {
-                            TextBox? tb = o as TextBox;
-                            if (tb != null)
+                            string? cleanPropertyName = query.Parts[i].PropertyCleanName;
+                            if (!string.IsNullOrEmpty(cleanPropertyName) && allProperties.ContainsKey(cleanPropertyName))
                             {
-                                int partId = (int)tb.Tag;
-                                string newValue = tb.Text;
-                                if (EditSearchQuery._editSearchQuery != null)
-                                    EditSearchQuery._editSearchQuery.ModifyQueryValue(partId, newValue);
+                                PropertyInfo? property = Utils.GetProperty(searchObjType, allProperties[cleanPropertyName]);
+                                if (property != null)
+                                {
+                                    List<string> propertyValues = Utils.GetPropertyValues(SearchBuilder.GetData(searchType), property, SearchBuilder.MAX_PROPERTY_VALUES);
+                                    if (propertyValues.Count > 0)
+                                    {
+                                        addAsTextBox = false;
+
+                                        cbb3 = new ComboBox()
+                                        {
+                                            FontSize = 14.0d,
+                                            VerticalAlignment = VerticalAlignment.Center,
+                                            HorizontalAlignment = HorizontalAlignment.Left,
+                                            Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
+                                            Tag = i
+                                        };
+
+                                        propertyValues.Sort();
+                                        int cbb3Index = 0;
+                                        bool foundValue = false;
+                                        foreach (string val in propertyValues)
+                                            if (!string.IsNullOrEmpty(val))
+                                            {
+                                                cbb3.Items.Add(val);
+                                                if (!foundValue && string.Compare(val, query.Parts[i].Value, StringComparison.InvariantCulture) == 0)
+                                                {
+                                                    foundValue = true;
+                                                    cbb3.SelectedIndex = cbb3Index;
+                                                }
+                                                cbb3Index++;
+                                            }
+                                        if (!foundValue)
+                                        {
+#if DEBUG
+                                            Logger.Instance.Log("Value not found for match filter!", Logger.LogLevel.WARNING);
+#endif
+                                            cbb3.SelectedIndex = 0;
+                                        }
+
+                                        cbb3.SelectionChanged += (o, e) =>
+                                        {
+                                            ComboBox? cbb = o as ComboBox;
+                                            if (cbb != null)
+                                            {
+                                                int partId = (int)cbb.Tag;
+                                                string newValue = GetDropdownValueFromSelectionChanged(e);
+                                                if (isBuilderWindow)
+                                                {
+                                                    if (SearchBuilder._searchBuilder != null)
+                                                        SearchBuilder._searchBuilder.ModifyQueryValue(partId, newValue);
+                                                }
+                                                else // Edit window
+                                                {
+                                                    if (EditSearchQuery._editSearchQuery != null)
+                                                        EditSearchQuery._editSearchQuery.ModifyQueryValue(partId, newValue);
+                                                }
+                                            }
+                                        };
+                                    }
+                                }
                             }
-                        };
+                        }
+                        if (addAsTextBox)
+                        {
+                            tb3_a = new TextBox()
+                            {
+                                FontSize = 14.0d,
+                                TextWrapping = TextWrapping.Wrap,
+                                Text = query.Parts[i].Value ?? string.Empty,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(5.0d, 0.0d, 0.0d, 0.0d),
+                                IsReadOnly = false,
+                                AcceptsReturn = false,
+                                Tag = i
+                            };
+                            tb3_a.TextChanged += (o, e) =>
+                            {
+                                TextBox? tb = o as TextBox;
+                                if (tb != null)
+                                {
+                                    int partId = (int)tb.Tag;
+                                    string newValue = tb.Text;
+                                    if (isBuilderWindow)
+                                    {
+                                        if (SearchBuilder._searchBuilder != null)
+                                            SearchBuilder._searchBuilder.ModifyQueryValue(partId, newValue);
+                                    }
+                                    else
+                                    {
+                                        if (EditSearchQuery._editSearchQuery != null)
+                                            EditSearchQuery._editSearchQuery.ModifyQueryValue(partId, newValue);
+                                    }
+                                }
+                            };
+                        }
                     }
                     else
                     {
@@ -1386,8 +1509,16 @@ namespace ASA_Save_Inspector
                                 {
                                     int partId = (int)cbb.Tag;
                                     LogicalOperator newLogicalOperator = GetLogicalOperatorFromSelectionChanged(e);
-                                    if (EditSearchQuery._editSearchQuery != null)
-                                        EditSearchQuery._editSearchQuery.ModifyQueryLogicalOperator(partId, newLogicalOperator);
+                                    if (isBuilderWindow)
+                                    {
+                                        if (SearchBuilder._searchBuilder != null)
+                                            SearchBuilder._searchBuilder.ModifyQueryLogicalOperator(partId, newLogicalOperator);
+                                    }
+                                    else // Edit window
+                                    {
+                                        if (EditSearchQuery._editSearchQuery != null)
+                                            EditSearchQuery._editSearchQuery.ModifyQueryLogicalOperator(partId, newLogicalOperator);
+                                    }
                                 }
                             };
                         }
@@ -1426,6 +1557,35 @@ namespace ASA_Save_Inspector
                             tb4.Text = txt;
                         }
                     }
+
+                    Button removePartBtn = new Button()
+                    {
+                        FontSize = 14.0d,
+                        Content = ASILang.Get("Remove"),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Margin = new Thickness(5.0d, 0.0d, 5.0d, 0.0d),
+                        Tag = i
+                    };
+                    removePartBtn.Click += (o, e) =>
+                    {
+                        Button? btn = o as Button;
+                        if (btn != null)
+                        {
+                            int partId = (int)btn.Tag;
+                            if (isBuilderWindow)
+                            {
+                                if (SearchBuilder._searchBuilder != null)
+                                    SearchBuilder._searchBuilder.RemoveQueryPart(partId);
+                            }
+                            else // Edit window
+                            {
+                                if (EditSearchQuery._editSearchQuery != null)
+                                    EditSearchQuery._editSearchQuery.RemoveQueryPart(partId);
+                            }
+                        }
+                    };
+
                     if (spPad != null && spPad.Children.Count > 0)
                         sp.Children.Add(spPad);
                     sp.Children.Add(tb1);
@@ -1434,7 +1594,12 @@ namespace ASA_Save_Inspector
                     else
                         sp.Children.Add(tb2);
                     if (isEditable)
-                        sp.Children.Add(tb3_a);
+                    {
+                        if (cbb3 != null)
+                            sp.Children.Add(cbb3);
+                        else
+                            sp.Children.Add(tb3_a);
+                    }
                     else
                         sp.Children.Add(tb3_b);
                     if (tb4 != null)
@@ -1449,8 +1614,46 @@ namespace ASA_Save_Inspector
                         if (tb5 != null)
                             sp.Children.Add(tb5);
                     }
-                    mainSp.Children.Add(sp);
+
+                    grd.Children.Add(sp);
+                    Grid.SetColumn(sp, 0);
+                    grd.Children.Add(removePartBtn);
+                    Grid.SetColumn(removePartBtn, 1);
+
+                    mainSp.Children.Add(grd);
                 }
+        }
+
+        public static void DuplicateSearchQuery(string? selected)
+        {
+            if (string.IsNullOrWhiteSpace(selected))
+            {
+                MainWindow.ShowToast(ASILang.Get("NoFilterSelected"), BackgroundColor.WARNING);
+                return;
+            }
+            if (SearchBuilder._queries == null || SearchBuilder._queries.Queries == null || !SearchBuilder._queries.Queries.ContainsKey(selected) || SearchBuilder._queries.Queries[selected] == null)
+            {
+                MainWindow.ShowToast(ASILang.Get("FilterNotFound"), BackgroundColor.WARNING);
+                return;
+            }
+
+            SearchQuery prefill = SearchBuilder._queries.Queries[selected];
+            if (SearchBuilder._searchBuilder != null)
+            {
+                SearchBuilder._query = SearchQuery.GetCopy(prefill);
+                SearchBuilder._searchBuilder.Show();
+                SearchBuilder._searchBuilder.Activate();
+                SearchBuilder._searchBuilder.ShowQueryDispatched();
+                SearchBuilder._searchBuilder.UpdateBtnsStatesDispatched();
+            }
+            else
+            {
+                var s = new SearchBuilder();
+                s.Initialize(SearchType.STRUCTURES, prefill);
+                s.Show();
+                s.ShowQueryDispatched();
+                s.UpdateBtnsStatesDispatched();
+            }
         }
 
         public static void LogASIDataFolder()

@@ -215,6 +215,26 @@ namespace ASA_Save_Inspector
         [JsonInclude]
         public List<SearchQueryPart> Parts { get; set; } = new List<SearchQueryPart>();
 
+        public static SearchQuery? GetCopy(SearchQuery query)
+        {
+            if (query == null)
+                return null;
+            SearchQuery? copy = new SearchQuery();
+            if (query.Parts != null && query.Parts.Count > 0)
+                foreach (var part in query.Parts)
+                    copy.Parts.Add(new SearchQueryPart()
+                    {
+                        Type = part.Type,
+                        LogicalOperator = part.LogicalOperator,
+                        PropertyName = part.PropertyName,
+                        PropertyCleanName = part.PropertyCleanName,
+                        Operator = part.Operator,
+                        Value = part.Value,
+                        Group = part.Group
+                    });
+            return copy;
+        }
+
         public string ToExpression()
         {
             if (Parts.Count <= 0)
@@ -363,7 +383,7 @@ namespace ASA_Save_Inspector
 
     public sealed partial class SearchBuilder : Window
     {
-        private const int MAX_PROPERTY_VALUES = 300;
+        public const int MAX_PROPERTY_VALUES = 300;
 
         public static SearchBuilder? _searchBuilder = null;
 
@@ -411,23 +431,25 @@ namespace ASA_Save_Inspector
             AppWindow.Resize(new Windows.Graphics.SizeInt32(700, 500));
         }
 
-        public void Initialize(SearchType type)
+        public void Initialize(SearchType type, SearchQuery? prefill = null)
         {
             this._searchType = type;
             this._searchObjType = GetTypeFromSearchType(type);
             // Fill query builder dropdown.
             FillPropertiesDropdown();
             // Init search statics.
-            InitSearch(type);
+            InitSearch(type, prefill);
             // Update queries dropdown.
             UpdateSavedSearchQueriesDropdownLocal();
         }
 
-        public static void InitSearch(SearchType type)
+        public static void InitSearch(SearchType type, SearchQuery? prefill = null)
         {
             // Init current search query.
-            _query = new SearchQuery();
-            // Load saved search queries.
+            if (prefill != null && prefill.Parts != null && prefill.Parts.Count > 0)
+                _query = SearchQuery.GetCopy(prefill);
+            else
+                _query = new SearchQuery();
             if (type == SearchType.PAWNS)
                 _savedQueriesFilePath = Utils.PlayerPawnSearchQueriesFilePath();
             else if (type == SearchType.DINOS)
@@ -487,7 +509,7 @@ namespace ASA_Save_Inspector
                 {
                     if (!string.IsNullOrEmpty(p.Name))
                     {
-                        string? cleanName = GetCleanNameFromPropName(p.Name);
+                        string? cleanName = GetCleanNameFromPropName(_searchType, p.Name);
                         if (!string.IsNullOrEmpty(cleanName))
                         {
                             toAdd.Add(cleanName);
@@ -506,25 +528,25 @@ namespace ASA_Save_Inspector
             }
         }
 
-        private string? GetCleanNameFromPropName(string propName)
+        public static string? GetCleanNameFromPropName(SearchType type, string propName)
         {
             string? result = null;
-            if (_searchType == SearchType.PAWNS)
+            if (type == SearchType.PAWNS)
                 result = PlayerPawnUtils.GetCleanNameFromPropertyName(propName);
-            else if (_searchType == SearchType.DINOS)
+            else if (type == SearchType.DINOS)
                 result = DinoUtils.GetCleanNameFromPropertyName(propName);
-            else if (_searchType == SearchType.STRUCTURES)
+            else if (type == SearchType.STRUCTURES)
                 result = StructureUtils.GetCleanNameFromPropertyName(propName);
-            else if (_searchType == SearchType.ITEMS)
+            else if (type == SearchType.ITEMS)
                 result = ItemUtils.GetCleanNameFromPropertyName(propName);
-            else if (_searchType == SearchType.PLAYERS)
+            else if (type == SearchType.PLAYERS)
                 result = PlayerUtils.GetCleanNameFromPropertyName(propName);
-            else if (_searchType == SearchType.TRIBES)
+            else if (type == SearchType.TRIBES)
                 result = TribeUtils.GetCleanNameFromPropertyName(propName);
             return result;
         }
 
-        private IEnumerable<object?>? GetData(SearchType type)
+        public static IEnumerable<object?>? GetData(SearchType type)
         {
             if (type == SearchType.DINOS)
                 return SettingsPage._dinosData;
@@ -647,6 +669,8 @@ namespace ASA_Save_Inspector
             btn_RemovePreviouslyAdded.IsEnabled = hasQueryParts;
         }
 
+        public void UpdateBtnsStatesDispatched() => this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateBtnsStates());
+
         private void btn_Add_Click(object sender, RoutedEventArgs e)
         {
             string? cleanPropertyName = Utils.GetComboBoxSelection(cbb_Property, false);
@@ -735,7 +759,9 @@ namespace ASA_Save_Inspector
 
         private void btn_TryQuery_Click(object sender, RoutedEventArgs e) => DoSearchQuery(_searchType, false);
 
-        private void ShowQuery() => Utils.FormatQuery(ref sp_QueryDisplay, _query, false);
+        private void ShowQuery() => Utils.FormatQuery(ref sp_QueryDisplay, _query, true, true, _searchType, _searchObjType);
+
+        public void ShowQueryDispatched() => this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => ShowQuery());
 
         private void ShowNotificationMsg(string msg, BackgroundColor color = BackgroundColor.DEFAULT, int duration = 3000)
         {
@@ -766,12 +792,18 @@ namespace ASA_Save_Inspector
                 this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                 {
                     await Task.Delay(duration - 600);
-                    FadeOutStoryboard.Begin();
+                    try { FadeOutStoryboard.Begin(); }
+                    catch { }
                     await Task.Delay(600);
-                    if (PopupNotification.IsOpen)
+                    bool isOpen = false;
+                    try { isOpen = PopupNotification.IsOpen; }
+                    catch { isOpen = false; }
+                    if (isOpen)
                     {
-                        b_popupNotification.Opacity = 0;
-                        PopupNotification.IsOpen = false;
+                        try { b_popupNotification.Opacity = 0; }
+                        catch { }
+                        try { PopupNotification.IsOpen = false; }
+                        catch { }
                     }
                 });
             }
@@ -958,6 +990,68 @@ namespace ASA_Save_Inspector
             }
             else
                 ShowNotificationMsg($"{ASILang.Get("SaveFilterFailed")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
+        }
+
+        public void ModifyQuerySearchOperator(int partId, SearchOperator newSearchOperator)
+        {
+            if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
+                return;
+
+            SearchOperator prevSearchOperator = _query.Parts[partId].Operator;
+            bool wasMatchingOperator = (prevSearchOperator == SearchOperator.MATCHING || prevSearchOperator == SearchOperator.NOT_MATCHING);
+            bool becomesMatchingOperator = (newSearchOperator == SearchOperator.MATCHING || newSearchOperator == SearchOperator.NOT_MATCHING);
+
+            _query.Parts[partId].Operator = newSearchOperator;
+
+            if ((wasMatchingOperator && !becomesMatchingOperator) || (!wasMatchingOperator && becomesMatchingOperator))
+                Utils.FormatQuery(ref sp_QueryDisplay, _query, true, true, _searchType, _searchObjType);
+
+#if DEBUG
+            ShowNotificationMsg($"Changed operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+#endif
+        }
+
+        public void ModifyQueryValue(int partId, string newValue)
+        {
+            if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
+                return;
+
+            _query.Parts[partId].Value = newValue;
+
+#if DEBUG
+            ShowNotificationMsg($"Changed value for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+#endif
+        }
+
+        public void ModifyQueryLogicalOperator(int partId, LogicalOperator newLogicalOperator)
+        {
+            if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
+                return;
+
+            _query.Parts[partId].LogicalOperator = newLogicalOperator;
+
+#if DEBUG
+            ShowNotificationMsg($"Changed logical operator for query part {partId}.", BackgroundColor.SUCCESS, 1500);
+#endif
+        }
+
+        public void RemoveQueryPart(int partId)
+        {
+            if (_query == null || _query.Parts == null || partId >= _query.Parts.Count)
+                return;
+
+            if (_query.Parts.Count <= 1)
+            {
+                ShowNotificationMsg(ASILang.Get("FilterRequiresOneCondition"), BackgroundColor.ERROR, 3000);
+                return;
+            }
+
+            _query.Parts.RemoveAt(partId);
+            Utils.FormatQuery(ref sp_QueryDisplay, _query, true, true, _searchType, _searchObjType);
+
+#if DEBUG
+            ShowNotificationMsg($"Removed query part {partId}.", BackgroundColor.SUCCESS, 1500);
+#endif
         }
 
         private void btn_SaveSearchQuery_Click(object sender, RoutedEventArgs e)

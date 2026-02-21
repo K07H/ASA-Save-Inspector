@@ -2711,18 +2711,20 @@ namespace ASA_Save_Inspector.Pages
             {
                 if (EditSearchQuery._editSearchQuery != null)
                 {
-                    EditSearchQuery._editSearchQuery.Initialize(selected, SearchBuilder._queries.Queries[selected], true);
+                    EditSearchQuery._editSearchQuery.Initialize(selected, SearchBuilder._queries.Queries[selected], true, SearchType.PLAYERS);
                     EditSearchQuery._editSearchQuery.Show();
                     EditSearchQuery._editSearchQuery.Activate();
                 }
                 else
                 {
                     var s = new EditSearchQuery();
-                    s.Initialize(selected, SearchBuilder._queries.Queries[selected], true);
+                    s.Initialize(selected, SearchBuilder._queries.Queries[selected], true, SearchType.PLAYERS);
                     s.Show();
                 }
             }
         }
+
+        private void btn_DuplicateQuery_Click(object sender, RoutedEventArgs e) => Utils.DuplicateSearchQuery(Utils.GetComboBoxSelection(cbb_ExistingQueries, false));
 
         #endregion
     }

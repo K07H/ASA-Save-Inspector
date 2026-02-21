@@ -10,7 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winuiex="using:WinUIEx"
     mc:Ignorable="d"
-    Title="ASA Save Inspector Edit Filter"
+    Title="ASA Save Inspector - Edit filter"
     SizeChanged="page_EditSearchQuery_SizeChanged"
     Closed="page_EditSearchQuery_Closed"
     x:Name="page_EditSearchQuery">
@@ -70,7 +70,7 @@
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-            <StackPanel x:Name="sp_Query" Orientation="Vertical" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <StackPanel x:Name="sp_Query" Orientation="Vertical" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
             </StackPanel>
         </ScrollViewer>
 

@@ -150,7 +150,8 @@
                     <TextBlock x:Name="tb_SavedQueries" FontSize="14" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('SavedFilters'), Mode=OneWay}"/>
                     <ComboBox x:Name="cbb_ExistingQueries" Margin="10,0,0,0" SelectionChanged="cbb_ExistingQueries_SelectionChanged"></ComboBox>
                     <Button x:Name="btn_LoadQuery" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_LoadQuery_Click" IsEnabled="False"/>
-                    <Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_EditQuery_Click" IsEnabled="False"/>
+                    <!--<Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_EditQuery_Click" IsEnabled="False"/>-->
+                    <Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_DuplicateQuery_Click" IsEnabled="False"/>
                     <Button x:Name="btn_DeleteQuery" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_DeleteQuery_Click" IsEnabled="False"/>
                 </StackPanel>
             </StackPanel>

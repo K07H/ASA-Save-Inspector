@@ -18,7 +18,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "3.1";
+        public const string LANGUAGE_VERSION = "3.2";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -308,6 +308,7 @@ namespace ASA_Save_Inspector
             { "Load", "Load" },
             { "Edit", "Edit" },
             { "Remove", "Remove" },
+            { "Duplicate", "Duplicate" },
             { "Apply", "Apply" },
             { "Actions", "Actions" },
             { "Yes", "Yes" },
@@ -389,10 +390,10 @@ namespace ASA_Save_Inspector
             { "Filtering", "Filtering" },
             { "Filters", "Filters" },
             { "CreateFilter", "Create filter:" },
-            { "ApplyFilter", "Apply this filter" },
+            { "ApplyFilter", "Apply without saving" },
             { "SaveFilter", "Save this filter" },
             { "AddFilter", "Add filter" },
-            { "EditFilters", "Edit filters" },
+            { "EditFilter", "Edit filters" },
             { "Preset", "Preset" },
             { "Presets", "Presets" },
             { "FiltersGroups", "Filters groups" },
@@ -413,6 +414,7 @@ namespace ASA_Save_Inspector
             { "CopyCryopodGPSCoordsToClipboard", "Copy cryopod GPS coords to clipboard" },
             { "CopySelectedLinesJsonToClipboard", "Copy selected lines JSON to clipboard" },
             { "CopyTribeLogsToClipboard", "Copy tribe logs to clipboard" },
+            { "FilteringCondition", "Filtering condition:" },
             { "FilterBy", "Filter by" },
             { "FilterType", "Filter type" },
             { "FilterType_ExactMatch", "Exact match" },
@@ -433,6 +435,7 @@ namespace ASA_Save_Inspector
             { "EmptyFilterNameError", "Filter name must not be empty" },
             { "FilterNameAlreadyExists", "This filter name already exists" },
             { "EmptyFilter", "Filter is empty." },
+            { "FilterRequiresOneCondition", "Filter must have at least one condition." },
             { "NothingToSave", "Nothing to save." },
             { "SaveFilterFailed", "Failed to save search filter." },
             { "FilterSaved", "Filter saved." },
@@ -742,6 +745,7 @@ namespace ASA_Save_Inspector
             { "Load", "Charger" },
             { "Edit", "Editer" },
             { "Remove", "Supprimer" },
+            { "Duplicate", "Dupliquer" },
             { "Apply", "Appliquer" },
             { "Actions", "Actions" },
             { "Yes", "Oui" },
@@ -792,7 +796,7 @@ namespace ASA_Save_Inspector
             { "DebugLogging_Description", "Si le log de débogage est activé, trois fichiers supplémentaires sont créés dans le dossier json_exports lors de la création des fichiers JSON : skipped_blueprints.json, unknown_blueprints.json et failed_to_parse.json. Ces fichiers JSON fournissent des informations sur les objets qui ont été ignorés, ceux qui étaient inconnus et ceux qui n'ont pas pu être analysés." },
             { "ExportProfiles", "Profils d'extraction" },
             { "ExportPresets", "Préréglages d'extraction" },
-            { "Grouping", "Grouper :" },
+            { "Grouping", "Groupage :" },
             { "StartGroup", "Débuter groupe" },
             { "EndGroup", "Terminer groupe" },
             { "DinoFilters", "Filtres de dinos" },
@@ -823,10 +827,10 @@ namespace ASA_Save_Inspector
             { "Filtering", "Filtrage" },
             { "Filters", "Filtres" },
             { "CreateFilter", "Créer un filtre :" },
-            { "ApplyFilter", "Appliquer ce filtre" },
+            { "ApplyFilter", "Appliquer sans sauvegarder" },
             { "SaveFilter", "Sauvegarder ce filtre" },
             { "AddFilter", "Ajouter filtre" },
-            { "EditFilters", "Modifier filtres" },
+            { "EditFilter", "Modifier filtre" },
             { "Preset", "Préréglage" },
             { "Presets", "Préréglages" },
             { "FiltersGroups", "Groupes de filtres" },
@@ -847,6 +851,7 @@ namespace ASA_Save_Inspector
             { "CopyCryopodGPSCoordsToClipboard", "Copier les coords GPS de la cryopod dans le presse-papier" },
             { "CopySelectedLinesJsonToClipboard", "Copier le JSON des lignes sélectionnées dans le presse-papier" },
             { "CopyTribeLogsToClipboard", "Copier les logs de tribu dans le presse-papier" },
+            { "FilteringCondition", "Condition de filtrage :" },
             { "FilterBy", "Filtrer par" },
             { "FilterType", "Type de filtre" },
             { "FilterType_ExactMatch", "Correspondance exacte" },
@@ -867,6 +872,7 @@ namespace ASA_Save_Inspector
             { "EmptyFilterNameError", "Le nom du filtre ne doit pas être vide" },
             { "FilterNameAlreadyExists", "Ce nom de filtre existe déjà" },
             { "EmptyFilter", "Filtre vide." },
+            { "FilterRequiresOneCondition", "Le filtre doit posséder au moins une condition." },
             { "NothingToSave", "Rien à sauvegarder." },
             { "SaveFilterFailed", "Erreur lors de la sauvegarde du filtre." },
             { "FilterSaved", "Filtre sauvegardé." },
