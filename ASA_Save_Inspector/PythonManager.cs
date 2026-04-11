@@ -833,7 +833,7 @@ finalExportFolderPath,
                 });
         }
 
-        private static async void ShowInstallingPopup(string title)
+        public static async void ShowInstallingPopup(string title)
         {
             if (MainWindow._mainWindow != null)
                 MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, async () =>
@@ -842,7 +842,7 @@ finalExportFolderPath,
                 });
         }
 
-        private static async Task<bool> HideInstallingPopup(int delay = 1000)
+        public static async Task<bool> HideInstallingPopup(int delay = 1000)
         {
             bool ret = false;
             if (MainWindow._mainWindow != null)

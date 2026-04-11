@@ -21,6 +21,7 @@
                 <Button x:Name="btn_OpenAppDataFolder" Content="{x:Bind asi:ASILang.Get('OpenASIDataFolder'), Mode=OneWay}" Click="btn_OpenAppDataFolder_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_AddCustomBlueprints" Content="{x:Bind asi:ASILang.Get('CustomBlueprints'), Mode=OneWay}" Click="btn_ConfigureCustomBlueprints_Click" Margin="0,10,0,0" />
                 <Button x:Name="btn_ForceReinstallArkParse" Content="{x:Bind asi:ASILang.Get('ForceReinstallArkParse'), Mode=OneWay}" Click="btn_ForceReinstallArkParse_Click" Margin="0,10,0,0" />
+                <Button x:Name="btn_ForceReinstallPythonVenv" Content="{x:Bind asi:ASILang.Get('ForceReinstallPythonVenv'), Mode=OneWay}" ToolTipService.Placement="Top" ToolTipService.ToolTip="{x:Bind asi:ASILang.Get('ForceReinstallPythonVenvTooltip'), Mode=OneWay}" Click="btn_ForceReinstallPythonVenv_Click" Margin="0,10,0,0" />
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('ApplicationTheme'), Mode=OneWay}"/>:</TextBlock>
                     <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Margin="15,2,0,0" Content="{x:Bind asi:ASILang.Get('ApplicationTheme_Dark'), Mode=OneTime}" VerticalAlignment="Center"/>

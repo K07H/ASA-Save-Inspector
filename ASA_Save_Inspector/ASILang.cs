@@ -18,7 +18,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "3.2";
+        public const string LANGUAGE_VERSION = "3.3";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -500,6 +500,8 @@ namespace ASA_Save_Inspector
             { "Statistics", "Statistics" },
             { "CustomBlueprints", "Custom blueprints" },
             { "ForceReinstallArkParse", "Force reinstall ArkParse" },
+            { "ForceReinstallPythonVenv", "Force reinstall Python's vEnv" },
+            { "ForceReinstallPythonVenvTooltip", "Forces Python's virtual environment reinstallation" },
             { "CustomBlueprintsSectionDescription", "You can use this section to register and manage custom blueprints. Note that registering a custom blueprint does not necessarily means that its data will be extracted successfully (data extraction succeeds if the object is similar enough to a basic ASA game object)." },
             { "RegisterCustomBlueprint", "Register custom blueprint" },
             { "BlueprintType", "Blueprint type" },
@@ -516,6 +518,8 @@ namespace ASA_Save_Inspector
             { "ListingASIDataFolder", "ASI data folder content:" },
             { "ListingASIDataFolderError", "Exception caught while listing ASI data folder content." },
             { "ReinstallArkParseFailed", "Failed to reinstall ArkParse." },
+            { "ReinstallPythonVenvFailed", "Failed to reinstall Python's virtual environment." },
+            { "ReinstallPythonVenvSuccess", "Python's virtual environment has been reinstalled." },
             { "CustomDinoBlueprintUnregistered", "Custom dino blueprint unregistered." },
             { "CustomItemBlueprintUnregistered", "Custom item blueprint unregistered." },
             { "CustomStructureBlueprintUnregistered", "Custom structure blueprint unregistered." },
@@ -692,6 +696,7 @@ namespace ASA_Save_Inspector
             { "ArkParseAddSetupError", "An error happened in AddArkParseSetup." },
             { "ArkParseAddRunnerError", "An error happened in AddArkParseRunner." },
             { "ArkParseInstallingUpdating", "Installing/updating ArkParse..." },
+            { "PythonVenvReinstalling", "Reinstalling Python's virtual environment..." },
             { "PythonExeNotSet", "Python executable not set." },
             { "PythonDistUtilsPrecedenceError", "Python's distutils-precedence.pth error detected. Deleting file at #FILEPATH#..." },
             { "DeleteFileAtFailed", "Failed to delete file at #FILEPATH#." },
@@ -937,6 +942,8 @@ namespace ASA_Save_Inspector
             { "Statistics", "Statistiques" },
             { "CustomBlueprints", "Blueprints personnalisés" },
             { "ForceReinstallArkParse", "Forcer la réinstallation d'ArkParse" },
+            { "ForceReinstallPythonVenv", "Forcer la réinstallation du vEnv Python" },
+            { "ForceReinstallPythonVenvTooltip", "Force la réinstallation de l'environnement virtuel Python" },
             { "CustomBlueprintsSectionDescription", "Vous pouvez utiliser cette section pour ajouter et gérer des blueprints personnalisés. Notez qu'ajouter un blueprint personnalisé ne signifie pas forcément que l'extraction va réussir (l'extraction des données réussie uniquement si l'élément est suffisament similaire à un élément du jeu de base)." },
             { "RegisterCustomBlueprint", "Ajouter un blueprint personnalisé" },
             { "BlueprintType", "Type de blueprint" },
@@ -953,6 +960,8 @@ namespace ASA_Save_Inspector
             { "ListingASIDataFolder", "Contenu du dossier data d'ASI :" },
             { "ListingASIDataFolderError", "Impossible de lister le contenu du dossier data d'ASI." },
             { "ReinstallArkParseFailed", "La réinstallation d'ArkParse a échouée." },
+            { "ReinstallPythonVenvFailed", "La réinstallation de l'environnement virtuel Python a échouée." },
+            { "ReinstallPythonVenvSuccess", "L'environnement virtuel Python a été réinstallé." },
             { "CustomDinoBlueprintUnregistered", "Blueprint personnalisé de dino supprimé." },
             { "CustomItemBlueprintUnregistered", "Blueprint personnalisé d'objet supprimé." },
             { "CustomStructureBlueprintUnregistered", "Blueprint personnalisé de structure supprimé." },
@@ -1129,6 +1138,7 @@ namespace ASA_Save_Inspector
             { "ArkParseAddSetupError", "Une erreur est survenue dans AddArkParseSetup." },
             { "ArkParseAddRunnerError", "Une erreur est survenue dans AddArkParseRunner." },
             { "ArkParseInstallingUpdating", "Installation/Mise à jour de ArkParse..." },
+            { "PythonVenvReinstalling", "Réinstallation de l'environnement virtuel Python en cours..." },
             { "PythonExeNotSet", "L'exécutable Python n'est pas définit." },
             { "PythonDistUtilsPrecedenceError", "Erreur Python de distutils-precedence.pth détectée. Suppression du fichier #FILEPATH#..." },
             { "DeleteFileAtFailed", "Impossible de supprimer le fichier #FILEPATH#." },

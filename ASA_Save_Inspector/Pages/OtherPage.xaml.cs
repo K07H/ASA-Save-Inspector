@@ -212,6 +212,31 @@ namespace ASA_Save_Inspector.Pages
         }
 #pragma warning restore CS1998
 
+        private async void btn_ForceReinstallPythonVenv_Click(object sender, RoutedEventArgs e)
+        {
+            if (Directory.Exists(Utils.PythonVenvFolder()))
+            {
+                try
+                {
+                    Directory.Delete(Utils.PythonVenvFolder(), true);
+
+                    PythonManager.ShowInstallingPopup($"{ASILang.Get("PythonVenvReinstalling")} {ASILang.Get("PleaseWait")}");
+
+                    if (SettingsPage.UsePythonVenv())
+                        PythonManager.AddPythonVenvSetup();
+                    if (await PythonManager.SetupPythonVenv())
+                        MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvSuccess")}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"Failed to delete Python's vEnv folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvFailed")} {ASILang.Get("SeeLogsForDetails")}");
+                }
+            }
+            else
+                Logger.Instance.Log($"Failed to delete Python's vEnv folder (vEnv folder not found).", Logger.LogLevel.WARNING);
+        }
+
         private void ResetCustomBlueprintPopup()
         {
             tb_BlueprintType.Text = ASILang.Get("ClickHere");
@@ -685,6 +710,5 @@ namespace ASA_Save_Inspector.Pages
             SettingsPage.SaveSettings();
             AddArkParseForceReinstallFile();
         }
-
     }
 }
