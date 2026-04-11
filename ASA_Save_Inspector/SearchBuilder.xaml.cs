@@ -260,11 +260,11 @@ namespace ASA_Save_Inspector
                 }
 
                 if (Parts[i].Operator == SearchOperator.NOT_MATCHING)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} != {(Parts[i].Value == "True" ? "true" : "false")}" : (Parts[i].IsNumber ? $" != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
+                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "!= true" : "== true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
                 else if (Parts[i].Operator == SearchOperator.EQUALS)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} == {(Parts[i].Value == "True" ? "true" : "false")}" : (Parts[i].IsNumber ? $" == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
+                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "== true" : "!= true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
                 else if (Parts[i].Operator == SearchOperator.NOT_EQUALS)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} != {(Parts[i].Value == "True" ? "true" : "false")}" : (Parts[i].IsNumber ? $" != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
+                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "!= true" : "== true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
                 else if (Parts[i].Operator == SearchOperator.STARTING_WITH)
                     ret += $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}).StartsWith(\"{Parts[i].Value}\") == true";
                 else if (Parts[i].Operator == SearchOperator.ENDING_WITH)
@@ -278,7 +278,7 @@ namespace ASA_Save_Inspector
                 else if (Parts[i].Operator == SearchOperator.GREATER_THAN)
                     ret += $"x.{Parts[i].PropertyName} > {Parts[i].Value}";
                 else // (Parts[i].Operator == SearchOperator.MATCHING)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} == {(Parts[i].Value == "True" ? "true" : "false")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
+                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "== true" : "!= true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
             }
 
             while (currentGroup > 0)
@@ -687,6 +687,7 @@ namespace ASA_Save_Inspector
 
             _query.Parts.Add(new SearchQueryPart()
             {
+                Type = _searchType,
                 LogicalOperator = lo,
                 PropertyName = _properties[cleanPropertyName],
                 PropertyCleanName = cleanPropertyName,

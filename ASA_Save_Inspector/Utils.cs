@@ -1624,7 +1624,7 @@ namespace ASA_Save_Inspector
                 }
         }
 
-        public static void DuplicateSearchQuery(string? selected)
+        public static void DuplicateSearchQuery(string? selected, SearchType sType)
         {
             if (string.IsNullOrWhiteSpace(selected))
             {
@@ -1649,7 +1649,7 @@ namespace ASA_Save_Inspector
             else
             {
                 var s = new SearchBuilder();
-                s.Initialize(SearchType.STRUCTURES, prefill);
+                s.Initialize(sType, prefill);
                 s.Show();
                 s.ShowQueryDispatched();
                 s.UpdateBtnsStatesDispatched();

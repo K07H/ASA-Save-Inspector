@@ -3156,7 +3156,7 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private void btn_DuplicateQuery_Click(object sender, RoutedEventArgs e) => Utils.DuplicateSearchQuery(Utils.GetComboBoxSelection(cbb_ExistingQueries, false));
+        private void btn_DuplicateQuery_Click(object sender, RoutedEventArgs e) => Utils.DuplicateSearchQuery(Utils.GetComboBoxSelection(cbb_ExistingQueries, false), SearchType.STRUCTURES);
 
         #endregion
     }

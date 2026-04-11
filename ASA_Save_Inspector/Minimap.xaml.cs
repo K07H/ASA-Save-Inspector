@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using ASA_Save_Inspector.Pages;
@@ -290,13 +291,47 @@ namespace ASA_Save_Inspector
         private static ILayer? CreateLayerWithRasterFeature(MRect extent, string minimapFilename)
         {
             RasterFeature? rasterFeature = null;
-            using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream($"ASA_Save_Inspector.Assets.{minimapFilename}"))
+            bool fileFound = false;
+            byte[]? imgBytes = null;
+
+            // Try to read image from file path.
+            try { fileFound = File.Exists(minimapFilename); }
+            catch { fileFound = false; }
+            if (fileFound)
+                try { imgBytes = File.ReadAllBytes(minimapFilename); }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"Failed to get image bytes from file at \"{minimapFilename}\". Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    imgBytes = null;
+                }
+
+            // Fallback: Try to read image from ASI's embedded files (using file name).
+            if (imgBytes == null)
             {
-                if (s != null)
-                    rasterFeature = new RasterFeature(new MRaster(s.ToBytes(), extent)) { Styles = { new RasterStyle() } };
+                try
+                {
+                    using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream($"ASA_Save_Inspector.Assets.{minimapFilename}"))
+                    {
+                        if (s != null)
+                            imgBytes = s.ToBytes();
+                    }
+                }
+                catch (Exception exb)
+                {
+                    Logger.Instance.Log($"Failed to get image bytes from ASI's embedded resources with file name \"{minimapFilename}\". Exception=[{exb}]", Logger.LogLevel.ERROR);
+                    imgBytes = null;
+                }
             }
+
+            // Create raster feature
+            if (imgBytes != null)
+                rasterFeature = new RasterFeature(new MRaster(imgBytes, extent)) { Styles = { new RasterStyle() } };
             if (rasterFeature == null)
+            {
+                Logger.Instance.Log("Could not find minimap image. A valid image filename (or a valid file path to an image) must be provided in MinimapFilename field from maps_info.json.", Logger.LogLevel.ERROR);
                 return null;
+            }
+
             return new MemoryLayer() { Features = new List<RasterFeature> { rasterFeature }, Name = "Minimap", Opacity = 1, Style = null };
         }
 
