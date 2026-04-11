@@ -15,13 +15,13 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_41BEED122D2141CD93862AAB00203804"
+        "MsmKey" = "8:_50981F1ABA3B4F44B3655EC9535ED5B7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_50981F1ABA3B4F44B3655EC9535ED5B7"
+        "MsmKey" = "8:_DABF458F660B41298B128C050D1356BB"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -366,7 +366,7 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_194CE787E6414203A1FE15793E3B3E35"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_04C7A94A0BBE4738A56461FB03B57859"
             {
             "Name" = "8:ASA Save Inspector"
             "Arguments" = "8:"
@@ -374,13 +374,13 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_41BEED122D2141CD93862AAB00203804"
+            "Target" = "8:_DABF458F660B41298B128C050D1356BB"
             "Folder" = "8:_8618B6C6090049209136915BBFE1CDE1"
             "WorkingFolder" = "8:_FCC92804DE2B4FC18850AAF8EE677477"
-            "Icon" = "8:_50981F1ABA3B4F44B3655EC9535ED5B7"
+            "Icon" = "8:"
             "Feature" = "8:"
             }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_9E8AE76B29974B08902BBC5F28CBD06A"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_9F9EF350DAD74DB5A0D97411FF0EBFB0"
             {
             "Name" = "8:ASA Save Inspector"
             "Arguments" = "8:"
@@ -388,10 +388,10 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_41BEED122D2141CD93862AAB00203804"
+            "Target" = "8:_DABF458F660B41298B128C050D1356BB"
             "Folder" = "8:_B22934E82649407D984F16484D3F88D2"
             "WorkingFolder" = "8:_FCC92804DE2B4FC18850AAF8EE677477"
-            "Icon" = "8:_50981F1ABA3B4F44B3655EC9535ED5B7"
+            "Icon" = "8:"
             "Feature" = "8:"
             }
         }
@@ -803,7 +803,7 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_41BEED122D2141CD93862AAB00203804"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_DABF458F660B41298B128C050D1356BB"
             {
             "SourcePath" = "8:..\\ASA_Save_Inspector\\obj\\x64\\Release\\net8.0-windows10.0.19041.0\\win-x64\\apphost.exe"
             "TargetName" = "8:"
@@ -823,7 +823,7 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
+            "OutputConfiguration" = "8:Release|x64"
             "OutputGroupCanonicalName" = "8:PublishItems"
             "OutputProjectGuid" = "8:{C330DA46-7BC4-4B1B-B9F7-1C51130CB611}"
             "ShowKeyOutput" = "11:TRUE"
