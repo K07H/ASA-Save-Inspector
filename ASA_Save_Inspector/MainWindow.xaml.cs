@@ -143,43 +143,130 @@ namespace ASA_Save_Inspector
             App.Current.Exit();
         }
 
-        private void LoadMapsInfo()
+        private bool MapsInfosAreEqual(ArkMapInfo? a, ArkMapInfo? b)
         {
-#if !DEBUG
-            string mapsInfoFilepath = Utils.MapsInfoFilePath();
-            if (File.Exists(mapsInfoFilepath))
+            if (a == null)
+                return (b == null);
+            if (b == null)
+                return (a == null);
+            if (string.Compare(a.MapName, b.MapName, StringComparison.InvariantCultureIgnoreCase) != 0 ||
+                string.Compare(a.MinimapFilename, b.MinimapFilename, StringComparison.InvariantCultureIgnoreCase) != 0 ||
+                a.Bounds?.OriginMinX != b.Bounds?.OriginMinX ||
+                a.Bounds?.OriginMinY != b.Bounds?.OriginMinY ||
+                a.Bounds?.OriginMinZ != b.Bounds?.OriginMinZ ||
+                a.Bounds?.OriginMaxX != b.Bounds?.OriginMaxX ||
+                a.Bounds?.OriginMaxY != b.Bounds?.OriginMaxY ||
+                a.Bounds?.OriginMaxZ != b.Bounds?.OriginMaxZ ||
+                a.Bounds?.PlayableMinX != b.Bounds?.PlayableMinX ||
+                a.Bounds?.PlayableMinY != b.Bounds?.PlayableMinY ||
+                a.Bounds?.PlayableMinZ != b.Bounds?.PlayableMinZ ||
+                a.Bounds?.PlayableMaxX != b.Bounds?.PlayableMaxX ||
+                a.Bounds?.PlayableMaxY != b.Bounds?.PlayableMaxY ||
+                a.Bounds?.PlayableMaxZ != b.Bounds?.PlayableMaxZ)
+                return false;
+            if (a.SubMinimaps == null && b.SubMinimaps != null)
+                return false;
+            if (a.SubMinimaps != null && b.SubMinimaps == null)
+                return false;
+            if (a.SubMinimaps != null && b.SubMinimaps != null)
             {
-                try
-                {
-                    string mapsInfoJson = File.ReadAllText(mapsInfoFilepath, Encoding.UTF8);
-                    if (string.IsNullOrWhiteSpace(mapsInfoJson))
-                        return;
-
-                    List<ArkMapInfo>? jsonMapsInfo = JsonSerializer.Deserialize<List<ArkMapInfo>>(mapsInfoJson);
-                    if (jsonMapsInfo != null)
-                        Utils._allMaps = jsonMapsInfo;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                }
+                if (a.SubMinimaps.Count != b.SubMinimaps.Count)
+                    return false;
+                if (a.SubMinimaps.Count > 0 && b.SubMinimaps.Count > 0)
+                    foreach (var subMapA in a.SubMinimaps)
+                        if (subMapA != null)
+                        {
+                            bool found = false;
+                            foreach (var subMapB in b.SubMinimaps)
+                                if (subMapB != null && MapsInfosAreEqual(subMapA, subMapB))
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            if (!found)
+                                return false;
+                        }
             }
-            else
-            {
-#endif
+            return true;
+        }
+
+        private bool UpdateMapsInfo()
+        {
             Utils.EnsureDataFolderExist();
             try
             {
                 string jsonString = JsonSerializer.Serialize<List<ArkMapInfo>>(Utils._allMaps, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(Utils.MapsInfoFilePath(), jsonString, Encoding.UTF8);
+                return true;
             }
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                return false;
             }
-#if !DEBUG
+        }
+
+        private bool LoadMapsInfo()
+        {
+            string mapsInfoFilepath = Utils.MapsInfoFilePath();
+            if (!File.Exists(mapsInfoFilepath))
+                return UpdateMapsInfo();
+
+            List<ArkMapInfo>? jsonMapsInfo = null;
+            try
+            {
+                string mapsInfoJson = File.ReadAllText(mapsInfoFilepath, Encoding.UTF8);
+                if (!string.IsNullOrWhiteSpace(mapsInfoJson))
+                    jsonMapsInfo = JsonSerializer.Deserialize<List<ArkMapInfo>>(mapsInfoJson);
             }
-#endif
+            catch (Exception ex)
+            {
+                jsonMapsInfo = null;
+                Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            if (jsonMapsInfo == null || jsonMapsInfo.Count <= 0)
+                return UpdateMapsInfo();
+
+            // Search if some maps config are missing or deprecated in currently stored maps info.
+            bool requiresUpdate = false;
+            foreach (var preconfig in Utils._allMaps)
+                if (preconfig != null)
+                {
+                    bool found = false;
+                    foreach (var newconfig in jsonMapsInfo)
+                        if (newconfig != null && MapsInfosAreEqual(preconfig, newconfig))
+                        {
+                            found = true;
+                            break;
+                        }
+                    if (!found) // If map config is missing or deprecated.
+                    {
+                        // Remove previously stored instance of the map info.
+                        int toDel = -1;
+                        try
+                        {
+                            for (int i = 0; i < jsonMapsInfo.Count; i++)
+                                if (string.Compare(jsonMapsInfo[i].MapName, preconfig.MapName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                                {
+                                    toDel = i;
+                                    break;
+                                }
+                            if (toDel >= 0)
+                                jsonMapsInfo.RemoveAt(toDel);
+                        }
+                        catch { }
+                        // Add the new (or updated) map info.
+                        if (toDel >= 0)
+                            jsonMapsInfo.Insert(toDel, preconfig);
+                        else
+                            jsonMapsInfo.Add(preconfig);
+                        requiresUpdate = true;
+                        Logger.Instance.Log($"Map \"{preconfig.MapName}\" was missing or incorrectly formatted inside \"maps_info.json\". JSON file has been updated.", Logger.LogLevel.WARNING);
+                    }
+                }
+
+            Utils._allMaps = jsonMapsInfo;
+            return (requiresUpdate ? UpdateMapsInfo() : true);
         }
 
         private static bool LastDoubleTap(MapPoint? point)
