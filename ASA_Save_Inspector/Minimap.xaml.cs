@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using ASA_Save_Inspector.Pages;
+using BruTile;
 using Mapsui;
 using Mapsui.Extensions;
+using Mapsui.Fetcher;
 using Mapsui.Layers;
 using Mapsui.Limiting;
 using Mapsui.Manipulations;
@@ -29,6 +33,7 @@ namespace ASA_Save_Inspector
         public string? Description { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
+        public string? SubMapName { get; set; }
     }
 
     public class ASIMouseCoordinatesWidget : TextBoxWidget
@@ -46,7 +51,7 @@ namespace ASA_Save_Inspector
         public override void OnPointerMoved(WidgetEventArgs e)
         {
             var worldPosition = e.Map.Navigator.Viewport.ScreenToWorld(e.ScreenPosition);
-            var mapCoords = Utils.GetMapCoordsFromASIMinimapCoords((!string.IsNullOrEmpty(SettingsPage._currentlyLoadedMapName) ? SettingsPage._currentlyLoadedMapName : "Unknown"), worldPosition.Y, worldPosition.X);
+            var mapCoords = Utils.GetMapCoordsFromASIMinimapCoords(worldPosition.Y, worldPosition.X);
             Text = $"Lat {mapCoords.Key.ToString("F1", CultureInfo.InvariantCulture)}  Long {mapCoords.Value.ToString("F1", CultureInfo.InvariantCulture)}";
         }
     }
@@ -72,7 +77,7 @@ namespace ASA_Save_Inspector
         private static readonly string _windowName = $"{MainWindow._appName} Minimap";
         private static readonly MRect _mapDimensions = new MRect(X_MIN, Y_MIN, X_MAX + (MARGIN * 2.0d), Y_MAX + (MARGIN * 2.0d));
 
-        private static ILayer? _minimapLayer = null;
+        private static MemoryLayer? _minimapLayer = null;
         private static ILayer? _pointsLayer = null;
         private static MemoryProvider? _featuresProvider = null;
 
@@ -127,7 +132,7 @@ namespace ASA_Save_Inspector
                 TitleBarTextBlock.Foreground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
         }
 
-        public static void InitMap(IEnumerable<MapPoint?> points, string minimapFilename, Func<MapPoint?, bool>? doubleTapCallback)
+        public static void InitMap(IEnumerable<MapPoint?> points, List<string> minimapFilename, Func<MapPoint?, bool>? doubleTapCallback)
         {
             if (!_initialized && _minimap != null)
             {
@@ -146,13 +151,30 @@ namespace ASA_Save_Inspector
             }
         }
 
-        private void CreateMap(IEnumerable<MapPoint?> points, string minimapFilename)
+        private void CreateMap(IEnumerable<MapPoint?> points, List<string> minimapFilename)
         {
             if (_pinStyle == null)
                 _pinStyle = CreatePinSymbol();
-            _minimapLayer = CreateLayerWithRasterFeature(_mapDimensions, minimapFilename);
-            if (_minimapLayer != null)
-                MyMap.Map.Layers.Add(_minimapLayer);
+            bool isFirstLayer = true;
+            int foundSubMaps = 0;
+            foreach (var filename in minimapFilename)
+                if (!string.IsNullOrWhiteSpace(filename))
+                {
+                    var backgroundLayer = CreateLayerWithRasterFeature(_mapDimensions, filename);
+                    if (backgroundLayer != null)
+                    {
+                        ++foundSubMaps;
+                        if (isFirstLayer)
+                        {
+                            isFirstLayer = false;
+                            backgroundLayer.Enabled = true;
+                            _minimapLayer = backgroundLayer;
+                        }
+                        else
+                            backgroundLayer.Enabled = false;
+                        MyMap.Map.Layers.Add(backgroundLayer);
+                    }
+                }
             _pointsLayer = CreatePointLayer(points);
             if (_pointsLayer != null)
                 MyMap.Map.Layers.Add(_pointsLayer);
@@ -169,6 +191,20 @@ namespace ASA_Save_Inspector
             MyMap.Map.Navigator.CenterOn(_mapDimensions.Centroid);
 
             MyMap.Map.Tapped += MapTapped;
+
+            if (foundSubMaps > 1)
+            {
+                TBSubMapName.Text = "Sub map";
+                if (!string.IsNullOrWhiteSpace(SettingsPage._currentlyLoadedMapName))
+                {
+                    var mapInfo = Utils.GetMapInfoFromName(SettingsPage._currentlyLoadedMapName);
+                    if (mapInfo != null && !string.IsNullOrWhiteSpace(mapInfo.SubMapName))
+                        TBSubMapName.Text = $"Sub map : {mapInfo.SubMapName}";
+                }
+                SPSubMap.Visibility = Visibility.Visible;
+            }
+            else
+                SPSubMap.Visibility = Visibility.Collapsed;
         }
 
         private void ClearPoints()
@@ -199,6 +235,20 @@ namespace ASA_Save_Inspector
                 _minimapLayer.Dispose();
                 _minimapLayer = null;
             }
+        }
+
+        private void ChangeBackgroundImage(string newMinimapFilename)
+        {
+            if (MyMap.Map.Layers != null && MyMap.Map.Layers.Count > 0)
+                foreach (var layer in MyMap.Map.Layers)
+                    if (layer != null)
+                    {
+                        if (string.Compare(layer.Name, newMinimapFilename, StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                            string.Compare(layer.Name, "Points", StringComparison.InvariantCultureIgnoreCase) == 0)
+                            layer.Enabled = true;
+                        else
+                            layer.Enabled = false;
+                    }
         }
 
         private void ModifyPoints(IEnumerable<MapPoint?> points)
@@ -264,10 +314,96 @@ namespace ASA_Save_Inspector
                 mapInfo.Layer?.DataHasChanged();
         }
 
-        private void MapShowCallout(string? ID, double x, double y)
+        private void RefreshPointsForCurrentSubMap()
+        {
+            HideCallouts();
+            var currentPageType = Utils.GetCurrentlyDisplayedPageType();
+            if (currentPageType != null)
+            {
+                if (currentPageType == typeof(DinosPage))
+                {
+                    if (DinosPage._page != null)
+                        DinosPage._page.ApplyFiltersAndSort();
+                }
+                else if (currentPageType == typeof(StructuresPage))
+                {
+                    if (StructuresPage._page != null)
+                        StructuresPage._page.ApplyFiltersAndSort();
+                }
+                else if (currentPageType == typeof(ItemsPage))
+                {
+                    if (ItemsPage._page != null)
+                        ItemsPage._page.ApplyFiltersAndSort();
+                }
+                else if (currentPageType == typeof(PlayerPawnsPage))
+                {
+                    if (PlayerPawnsPage._page != null)
+                        PlayerPawnsPage._page.ApplyFiltersAndSort();
+                }
+                else if (currentPageType == typeof(PlayersPage))
+                {
+                    if (PlayersPage._page != null)
+                        PlayersPage._page.ApplyFiltersAndSort();
+                }
+                else if (currentPageType == typeof(TribesPage))
+                {
+                    if (TribesPage._page != null)
+                        TribesPage._page.ApplyFiltersAndSort();
+                }
+            }
+        }
+
+        private void ChangeToSubMap(string? subMapName)
+        {
+            if (string.IsNullOrWhiteSpace(SettingsPage._currentlyLoadedMapName))
+                return;
+            ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(SettingsPage._currentlyLoadedMapName);
+            if (mapInfo == null)
+                return;
+            if (!string.IsNullOrWhiteSpace(subMapName) &&
+                string.Compare(subMapName, mapInfo.SubMapName, StringComparison.InvariantCultureIgnoreCase) != 0 &&
+                mapInfo.SubMinimaps != null &&
+                mapInfo.SubMinimaps.Count > 0)
+                foreach (ArkMapInfo subMap in mapInfo.SubMinimaps)
+                    if (subMap != null && string.Compare(subMapName, subMap.SubMapName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        mapInfo = subMap;
+                        break;
+                    }
+            SettingsPage._currentlyLoadedSubMapName = subMapName;
+            if (string.IsNullOrWhiteSpace(mapInfo.SubMapName))
+                SPSubMap.Visibility = Visibility.Collapsed;
+            else
+            {
+                TBSubMapName.Text = $"Sub map : {mapInfo.SubMapName}";
+                SPSubMap.Visibility = Visibility.Visible;
+            }
+            if (!string.IsNullOrWhiteSpace(mapInfo.MinimapFilename))
+                ChangeBackgroundImage(mapInfo.MinimapFilename);
+            RefreshPointsForCurrentSubMap();
+            MyMap.RefreshGraphics();
+        }
+
+        private void MapShowCallout(string? ID, double x, double y, string? subMapName, bool noRecursion = false)
         {
             if (_featuresProvider == null)
                 return;
+
+            if (!string.IsNullOrWhiteSpace(subMapName))
+                if (string.Compare(subMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) != 0)
+                {
+#if DEBUG
+                    Debug.WriteLine("WARNING: Not on proper sub map. Changing sub map.");
+#endif
+                    ChangeToSubMap(subMapName);
+                    if (!noRecursion && _minimap != null)
+                        _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                        {
+                            await Task.Delay(1000);
+                            MapShowCallout(ID, x, y, subMapName, true);
+                        });
+                    return;
+                }
 
             HideCallouts();
             var features = _featuresProvider.Features.Where(f => ((f.Data as MapPoint)?.X == x && (f.Data as MapPoint)?.Y == y));
@@ -282,13 +418,13 @@ namespace ASA_Save_Inspector
             MyMap.RefreshGraphics();
         }
 
-        public static void ShowCallout(string? ID, double x, double y)
+        public static void ShowCallout(string? ID, double x, double y, string? subMapName)
         {
             if (_minimap != null)
-                _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.MapShowCallout(ID, x, y); });
+                _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.MapShowCallout(ID, x, y, subMapName); });
         }
 
-        private static ILayer? CreateLayerWithRasterFeature(MRect extent, string minimapFilename)
+        private static MemoryLayer? CreateLayerWithRasterFeature(MRect extent, string minimapFilename)
         {
             RasterFeature? rasterFeature = null;
             bool fileFound = false;
@@ -325,14 +461,19 @@ namespace ASA_Save_Inspector
 
             // Create raster feature
             if (imgBytes != null)
-                rasterFeature = new RasterFeature(new MRaster(imgBytes, extent)) { Styles = { new RasterStyle() } };
+                try { rasterFeature = new RasterFeature(new MRaster(imgBytes, extent)) { Styles = { new RasterStyle() } }; }
+                catch (Exception exc)
+                {
+                    rasterFeature = null;
+                    Logger.Instance.Log($"Exception caught while creating raster feature for filename \"{minimapFilename}\". Exception=[{exc}]", Logger.LogLevel.ERROR);
+                }
             if (rasterFeature == null)
             {
                 Logger.Instance.Log("Could not find minimap image. A valid image filename (or a valid file path to an image) must be provided in MinimapFilename field from maps_info.json.", Logger.LogLevel.ERROR);
                 return null;
             }
 
-            return new MemoryLayer() { Features = new List<RasterFeature> { rasterFeature }, Name = "Minimap", Opacity = 1, Style = null };
+            return new MemoryLayer() { Features = new List<RasterFeature> { rasterFeature }, Name = minimapFilename, Opacity = 1, Style = null };
         }
 
         private static ILayer? CreatePointLayer(IEnumerable<MapPoint?>? points)
@@ -414,6 +555,132 @@ namespace ASA_Save_Inspector
 
             _initialized = false;
             MainWindow._minimap = null;
+        }
+
+        private ArkMapInfo? GetMapInfoFromMinimapFileName(string? minimapFilename)
+        {
+            if (string.IsNullOrWhiteSpace(minimapFilename))
+                return null;
+            if (string.IsNullOrWhiteSpace(SettingsPage._currentlyLoadedMapName))
+                return null;
+            ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(SettingsPage._currentlyLoadedMapName);
+            if (mapInfo == null)
+                return null;
+            if (string.Compare(minimapFilename, mapInfo.MinimapFilename, StringComparison.InvariantCultureIgnoreCase) == 0)
+                return mapInfo;
+            if (mapInfo.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
+                foreach (var subMap in mapInfo.SubMinimaps)
+                    if (subMap != null && string.Compare(minimapFilename, subMap.MinimapFilename, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        return subMap;
+            return null;
+        }
+
+        private void ChangeToSubMapForLayer(ILayer? layer)
+        {
+            if (layer == null)
+                return;
+            var mapInfo = GetMapInfoFromMinimapFileName(layer.Name);
+            if (mapInfo == null || string.IsNullOrWhiteSpace(mapInfo.SubMapName))
+                return;
+            ChangeToSubMap(mapInfo.SubMapName);
+        }
+
+        private void BTNSubMapPrev_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyMap.Map.Layers != null && MyMap.Map.Layers.Count > 0)
+            {
+                ILayer? lastLayer = null;
+                for (int i = (MyMap.Map.Layers.Count - 1); i >= 0; i--)
+                {
+                    var layer = MyMap.Map.Layers.ElementAt(i);
+                    if (layer != null && string.Compare(layer.Name, "Points", StringComparison.InvariantCultureIgnoreCase) != 0)
+                    {
+                        lastLayer = layer;
+                        break;
+                    }
+                }
+
+                ILayer? prevLayer = null;
+                for (int i = 0; i < MyMap.Map.Layers.Count; i++)
+                {
+                    var layer = MyMap.Map.Layers.ElementAt(i);
+                    if (layer != null && string.Compare(layer.Name, "Points", StringComparison.InvariantCultureIgnoreCase) != 0)
+                    {
+                        if (layer.Enabled)
+                        {
+                            if (prevLayer != null)
+                            {
+                                prevLayer.Enabled = true;
+                                layer.Enabled = false;
+                                ChangeToSubMapForLayer(prevLayer);
+                            }
+                            else if (lastLayer != null && lastLayer != layer)
+                            {
+                                lastLayer.Enabled = true;
+                                layer.Enabled = false;
+                                ChangeToSubMapForLayer(lastLayer);
+                            }
+                            return;
+                        }
+                        prevLayer = layer;
+                    }
+                }
+            }
+        }
+
+        private void BTNSubMapNext_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyMap.Map.Layers != null && MyMap.Map.Layers.Count > 0)
+            {
+                ILayer? firstLayer = null;
+                for (int i = 0; i < MyMap.Map.Layers.Count; i++)
+                {
+                    var layer = MyMap.Map.Layers.ElementAt(i);
+                    if (layer != null && string.Compare(layer.Name, "Points", StringComparison.InvariantCultureIgnoreCase) != 0)
+                    {
+                        firstLayer = layer;
+                        break;
+                    }
+                }
+
+                ILayer? currentLayer = null;
+                bool foundCurrentLayer = false;
+                bool foundNextLayer = false;
+                for (int i = 0; i < MyMap.Map.Layers.Count; i++)
+                {
+                    var layer = MyMap.Map.Layers.ElementAt(i);
+                    if (layer != null && string.Compare(layer.Name, "Points", StringComparison.InvariantCultureIgnoreCase) != 0)
+                    {
+                        if (foundCurrentLayer)
+                        {
+                            foundNextLayer = true;
+                            if (layer != currentLayer)
+                            {
+                                layer.Enabled = true;
+                                if (currentLayer != null)
+                                    currentLayer.Enabled = false;
+                                ChangeToSubMapForLayer(layer);
+                            }
+                        }
+                        else
+                        {
+                            if (layer.Enabled)
+                            {
+                                foundCurrentLayer = true;
+                                currentLayer = layer;
+                            }
+                        }
+                    }
+                }
+                if (!foundNextLayer)
+                    if (firstLayer != null && firstLayer != currentLayer)
+                    {
+                        firstLayer.Enabled = true;
+                        if (currentLayer != null)
+                            currentLayer.Enabled = false;
+                        ChangeToSubMapForLayer(firstLayer);
+                    }
+            }
         }
     }
 }

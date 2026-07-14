@@ -454,7 +454,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
         }
 
-        private void ApplyFiltersAndSort()
+        public void ApplyFiltersAndSort()
         {
             IEnumerable<Player>? filtered = null;
             if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)

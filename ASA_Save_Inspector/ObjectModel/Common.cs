@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace ASA_Save_Inspector.ObjectModel
 {
@@ -119,6 +120,7 @@ namespace ASA_Save_Inspector.ObjectModel
 
     public class Property : IComparable, IComparable<Property>
     {
+        [JsonConverter(typeof(SingleOrArrayStringConverter))]
         public string? name { get; set; }
         public string? type { get; set; }
         public string? value { get; set; }

@@ -8,9 +8,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using ASA_Save_Inspector.ObjectModel;
 using ASA_Save_Inspector.Pages;
+using Mapsui;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -356,6 +358,46 @@ namespace ASA_Save_Inspector
                     PlayableMaxZ = 54695.0
                 }
             },
+            new ArkMapInfo() { MapName = "Genesis1", SubMapName = "Ocean", MinimapFilename = "Genesis1Ocean_Minimap_Margin.jpg",
+                SubMinimaps = new List<ArkMapInfo>()
+                {
+                    new ArkMapInfo()
+                    {
+                        MapName = "Genesis1",
+                        SubMapName = "Biomes",
+                        MinimapFilename = "Genesis1Biomes_Minimap_Margin.jpg",
+                        Bounds = new MapBounds()
+                        {
+                            OriginMinX = -410001.0,
+                            OriginMinY = -410000.0,
+                            OriginMinZ = -399952.0,
+                            OriginMaxX = 409999.0,
+                            OriginMaxY = 410000.0,
+                            OriginMaxZ = 100048.0,
+                            PlayableMinX = -410001.0,
+                            PlayableMinY = -410000.0,
+                            PlayableMinZ = -399952.0,
+                            PlayableMaxX = 409999.0,
+                            PlayableMaxY = 410000.0,
+                            PlayableMaxZ = 100048.0
+                        }
+                    }
+                }, Bounds = new MapBounds()
+                {
+                    OriginMinX = -1107501.0,
+                    OriginMinY = -1107500.0,
+                    OriginMinZ = 129392.0,
+                    OriginMaxX = 1107499.0,
+                    OriginMaxY = 1107500.0,
+                    OriginMaxZ = 404392.0,
+                    PlayableMinX = -1107501.0,
+                    PlayableMinY = -1107500.0,
+                    PlayableMinZ = 129392.0,
+                    PlayableMaxX = 1107499.0,
+                    PlayableMaxY = 1107500.0,
+                    PlayableMaxZ = 404392.0
+                }
+            },
             new ArkMapInfo() { MapName = "Unknown", MinimapFilename = "TheIsland_Minimap_Margin.jpg", Bounds = new MapBounds()
                 {
                     OriginMinX = -342900.0,
@@ -685,6 +727,29 @@ namespace ASA_Save_Inspector
             return new KeyValuePair<double, double>(x, y);
         }
 
+        public static KeyValuePair<MapBounds, string?>? FindMapBounds(ArkMapInfo mapInfo, double? x, double? y, double? z)
+        {
+            if (mapInfo == null || x == null || !x.HasValue || y == null || !y.HasValue || z == null || !z.HasValue)
+                return null;
+            MapBounds? bounds = mapInfo.Bounds;
+            string? subMapName = mapInfo.SubMapName;
+            if (x.Value < mapInfo.Bounds.OriginMinX || x.Value > mapInfo.Bounds.OriginMaxX ||
+                y.Value < mapInfo.Bounds.OriginMinY || y.Value > mapInfo.Bounds.OriginMaxY ||
+                z.Value < mapInfo.Bounds.OriginMinZ || z.Value > mapInfo.Bounds.OriginMaxZ)
+                if (mapInfo.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
+                    foreach (ArkMapInfo subMap in mapInfo.SubMinimaps)
+                        if (subMap != null && subMap.Bounds != null &&
+                            x.Value >= subMap.Bounds.OriginMinX && x.Value <= subMap.Bounds.OriginMaxX &&
+                            y.Value >= subMap.Bounds.OriginMinY && y.Value <= subMap.Bounds.OriginMaxY &&
+                            z.Value >= subMap.Bounds.OriginMinZ && z.Value <= subMap.Bounds.OriginMaxZ)
+                        {
+                            subMapName = subMap.SubMapName;
+                            bounds = subMap.Bounds;
+                            break;
+                        }
+            return new KeyValuePair<MapBounds, string?>(bounds, subMapName);
+        }
+
         /// <summary>
         /// Returns map GPS coordinates from given transform position, with Key being latitude (Y) and Value being longitude (X).
         /// </summary>
@@ -693,17 +758,24 @@ namespace ASA_Save_Inspector
         /// <param name="y">Transform y</param>
         /// <param name="z">Transform z</param>
         /// <returns>Returns map GPS coordinates from given transform position, with Key being latitude (Y) and Value being longitude (X).</returns>
-        public static KeyValuePair<double, double> GetMapCoords(string? mapName, double? x, double? y, double? z)
+        public static Tuple<double, double, string?> GetMapCoords(string? mapName, double? x, double? y, double? z)
         {
             if (x == null || !x.HasValue || y == null || !y.HasValue || z == null || !z.HasValue)
-                return new KeyValuePair<double, double>(50.0d, 50.0d);
+                return new Tuple<double, double, string?>(50.0d, 50.0d, null);
 
             ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(mapName ?? "Unknown");
             if (mapInfo == null)
                 mapInfo = Utils.GetMapInfoFromName("Unknown");
             if (mapInfo != null)
-                return Utils.transformToMapCoords(mapInfo.Bounds, x.Value, y.Value, z.Value);
-            return new KeyValuePair<double, double>(50.0d, 50.0d);
+            {
+                var bounds = FindMapBounds(mapInfo, x, y, z);
+                if (bounds != null && bounds.HasValue)
+                {
+                    var coords = Utils.transformToMapCoords(bounds.Value.Key, x.Value, y.Value, z.Value);
+                    return new Tuple<double, double, string?>(coords.Key, coords.Value, bounds.Value.Value);
+                }
+            }
+            return new Tuple<double, double, string?>(50.0d, 50.0d, null);
         }
 
         /// <summary>
@@ -714,30 +786,33 @@ namespace ASA_Save_Inspector
         /// <param name="y">Y coord</param>
         /// <param name="z">Z coord</param>
         /// <returns>Returns ASI minimap coords, with Key being Y axis and Value being X axis.</returns>
-        public static KeyValuePair<double, double> GetASIMinimapCoords(string? mapName, double? x, double? y, double? z)
+        public static Tuple<double, double, string?> GetASIMinimapCoords(string? mapName, double? x, double? y, double? z)
         {
             if (x == null || !x.HasValue || y == null || !y.HasValue || z == null || !z.HasValue)
-                return new KeyValuePair<double, double>(50.0d, 50.0d);
+                return new Tuple<double, double, string?>(50.0d, 50.0d, null);
 
             ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(mapName ?? "Unknown");
             if (mapInfo == null)
                 mapInfo = Utils.GetMapInfoFromName("Unknown");
             if (mapInfo != null)
             {
-                var pos = Utils.transformToMapCoords(mapInfo.Bounds, x.Value, y.Value, z.Value, Minimap.X_MIN, Minimap.X_MAX, Minimap.Y_MIN, Minimap.Y_MAX);
-                return new KeyValuePair<double, double>(Minimap.Y_MAX - pos.Key, pos.Value);
+                var bounds = FindMapBounds(mapInfo, x, y, z);
+                if (bounds != null && bounds.HasValue)
+                {
+                    var pos = Utils.transformToMapCoords(bounds.Value.Key, x.Value, y.Value, z.Value, Minimap.X_MIN, Minimap.X_MAX, Minimap.Y_MIN, Minimap.Y_MAX);
+                    return new Tuple<double, double, string?>(Minimap.Y_MAX - pos.Key, pos.Value, bounds.Value.Value);
+                }
             }
-            return new KeyValuePair<double, double>(50.0d, 50.0d);
+            return new Tuple<double, double, string?>(50.0d, 50.0d, null);
         }
 
         /// <summary>
         /// Returns map GPS coordinates from given ASI minimap coords, with Key being latitude (Y) and Value being longitude (X).
         /// </summary>
-        /// <param name="mapName">The name of the map.</param>
         /// <param name="x">ASI minimap X coord</param>
         /// <param name="y">ASI minimap Y coord</param>
         /// <returns>Returns map GPS coordinates from given ASI minimap coords, with Key being latitude (Y) and Value being longitude (X).</returns>
-        public static KeyValuePair<double, double> GetMapCoordsFromASIMinimapCoords(string? mapName, double? y, double? x)
+        public static KeyValuePair<double, double> GetMapCoordsFromASIMinimapCoords(double? y, double? x)
         {
             if (x == null || !x.HasValue || y == null || !y.HasValue)
                 return new KeyValuePair<double, double>(50.0d, 50.0d);
@@ -807,6 +882,21 @@ namespace ASA_Save_Inspector
             foreach (ArkMapInfo mapInfo in Utils._allMaps)
                 if (mapInfo != null && string.Compare(mapName, mapInfo.MapName, StringComparison.InvariantCulture) == 0)
                     return mapInfo;
+                /*
+                {
+                    if (string.IsNullOrWhiteSpace(subMapName))
+                    else
+                    {
+                        if (string.Compare(subMapName, mapInfo.SubMapName, StringComparison.InvariantCulture) == 0)
+                            return mapInfo;
+                        if (mapInfo.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
+                            foreach (ArkMapInfo subMapInfo in mapInfo.SubMinimaps)
+                                if (subMapInfo != null && string.Compare(subMapName, subMapInfo.SubMapName, StringComparison.InvariantCulture) == 0)
+                                    return subMapInfo;
+                        return mapInfo;
+                    }
+                }
+                */
             return null;
         }
 
@@ -1718,6 +1808,14 @@ namespace ASA_Save_Inspector
             if (TribesPage._page != null)
                 TribesPage._page.IsEnabled = !doLock;
         }
+
+        public static Type? GetCurrentlyDisplayedPageType()
+        {
+            if (MainWindow._mainWindow?._navView?.Content != null && MainWindow._mainWindow._navView.Content is Frame)
+                if (((Frame)MainWindow._mainWindow._navView.Content).Content != null)
+                    return ((Frame)MainWindow._mainWindow._navView.Content).Content.GetType();
+            return null;
+        }
     }
 
     public enum ArkObjectType
@@ -1824,5 +1922,42 @@ namespace ASA_Save_Inspector
     {
         public string? HeaderName { get; set; } = null;
         public int DisplayIndex { get; set; } = -1;
+    }
+
+    public class SingleOrArrayStringConverter : JsonConverter<string?>
+    {
+        public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.StartArray)
+            {
+                reader.Read();
+                string? first = ExtractValue(ref reader);
+                while (reader.TokenType != JsonTokenType.EndArray)
+                    reader.Read();
+                return first;
+            }
+
+            return ExtractValue(ref reader);
+        }
+
+        private static string? ExtractValue(ref Utf8JsonReader reader)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return reader.GetString();
+                case JsonTokenType.Null:
+                    return null;
+                case JsonTokenType.EndArray:
+                    return null;
+                default:
+                    using (var doc = JsonDocument.ParseValue(ref reader))
+                    {
+                        return doc.RootElement.GetRawText();
+                    }
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options) => writer.WriteStringValue(value);
     }
 }

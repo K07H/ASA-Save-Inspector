@@ -210,14 +210,37 @@ namespace ASA_Save_Inspector
             }
         }
 
-        public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap)
+        public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap, string? subMapName = null)
         {
             if (_minimap == null)
             {
                 _minimap = new Minimap();
                 string mapName = SettingsPage._currentlyLoadedMapName != null ? SettingsPage._currentlyLoadedMapName : ASILang.Get("Unknown");
                 ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(mapName);
-                Minimap.InitMap(points, (mapInfo != null ? mapInfo.MinimapFilename : "TheIsland_Minimap_Margin.jpg"), onDoubleTap);
+
+                /*
+                string? currentSubMapName = !string.IsNullOrWhiteSpace(subMapName) ? subMapName : SettingsPage._currentlyLoadedSubMapName;
+                if (!string.IsNullOrWhiteSpace(currentSubMapName) && mapInfo?.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
+                    foreach (ArkMapInfo subMapInfo in mapInfo.SubMinimaps)
+                        if (subMapInfo != null && string.Compare(currentSubMapName, subMapInfo.SubMapName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        {
+                            mapInfo = subMapInfo;
+                            break;
+                        }
+                */
+                List<string> allMapFilenames = new List<string>();
+                if (mapInfo != null)
+                {
+                    allMapFilenames.Add(mapInfo.MinimapFilename);
+                    if (mapInfo.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
+                        foreach (var subMap in mapInfo.SubMinimaps)
+                            if (subMap != null && !string.IsNullOrWhiteSpace(subMap.MinimapFilename))
+                                if (!allMapFilenames.Contains(subMap.MinimapFilename))
+                                    allMapFilenames.Add(subMap.MinimapFilename);
+                }
+                else
+                    allMapFilenames.Add("TheIsland_Minimap_Margin.jpg");
+                Minimap.InitMap(points, allMapFilenames, onDoubleTap);
             }
             else
                 Minimap.ChangePoints(points, onDoubleTap);

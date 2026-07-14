@@ -28,8 +28,10 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "/Foliage",
                                   "/NPCZoneManagerBlueprint_",
                                   "/PlayerControllerBlueprint",
+                                  "/Script/Engine.Texture2D",
                                   "/Script/ShooterGame.ShooterMatineeActor",
                                   "/Script/ShooterGame.StructurePaintingComponent",
+                                  "/Script/ShooterGame.VesselDynamicsComponent",
                                   "/Sound/",
                                   "/Traps/DoorAndButtons",
                                   "/Trap/Multi_Switch_Door",
@@ -43,22 +45,30 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "NPCZoneVolume",
                                   "PrimalPersistentWorldData",
                                   "PrimalInventory",
+                                  "GargoyleHarvestComponent_",
+                                  "CreatureTamedInventoryComponent_GrandTortugar_",
                                   "/DinoDeathHarvestingComponent_",
                                   "/DinoDropInventoryComponent_",
                                   "/DinoInventoryComponent_",
                                   "/DinoTamedInventoryComponent_",
                                   "/DinoWildInventoryComponent_",
+                                  "/InventoryComponent_",
                                   "/AstraeosCreatures/AstraeosCreatures_Singleton.AstraeosCreatures_Singleton_C" ]
 
 BLUEPRINTS_NO_EXPORT: list[str] = [ "/AI/",
                                     "_AI_Blueprint.",
                                     "_AIController",
                                     "_AI_Controller",
+                                    "Paracer_AI_Blueprint_Corrupt",
+                                    "Spino_AI_Blueprint_Corrupt",
                                     "/DinoCharacterStatus_BP",
                                     "DinoCharacterStatusComponent_",
                                     "DinoCharacterStatusComponent_BP",
                                     "/PlayerCharacterStatusComponent_BP",
                                     "/Buffs/",
+                                    "Buff_DinoCompanion_YoungIceFox_C",
+                                    "Buff_SanguineElixirUsed_C",
+                                    "PrimalBuffPersistentData",
                                     "DayCycle" ]
 
 def is_in_str(search_for: list[str], search_in: str) -> bool:
@@ -81,6 +91,12 @@ def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str])
             or "/Raft/MotorRaft_BP.MotorRaft_BP" in game_obj.blueprint \
             or "/Raft/Tireme_BP_" in game_obj.blueprint \
             or "Car_Vehicle_BP.Car_Vehicle_BP_C" in game_obj.blueprint \
+            or "InsectSwarmChar_BP.InsectSwarmChar_BP_C" in game_obj.blueprint \
+            or "MicrobeSwarmChar_BP.MicrobeSwarmChar_BP_C" in game_obj.blueprint \
+            or "BrigShipBP.BrigShipBP_C" in game_obj.blueprint \
+            or "SloopShipBP.SloopShipBP_C" in game_obj.blueprint \
+            or "Lumina_Character_BP.Lumina_Character_BP_C" in game_obj.blueprint \
+            or "Umbra_Character_BP.Umbra_Character_BP_C" in game_obj.blueprint \
             or "Polar_Bear.Polar_Bear_C" in game_obj.blueprint:
         return True
     if additional_blueprints is not None and len(additional_blueprints) > 0:

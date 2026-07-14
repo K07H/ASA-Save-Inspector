@@ -23,6 +23,8 @@
     <Content Remove="Assets\Astraeos_Minimap_Margin.jpg" />
     <Content Remove="Assets\ClubArk_Minimap_Margin.jpg" />
     <Content Remove="Assets\Extinction_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Genesis1Biomes_Minimap_Margin.jpg" />
+    <Content Remove="Assets\Genesis1Ocean_Minimap_Margin.jpg" />
     <Content Remove="Assets\LostColony_Minimap_Margin.jpg" />
     <Content Remove="Assets\Ragnarok_Minimap_Margin.jpg" />
     <Content Remove="Assets\RedCircle.svg" />
@@ -87,6 +89,12 @@
     <EmbeddedResource Include="Assets\Extinction_Minimap_Margin.jpg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+	<EmbeddedResource Include="Assets\Genesis1Biomes_Minimap_Margin.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	</EmbeddedResource>
+    <EmbeddedResource Include="Assets\Genesis1Ocean_Minimap_Margin.jpg">
+	  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	</EmbeddedResource>
     <EmbeddedResource Include="Assets\LostColony_Minimap_Margin.jpg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -526,9 +534,9 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025-2026 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>3.0.3.0</AssemblyVersion>
-    <FileVersion>3.0.3.0</FileVersion>
-    <Version>3.0.3</Version>
+    <AssemblyVersion>3.0.4.0</AssemblyVersion>
+    <FileVersion>3.0.4.0</FileVersion>
+    <Version>3.0.4</Version>
     <Title>ASA Save Inspector</Title>
     <Authors>OSubMarin</Authors>
     <Company>LC-IT S.</Company>

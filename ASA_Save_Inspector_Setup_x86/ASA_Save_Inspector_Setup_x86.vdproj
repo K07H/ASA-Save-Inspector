@@ -245,15 +245,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:ASA Save Inspector"
-        "ProductCode" = "8:{970D5EC1-94BF-4E8A-B2F3-255618BC442D}"
-        "PackageCode" = "8:{396AD04F-40A3-44B3-A0D9-EDC7BA665138}"
+        "ProductCode" = "8:{C31CA89A-1A47-498A-B810-F2FE96F5812A}"
+        "PackageCode" = "8:{DD16BD5A-3802-4F61-B49B-8A618D4F35A1}"
         "UpgradeCode" = "8:{B65B2160-517F-460B-B390-1A122F173571}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:3.3.0"
+        "ProductVersion" = "8:3.4.0"
         "Manufacturer" = "8:OSubMarin (LC-IT S.)"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:https://discord.gg/dPgTprNyn9"
@@ -377,7 +377,7 @@
             "Target" = "8:_5611F872C9E04512B39FA59C1033ABF9"
             "Folder" = "8:_E7734F6D562840F2A4A360E1892F238C"
             "WorkingFolder" = "8:_A28A7D2174034FE08BE4BC4B2020D1D4"
-            "Icon" = "8:"
+            "Icon" = "8:_246AA8BC371046F29B2F45708275405D"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_7717E290EDCC4A59B9DAE359A3CD9CF5"
@@ -391,7 +391,7 @@
             "Target" = "8:_5611F872C9E04512B39FA59C1033ABF9"
             "Folder" = "8:_451837503A6245EAA66976E7CA82BDAC"
             "WorkingFolder" = "8:_A28A7D2174034FE08BE4BC4B2020D1D4"
-            "Icon" = "8:"
+            "Icon" = "8:_246AA8BC371046F29B2F45708275405D"
             "Feature" = "8:"
             }
         }

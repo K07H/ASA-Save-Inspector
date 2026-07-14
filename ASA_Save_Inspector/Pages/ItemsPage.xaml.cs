@@ -407,7 +407,8 @@ namespace ASA_Save_Inspector.Pages
                 ReorderColumns();
             });
             if (items != null && MainWindow._minimap != null)
-                MainWindow.UpdateMinimap(items.Select(d =>
+            {
+                var itemsPoints = items.Select(d =>
                 {
                     if (d != null && d.UECoords != null && d.UECoords.Item1 != null && d.UECoords.Item1.HasValue && d.UECoords.Item2 != null && d.UECoords.Item2.HasValue && d.UECoords.Item3 != null && d.UECoords.Item3.HasValue)
                     {
@@ -418,12 +419,16 @@ namespace ASA_Save_Inspector.Pages
                             ID = itemIDStr,
                             Name = d.ShortName,
                             Description = $"{(itemIDStr != "00" ? $"{ASILang.Get("ID")}: {itemIDStr}\n" : string.Empty)}{(!string.IsNullOrWhiteSpace(d.ShortName) ? $"{ASILang.Get("Name")}: {d.ShortName}\n" : string.Empty)}",
-                            X = minimapCoords.Value,
-                            Y = minimapCoords.Key
+                            X = minimapCoords.Item2,
+                            Y = minimapCoords.Item1,
+                            SubMapName = minimapCoords.Item3
                         };
                     }
                     return null;
-                }), LastItemDoubleTap);
+                });
+                var itemsFiltered = itemsPoints.Where(d => d != null && string.Compare(d.SubMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) == 0);
+                MainWindow.UpdateMinimap(itemsFiltered, LastItemDoubleTap);
+            }
         }
 
         private void ReorderColumns()
@@ -540,7 +545,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
         }
 
-        private void ApplyFiltersAndSort()
+        public void ApplyFiltersAndSort()
         {
             IEnumerable<Item>? filtered = null;
             if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
@@ -671,9 +676,10 @@ namespace ASA_Save_Inspector.Pages
                 {
                     string? itemIDStr = i.GetItemID();
                     var minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, i.UECoords.Item1.Value, i.UECoords.Item2.Value, i.UECoords.Item3.Value);
-                    double x = minimapCoords.Value;
-                    double y = minimapCoords.Key;
-                    Minimap.ShowCallout(itemIDStr, x, y);
+                    double x = minimapCoords.Item2;
+                    double y = minimapCoords.Item1;
+                    string? subMapName = minimapCoords.Item3;
+                    Minimap.ShowCallout(itemIDStr, x, y, subMapName);
                 }
             }
         }

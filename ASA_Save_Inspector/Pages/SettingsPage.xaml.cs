@@ -97,6 +97,10 @@ namespace ASA_Save_Inspector.Pages
     {
         public string MapName { get; set; } = ASILang.Get("Unknown");
         public string MinimapFilename { get; set; } = "TheIsland_Minimap_Margin.jpg";
+
+        public string? SubMapName { get; set; } = null;
+        public List<ArkMapInfo>? SubMinimaps { get; set; } = null;
+
         public MapBounds Bounds { get; set; } = new MapBounds()
         {
             OriginMinX = -342900.0,
@@ -196,6 +200,7 @@ namespace ASA_Save_Inspector.Pages
         public static bool _allShortNamesForItemsInitialized = false;
 
         public static string? _currentlyLoadedMapName = null;
+        public static string? _currentlyLoadedSubMapName = null;
 
         public static CustomBlueprints _customBlueprints = new CustomBlueprints();
 
@@ -1889,6 +1894,8 @@ namespace ASA_Save_Inspector.Pages
 
         private static void GotAllTribeIdsForDinos(List<Dino> dinos)
         {
+            if (dinos == null)
+                return;
             _allTribesForDinos = dinos.DistinctBy(d => d.OwningTribeID).Select(d => new KeyValuePair<string, int>(GetTribeNameOrId(d), d.OwningTribeID)).DistinctBy(e => e.Key).ToDictionary();
             if (_allTribesForDinos != null && _allTribesForDinos.Count > 0)
             {
@@ -1974,6 +1981,8 @@ namespace ASA_Save_Inspector.Pages
 
         private static void GotAllTribeIdsForStructures(List<Structure> structures)
         {
+            if (structures == null)
+                return;
             _allTribesForStructures = structures.DistinctBy(d => d.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
             if (_allTribesForStructures != null && _allTribesForStructures.Count > 0)
             {
@@ -2053,6 +2062,8 @@ namespace ASA_Save_Inspector.Pages
 
         private static void GotAllTribeIdsForItems(List<Item> items)
         {
+            if (items == null)
+                return;
             _allTribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
             if (_allTribesForItems != null && _allTribesForItems.Count > 0)
             {
@@ -2393,6 +2404,13 @@ namespace ASA_Save_Inspector.Pages
 
             bool refreshMinimap = (string.Compare(_currentlyLoadedMapName, _selectedJsonExportProfile.MapName, StringComparison.InvariantCulture) != 0);
             _currentlyLoadedMapName = _selectedJsonExportProfile.MapName;
+            _currentlyLoadedSubMapName = null;
+            if (!string.IsNullOrWhiteSpace(_currentlyLoadedMapName))
+            {
+                var mapInfo = Utils.GetMapInfoFromName(_currentlyLoadedMapName);
+                if (mapInfo != null)
+                    _currentlyLoadedSubMapName = mapInfo.SubMapName;
+            }
             if (refreshMinimap && MainWindow._minimap != null)
                 MainWindow.OpenMinimap();
 

@@ -393,26 +393,43 @@ namespace ASA_Save_Inspector.Pages
                 ReorderColumns();
             });
             if (dinos != null && MainWindow._minimap != null)
-                MainWindow.UpdateMinimap(dinos.Select(d =>
+            {
+                var dinosPoints = dinos.Select(d =>
                 {
                     string dinoIDStr = d.GetDinoID();
                     KeyValuePair<double, double> minimapCoords = new KeyValuePair<double, double>(0.0d, 0.0d);
+                    string? subMapName = null;
                     if (d.bIsCryopodded != null && d.bIsCryopodded.HasValue && d.bIsCryopodded.Value)
                     {
                         var cryopodPos = Utils.GetCryopodCoordsByUUID(d.CryopodUUID);
-                        minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        //minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        var coords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        if (coords != null)
+                        {
+                            minimapCoords = new KeyValuePair<double, double>(coords.Item1, coords.Item2);
+                            subMapName = coords.Item3;
+                        }
                     }
                     else
+                    {
                         minimapCoords = d.GetASIMinimapCoords();
+                        subMapName = d.GetSubMapName();
+                    }
                     return new MapPoint()
                     {
                         ID = dinoIDStr,
                         Name = d.CleanName,
                         Description = $"{(dinoIDStr != "00" ? $"{ASILang.Get("ID")}: {dinoIDStr}\n" : string.Empty)}{(!string.IsNullOrWhiteSpace(d.TamedName) ? $"{ASILang.Get("Name")}: {d.TamedName}\n" : string.Empty)}{ASILang.Get("Level")}: {(d.CurrentLevel != null && d.CurrentLevel.HasValue ? d.CurrentLevel.Value.ToString(CultureInfo.InvariantCulture) : "0")}",
                         X = minimapCoords.Value,
-                        Y = minimapCoords.Key
+                        Y = minimapCoords.Key,
+                        SubMapName = subMapName
                     };
-                }), LastDinoDoubleTap);
+                });
+                var t1 = dinosPoints.ToList();
+                var dinosFiltered = dinosPoints.Where(d => string.Compare(d.SubMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) == 0);
+                var t2 = dinosFiltered.ToList();
+                MainWindow.UpdateMinimap(dinosFiltered, LastDinoDoubleTap);
+            }
         }
 
         private void ReorderColumns()
@@ -529,7 +546,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
         }
 
-        private void ApplyFiltersAndSort()
+        public void ApplyFiltersAndSort()
         {
             IEnumerable<Dino>? filtered = null;
             if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
@@ -659,16 +676,26 @@ namespace ASA_Save_Inspector.Pages
                 {
                     string dinoIDStr = d.GetDinoID();
                     KeyValuePair<double, double> minimapCoords = new KeyValuePair<double, double>(0.0d, 0.0d);
+                    string? subMapName = null;
                     if (d.bIsCryopodded != null && d.bIsCryopodded.HasValue && d.bIsCryopodded.Value)
                     {
                         var cryopodPos = Utils.GetCryopodCoordsByUUID(d.CryopodUUID);
-                        minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        //minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        var coords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
+                        if (coords != null)
+                        {
+                            minimapCoords = new KeyValuePair<double, double>(coords.Item1, coords.Item2);
+                            subMapName = coords.Item3;
+                        }
                     }
                     else
+                    {
                         minimapCoords = d.GetASIMinimapCoords();
+                        subMapName = d.GetSubMapName();
+                    }
                     double x = minimapCoords.Value;
                     double y = minimapCoords.Key;
-                    Minimap.ShowCallout(dinoIDStr, x, y);
+                    Minimap.ShowCallout(dinoIDStr, x, y, subMapName);
                 }
             }
         }

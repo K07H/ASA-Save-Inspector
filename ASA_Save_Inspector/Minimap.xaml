@@ -18,6 +18,7 @@
     <Grid Background="{StaticResource MyAcrylicBrushDarker}">
         <Grid.RowDefinitions>
             <RowDefinition Height="48"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48">
@@ -32,6 +33,11 @@
             <TextBlock x:Name="TitleBarTextBlock" Text="ASA Save Inspector" Style="{StaticResource CaptionTextBlockStyle}" FontSize="14" Grid.Column="2" VerticalAlignment="Center">
             </TextBlock>
         </Grid>
-        <winui:MapControl x:Name="MyMap" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+        <StackPanel x:Name="SPSubMap" Grid.Row="1" Visibility="Collapsed" Orientation="Horizontal" Height="40" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Button x:Name="BTNSubMapPrev" Content="&lt;" Style="{StaticResource AccentButtonStyle}" Click="BTNSubMapPrev_Click" />
+            <TextBlock x:Name="TBSubMapName" Text="Sub map : X" Style="{StaticResource BodyLargeTextBlockStyle}" Margin="10,10,10,0"></TextBlock>
+            <Button x:Name="BTNSubMapNext" Content="&gt;" Style="{StaticResource AccentButtonStyle}" Click="BTNSubMapNext_Click" />
+        </StackPanel>
+        <winui:MapControl x:Name="MyMap" Grid.Row="2" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
     </Grid>
 </Window>

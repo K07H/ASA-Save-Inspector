@@ -796,7 +796,11 @@ namespace ASA_Save_Inspector.ObjectModel
             if (string.IsNullOrEmpty(SettingsPage._currentlyLoadedMapName))
                 return new KeyValuePair<double, double>(0.0d, 0.0d);
             var coords = Utils.GetMapCoords(SettingsPage._currentlyLoadedMapName, ActorTransformX, ActorTransformY, ActorTransformZ);
-            _gpsCoords = new KeyValuePair<double, double>(coords.Key, coords.Value);
+            if (coords == null)
+                return new KeyValuePair<double, double>(0.0d, 0.0d);
+            if (!string.IsNullOrWhiteSpace(coords.Item3))
+                _subMapName = coords.Item3;
+            _gpsCoords = new KeyValuePair<double, double>(coords.Item1, coords.Item2);
             return _gpsCoords.Value;
         }
 
@@ -808,8 +812,31 @@ namespace ASA_Save_Inspector.ObjectModel
             if (string.IsNullOrEmpty(SettingsPage._currentlyLoadedMapName))
                 return new KeyValuePair<double, double>(0.0d, 0.0d);
             var coords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, ActorTransformX, ActorTransformY, ActorTransformZ);
-            _asiMinimapCoords = new KeyValuePair<double, double>(coords.Key, coords.Value);
+            if (coords == null)
+                return new KeyValuePair<double, double>(0.0d, 0.0d);
+            if (!string.IsNullOrWhiteSpace(coords.Item3))
+                _subMapName = coords.Item3;
+            _asiMinimapCoords = new KeyValuePair<double, double>(coords.Item1, coords.Item2);
             return _asiMinimapCoords.Value;
+        }
+
+        private string? _subMapName = null;
+        public string? GetSubMapName()
+        {
+            if (!string.IsNullOrWhiteSpace(_subMapName))
+                return _subMapName;
+            if (!string.IsNullOrEmpty(SettingsPage._currentlyLoadedMapName))
+            {
+                var coords = Utils.GetMapCoords(SettingsPage._currentlyLoadedMapName, ActorTransformX, ActorTransformY, ActorTransformZ);
+                if (coords != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(coords.Item3))
+                        _subMapName = coords.Item3;
+                    if (_gpsCoords == null || !_gpsCoords.HasValue)
+                        _gpsCoords = new KeyValuePair<double, double>(coords.Item1, coords.Item2);
+                }
+            }
+            return _subMapName;
         }
 
         private int[]? ParseStatsPoints(string? stats)

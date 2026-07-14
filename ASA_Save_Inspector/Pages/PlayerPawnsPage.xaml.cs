@@ -354,19 +354,25 @@ namespace ASA_Save_Inspector.Pages
                 ReorderColumns();
             });
             if (playerpawns != null && MainWindow._minimap != null)
-                MainWindow.UpdateMinimap(playerpawns.Select(d =>
+            {
+                var playerpawnsPoints = playerpawns.Select(d =>
                 {
                     string playerpawnIDStr = (d.LinkedPlayerDataID != null && d.LinkedPlayerDataID.HasValue ? d.LinkedPlayerDataID.Value.ToString(CultureInfo.InvariantCulture) : "0");
                     KeyValuePair<double, double> minimapCoords = d.GetASIMinimapCoords();
+                    string? subMapName = d.GetSubMapName();
                     return new MapPoint()
                     {
                         ID = playerpawnIDStr,
                         Name = d.ShortName,
                         Description = $"{(playerpawnIDStr != "0" ? $"{ASILang.Get("ID")}: {playerpawnIDStr}\n" : string.Empty)}{(!string.IsNullOrWhiteSpace(d.PlayerName) ? $"{ASILang.Get("Name")}: {d.PlayerName}\n" : string.Empty)}{(!string.IsNullOrWhiteSpace(d.UniqueNetID) ? $"{ASILang.Get("UniqueID")}: {d.UniqueNetID}" : string.Empty)}",
                         X = minimapCoords.Value,
-                        Y = minimapCoords.Key
+                        Y = minimapCoords.Key,
+                        SubMapName = subMapName
                     };
-                }), LastPlayerPawnDoubleTap);
+                });
+                var playerpawnsFiltered = playerpawnsPoints.Where(d => string.Compare(d.SubMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) == 0);
+                MainWindow.UpdateMinimap(playerpawnsFiltered, LastPlayerPawnDoubleTap);
+            }
         }
 
         private void ReorderColumns()
@@ -483,7 +489,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
         }
 
-        private void ApplyFiltersAndSort()
+        public void ApplyFiltersAndSort()
         {
             IEnumerable<PlayerPawn>? filtered = null;
             if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
@@ -605,7 +611,8 @@ namespace ASA_Save_Inspector.Pages
                     var minimapCoords = pp.GetASIMinimapCoords();
                     double x = minimapCoords.Value;
                     double y = minimapCoords.Key;
-                    Minimap.ShowCallout(playerpawnIDStr, x, y);
+                    string? subMapName = pp.GetSubMapName();
+                    Minimap.ShowCallout(playerpawnIDStr, x, y, subMapName);
                 }
             }
         }

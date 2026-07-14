@@ -484,19 +484,25 @@ namespace ASA_Save_Inspector.Pages
                 ReorderColumns();
             });
             if (structures != null && MainWindow._minimap != null)
-                MainWindow.UpdateMinimap(structures.Select(d =>
+            {
+                var structuresPoints = structures.Select(d =>
                 {
                     string structureIDStr = (d.StructureID != null && d.StructureID.HasValue ? d.StructureID.Value.ToString(CultureInfo.InvariantCulture) : "0");
                     var minimapCoords = d.GetASIMinimapCoords();
+                    string? subMapName = d.GetSubMapName();
                     return new MapPoint()
                     {
                         ID = structureIDStr,
                         Name = d.ShortName,
                         Description = $"{(structureIDStr != "0" ? $"{ASILang.Get("ID")}: {structureIDStr}\n" : string.Empty)}{(d.TargetingTeam != null && d.TargetingTeam.HasValue ? $"{ASILang.Get("TribeID")}: {d.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture)}" : string.Empty)}",
                         X = minimapCoords.Value,
-                        Y = minimapCoords.Key
+                        Y = minimapCoords.Key,
+                        SubMapName = subMapName
                     };
-                }), LastStructureDoubleTap);
+                });
+                var structuresFiltered = structuresPoints.Where(d => string.Compare(d.SubMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) == 0);
+                MainWindow.UpdateMinimap(structuresFiltered, LastStructureDoubleTap);
+            }
         }
 
         private void ReorderColumns()
@@ -613,7 +619,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
         }
 
-        private void ApplyFiltersAndSort()
+        public void ApplyFiltersAndSort()
         {
             IEnumerable<Structure>? filtered = null;
             if (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value)
@@ -735,7 +741,8 @@ namespace ASA_Save_Inspector.Pages
                     var minimapCoords = s.GetASIMinimapCoords();
                     double x = minimapCoords.Value;
                     double y = minimapCoords.Key;
-                    Minimap.ShowCallout(structureIDStr, x, y);
+                    string? subMapName = s.GetSubMapName();
+                    Minimap.ShowCallout(structureIDStr, x, y, subMapName);
                 }
             }
         }
