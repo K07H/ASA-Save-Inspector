@@ -43,10 +43,10 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 The filtering feature has been fully reworked in v3.0. However, if you are still using an older version of ASI, you can find the old filtering documentation here: [https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md](https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md)
 
 ## 6) Custom maps
-You can add your own maps in file "maps_info.json" inside ASI's data folder.<br>
-*To access ASI's data folder, click on "Other" tab then click on "Open ASI data folder" button.*<br>
+You can add your own maps in file "maps_info.json" inside ASI's data folder (*to access ASI's data folder, click on "Other" tab then click on "Open ASI data folder" button).*<br>
 Here's an example of a custom map added in "maps_info.json": [Adding custom map example](AddingCustomMap.jpg)<br>
-Note that your map image must be 5096 by 5096 pixels exactly for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)
+Your map image must be 5096 by 5096 pixels exactly for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)
+*If you want me to add some modded maps just let me know on the [Discord](https://discord.gg/dPgTprNyn9) or open a GitHub [issue](https://github.com/K07H/ASA-Save-Inspector/issues).*
 
 ## 7) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
