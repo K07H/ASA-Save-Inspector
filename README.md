@@ -45,7 +45,7 @@ The filtering feature has been fully reworked in v3.0. However, if you are still
 ## 6) Custom maps
 You can add your own maps in file "maps_info.json" inside ASI's data folder (*to access ASI's data folder, click on "Other" tab then click on "Open ASI data folder" button).*<br>
 Here's an example of a custom map added in "maps_info.json": [Adding custom map example](AddingCustomMap.jpg)<br>
-Your map image must be 5096 by 5096 pixels exactly for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)
+Your map image must be 5096 by 5096 pixels exactly for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)<br>
 *If you want me to add some modded maps just let me know on the [Discord](https://discord.gg/dPgTprNyn9) or open a GitHub [issue](https://github.com/K07H/ASA-Save-Inspector/issues).*
 
 ## 7) Feature requests and bug reports
