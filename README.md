@@ -11,10 +11,11 @@ Note: This application is still under development, more features will be added i
 3. [Installation](#3-installation)
 4. [Quick start](#4-quick-start)
 5. [Filters and groups](#5-filters-and-groups)
-6. [Feature requests and bug reports](#6-feature-requests-and-bug-reports)
-7. [Contributing](#7-contributing)
-8. [Donations](#8-donations)
-9. [Discord](#9-discord)
+6. [Custom maps](#6-custom-maps)
+7. [Feature requests and bug reports](#7-feature-requests-and-bug-reports)
+8. [Contributing](#8-contributing)
+9. [Donations](#9-donations)
+10. [Discord](#10-discord)
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
@@ -41,14 +42,20 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 ## 5) Filters and groups
 The filtering feature has been fully reworked in v3.0. However, if you are still using an older version of ASI, you can find the old filtering documentation here: [https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md](https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md)
 
-## 6) Feature requests and bug reports
+## 6) Custom maps
+You can add your own maps in file "maps_info.json" inside ASI's data folder.<br>
+*To access ASI's data folder, click on "Other" tab then click on "Open ASI data folder" button.*<br>
+Here's an example of a custom map added in "maps_info.json": [Adding custom map example](AddingCustomMap.jpg)<br>
+Note that your map image must be 5096 by 5096 pixels exactly for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)
+
+## 7) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## 7) Contributing
+## 8) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## 8) Donations
+## 9) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## 9) Discord
+## 10) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
