@@ -35,7 +35,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "IsTamed",
             "IsUnclaimed",
             "MapCoords",
-            "CryopodCoords",
+            "SubMapName",
             "GeneTraitsString",
         };
 
@@ -50,7 +50,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Female",
             "Cryoed",
             "Map Coords",
-            "Cryo Coords",
+            "Sub Map",
             "Base HP",
             "Base Stam",
             "Base Oxy",
@@ -133,7 +133,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ValueFortitude", "Value Fortitude" },
             { "ValueCraftingSpeed", "Value Crafting" },
             { "MapCoords", "Map Coords" },
-            { "CryopodCoords", "Cryo Coords" },
+            { "SubMapName", "Sub Map" },
         };
 
         public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
@@ -241,6 +241,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalNPCVolumeName",
             "RequiredTameAffinity",
             "StatValues",
+            "SubMapName",
             "TamedAtTime",
             "TamedAtTimeReadable",
             "TamedName",
@@ -358,7 +359,18 @@ namespace ASA_Save_Inspector.ObjectModel
 
         public string? MapCoords
         {
-            get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            get
+            {
+                if (Cryopod != null)
+                    return Cryopod.MapCoords;
+                return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}";
+            }
+            private set { }
+        }
+
+        public string? SubMapName
+        {
+            get { return GetSubMapName(); }
             private set { }
         }
 
@@ -528,12 +540,6 @@ namespace ASA_Save_Inspector.ObjectModel
                 }
                 return _cryopod;
             }
-            private set { }
-        }
-
-        public string? CryopodCoords
-        {
-            get { return Cryopod?.MapCoords; }
             private set { }
         }
 

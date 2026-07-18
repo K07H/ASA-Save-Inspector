@@ -29,14 +29,18 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalPlacerPlayerID",
             "SignText",
             "StructureID",
-            "MapCoords"
+            "MapCoords",
+            "SubMapName"
         };
 
         public static List<string> DefaultColumnsOrder = new List<string>()
         {
             "Structure",
             "Structure ID",
-            "Tribe ID"
+            "Tribe ID",
+            "Owner Name",
+            "Map Coords",
+            "Sub Map"
         };
 
         private static readonly Dictionary<string, string> CleanNames = new Dictionary<string, string>()
@@ -62,7 +66,8 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "OriginalPlacerPlayerID", "Placed By" },
             { "SignText", "Sign Text" },
             { "StructureID", "Structure ID" },
-            { "MapCoords", "Map Coords" }
+            { "MapCoords", "Map Coords" },
+            { "SubMapName", "Sub Map" }
         };
 
         public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
@@ -133,6 +138,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             //"ShortName",
             "StructureID",
             "StructuresPlacedOnFloor",
+            "SubMapName",
             "timeStateStarted",
             "timeStateStartedReadable",
             "UUID",
@@ -200,6 +206,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? MapCoords
         {
             get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            private set { }
+        }
+
+        public string? SubMapName
+        {
+            get { return GetSubMapName(); }
             private set { }
         }
 

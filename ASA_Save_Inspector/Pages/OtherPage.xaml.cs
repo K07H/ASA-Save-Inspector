@@ -114,13 +114,32 @@ namespace ASA_Save_Inspector.Pages
                 if (folderPath != null)
                 {
                     double folderSize = Utils.GetDirectorySize(folderPath);
-                    if (folderSize > (10.0d * 1024.0d * 1024.0d * 1024.0d)) // If greater than 10 GB
+                    if (folderSize > (5.0d * 1024.0d * 1024.0d * 1024.0d)) // If greater than 5 GB
                         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemoveJsonData.Visibility = Visibility.Visible);
                     string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
                     DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateJsonExportsFolderSize(folderSizeStr));
                 }
             }
             catch { }
+        }
+
+        private static void LogFoldersSizes()
+        {
+            string jsonExportsFolderPath = Utils.JsonExportsFolder();
+            if (!string.IsNullOrWhiteSpace(jsonExportsFolderPath) && Directory.Exists(jsonExportsFolderPath))
+            {
+                double folderSize = Utils.GetDirectorySize(jsonExportsFolderPath);
+                string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
+                Logger.Instance.Log($"Json-exports folder size: {folderSizeStr}");
+            }
+
+            string? dataFolderPath = Utils.GetDataDir();
+            if (!string.IsNullOrWhiteSpace(dataFolderPath) && Directory.Exists(dataFolderPath))
+            {
+                double folderSize = Utils.GetDirectorySize(dataFolderPath);
+                string folderSizeStr = Utils.BytesSizeToReadableString(folderSize);
+                Logger.Instance.Log($"ASI data folder size (including json-exports): {folderSizeStr}");
+            }
         }
 
         private int _windowWidth = 0;
@@ -624,8 +643,12 @@ namespace ASA_Save_Inspector.Pages
                 DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed);
         }
 
-        private void RemoveOldJsonData()
+        public static bool DoRemoveOldJsonData(bool doLogFolderSizes)
         {
+            bool retVal = false;
+
+            if (doLogFolderSizes)
+                LogFoldersSizes();
             if (SettingsPage._jsonExportProfiles == null || SettingsPage._jsonExportProfiles.Count <= 0)
                 SettingsPage.LoadJsonExportProfiles();
             if (SettingsPage._jsonExportProfiles != null && SettingsPage._jsonExportProfiles.Count > 0)
@@ -647,9 +670,20 @@ namespace ASA_Save_Inspector.Pages
                                         catch { }
                                 }
                         }
-                    Task.Run(() => ComputeJsonExportsFolderSize());
-                    Task.Run(() => ComputeASIDataFolderTotalSize());
+                    if (doLogFolderSizes)
+                        LogFoldersSizes();
+                    retVal = true;
                 }
+            }
+            return retVal;
+        }
+
+        private void RemoveOldJsonData()
+        {
+            if (DoRemoveOldJsonData(false))
+            {
+                Task.Run(() => ComputeJsonExportsFolderSize());
+                Task.Run(() => ComputeASIDataFolderTotalSize());
             }
             DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
             {

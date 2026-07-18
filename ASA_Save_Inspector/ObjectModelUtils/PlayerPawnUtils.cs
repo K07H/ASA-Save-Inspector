@@ -17,6 +17,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "TargetingTeam",
             "TribeName",
             "MapCoords",
+            "SubMapName",
             "bIsSleeping",
             "ShortName",
         };
@@ -30,6 +31,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Tribe ID",
             "Tribe name",
             "Map coords",
+            "Sub map",
             "Sleeping",
             "Character",
         };
@@ -45,6 +47,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "PlatformProfileName", "Platform name" },
             { "PlayerName", "Name" },
             { "MapCoords", "Map coords" },
+            { "SubMapName", "Sub map" },
         };
 
         public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
@@ -73,6 +76,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "PlayerName",
             "SavedLastTimeHadController",
             "SavedLastTimeHadControllerReadable",
+            "SubMapName",
             "UUID",
             "UniqueNetID"
         };
@@ -124,6 +128,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? MapCoords
         {
             get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            private set { }
+        }
+
+        public string? SubMapName
+        {
+            get { return GetSubMapName(); }
             private set { }
         }
 

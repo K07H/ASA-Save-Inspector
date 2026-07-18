@@ -852,6 +852,8 @@ finalExportFolderPath,
                 ret = MainWindow._mainWindow.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                 {
                     MainWindow._mainWindow.HidePopup();
+                    // Notify that ArkParse update has been completed (CLI case).
+                    MainWindow.ArkParseUpdateCompleted = true;
                 });
             }
             return ret;
@@ -1020,7 +1022,6 @@ finalExportFolderPath,
                 return false;
             }
 
-            //Task.Run(() => DoRunArkParse(arkParseRunnerPath, jep, extractions, callback));
             Task.Run(async () => await DoRunArkParse(arkParseRunnerPath, true, jep, extractions, callback));
             return true;
         }

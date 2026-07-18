@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ASA_Save_Inspector.Pages;
 using Microsoft.UI;
@@ -101,15 +103,160 @@ namespace ASA_Save_Inspector
                 _appWindow.SetTaskbarIcon(@"Assets\ASI.ico");
             }
 
+            // Load maps data.
             LoadMapsInfo();
 
+            // Init Python.
             PythonManager.InitHttpClient();
             PythonManager.GetPythonExePaths();
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
 
+            // Load launch arguments.
+            bool checkForUpdates = true;
+            string[] args = Environment.GetCommandLineArgs();
+            if (args != null)
+            {
+                if (args.Length > 2 && !string.IsNullOrWhiteSpace(args[1]) && !string.IsNullOrWhiteSpace(args[2]))
+                {
+                    if (string.Compare(args[1], "-ExtractPreset", StringComparison.InvariantCultureIgnoreCase) == 0)
+                    {
+                        int timeout = 1800; // Default timeout: 30 minutes.
+                        checkForUpdates = false;
+                        if (args.Length > 4)
+                            if (!string.IsNullOrWhiteSpace(args[3]) && !string.IsNullOrWhiteSpace(args[4]))
+                                if (string.Compare(args[3], "-Timeout", StringComparison.InvariantCultureIgnoreCase) == 0)
+                                    if (int.TryParse(args[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedTimeout) && parsedTimeout >= 120 && parsedTimeout <= 10800) // Minimum timeout 2 minutes, maximum timeout 3 hours.
+                                        timeout = parsedTimeout;
 #pragma warning disable CS4014
-            CheckForUpdateAndPreviousData();
+                        CLI_ExtractPreset(args[2], timeout);
 #pragma warning restore CS4014
+                    }
+                }
+                else if (args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]))
+                {
+                    if (string.Compare(args[1], "-CleanOldData", StringComparison.InvariantCultureIgnoreCase) == 0)
+#pragma warning disable CS4014
+                        CLI_CleanOldData();
+#pragma warning restore CS4014
+                }
+            }
+
+            // Check for updates.
+            if (checkForUpdates)
+#pragma warning disable CS4014
+                CheckForUpdateAndPreviousData();
+#pragma warning restore CS4014
+        }
+
+        public static bool SettingsPageFinishedLoading = false;
+        public static bool PresetExtractionCompleted = false;
+        public static bool ArkParseUpdateCompleted = false;
+        private async Task CLI_ExtractPreset(string presetName, int timeout = 1800)
+        {
+            Utils.LockAllPages(true);
+            Logger.Instance.Log($"CLI: Running -ExtractPreset CLI with preset name [{presetName}] and timeout[{timeout.ToString(CultureInfo.InvariantCulture)}].");
+            await Task.Delay(250);
+            if (MainWindow._mainWindow != null)
+            {
+                Logger.Instance.Log("CLI: Loading settings and initializing ArkParse...");
+
+                // Open settings page so that presets are loaded.
+                SettingsPageFinishedLoading = false;
+                ArkParseUpdateCompleted = false;
+                if (MainWindow._mainWindow._navView != null)
+                    MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnSettings;
+                MainWindow._mainWindow.NavView_Navigate(typeof(SettingsPage), new EntranceNavigationTransitionInfo());
+
+                // Wait for settings page to finish opening (wait 3 minutes max).
+                int i = 0;
+                bool settingsPageLoaded = false;
+                bool arkParseUpdated = false;
+                while (i < 180 && (!SettingsPageFinishedLoading || !ArkParseUpdateCompleted))
+                {
+                    await Task.Delay(1000);
+                    if (!settingsPageLoaded && SettingsPageFinishedLoading)
+                    {
+                        settingsPageLoaded = true;
+                        Logger.Instance.Log("CLI: Settings loaded.");
+                        // Lock settings page.
+                        if (SettingsPage._page != null)
+                            SettingsPage._page.IsEnabled = false;
+                    }
+                    if (!arkParseUpdated && ArkParseUpdateCompleted)
+                    {
+                        arkParseUpdated = true;
+                        Logger.Instance.Log("CLI: ArkParse initialized.");
+                    }
+                    ++i;
+                }
+
+                // Lock settings page.
+                if (SettingsPage._page != null)
+                    SettingsPage._page.IsEnabled = false;
+
+                // Search requested preset.
+                Logger.Instance.Log($"CLI: Searching extraction preset \"{presetName}\"...");
+                JsonExportPreset? foundPreset = null;
+                if (SettingsPage._jsonExportPresets != null && SettingsPage._jsonExportPresets.Count > 0)
+                    foreach (var preset in SettingsPage._jsonExportPresets)
+                        if (preset != null && string.Compare(presetName, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        {
+                            foundPreset = preset;
+                            break;
+                        }
+
+                // Extract preset (if it has been found and if is valid).
+                if (foundPreset == null)
+                {
+                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" has not been found.", Logger.LogLevel.ERROR);
+                    return;
+                }
+                if (foundPreset.ExportProfiles == null || foundPreset.ExportProfiles.Count <= 0)
+                {
+                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" is empty.", Logger.LogLevel.ERROR);
+                    return;
+                }
+                if (SettingsPage._page != null) // If SettingsPage is valid.
+                    SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                    {
+                        Logger.Instance.Log($"CLI: Extracting preset \"{presetName}\"...");
+                        await Task.Delay(250);
+                        PresetExtractionCompleted = false;
+                        SettingsPage._page.DoExtractPreset(foundPreset, null); // Extract preset.
+                    });
+
+                // Wait for preset extraction to complete (wait "timeout" seconds max).
+                int j = 0;
+                while (!PresetExtractionCompleted && j < timeout)
+                {
+                    await Task.Delay(1000);
+                    ++j;
+                }
+                if (PresetExtractionCompleted)
+                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" has been successfully extracted.");
+                else
+                    Logger.Instance.Log($"CLI: Failed to extract preset \"{presetName}\" (timed out).", Logger.LogLevel.ERROR);
+
+                // Close app.
+                await Task.Delay(1000);
+                Environment.ExitCode = 0;
+                Application.Current.Exit();
+            }
+        }
+
+        private async Task CLI_CleanOldData()
+        {
+            Utils.LockAllPages(true);
+            Logger.Instance.Log("CLI: Running -CleanOldData.");
+
+            // Clean old data.
+            OtherPage.DoRemoveOldJsonData(true);
+            Logger.Instance.Log("CLI: Old data has been successfully cleaned up.");
+
+            // Close app.
+            await Task.Delay(1000);
+            Environment.ExitCode = 0;
+            Application.Current.Exit();
         }
 
         public void LanguageChanged()

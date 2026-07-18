@@ -308,7 +308,6 @@ namespace ASA_Save_Inspector.Pages
                 }
 
             LoadJsonExportProfiles();
-
             LoadSettings();
             LoadJsonExportPresets();
             LoadCustomBlueprints();
@@ -318,6 +317,8 @@ namespace ASA_Save_Inspector.Pages
                 JsonExportProfileSelected(_selectedJsonExportProfile);
 
             InitDatagrid(false, false);
+
+            MainWindow.SettingsPageFinishedLoading = true;
         }
 
         private int _windowWidth = 0;
@@ -1041,7 +1042,11 @@ namespace ASA_Save_Inspector.Pages
                 }
 
             if (Directory.Exists(folderPath))
-                try { Directory.Delete(folderPath, true); }
+                try
+                {
+                    Directory.Delete(folderPath, true);
+                    Logger.Instance.Log($"Folder \"{folderPath}\" has been removed.");
+                }
                 catch (Exception ex)
                 {
                     Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed")} Exception=[{ex}]", Logger.LogLevel.ERROR);
@@ -1551,6 +1556,54 @@ namespace ASA_Save_Inspector.Pages
                         OnCurrentExtractionComplete);
                     return;
                 }
+
+            // Notify that preset extraction is complete (CLI "-ExtractPreset" case).
+            MainWindow.PresetExtractionCompleted = true;
+        }
+
+        public void DoExtractPreset(JsonExportPreset? preset, Dictionary<string, bool>? selected)
+        {
+            if (preset == null)
+                return;
+
+            List<KeyValuePair<JsonExportProfile, bool>> toExtract = new List<KeyValuePair<JsonExportProfile, bool>>();
+            foreach (JsonExportProfile jep in preset.ExportProfiles)
+                if (jep != null)
+                {
+                    bool doAdd = false;
+                    if (selected == null)
+                        doAdd = true;
+                    else
+                    {
+                        string jepDescription = jep.ToString();
+                        foreach (var selection in selected)
+                            if (string.Compare(jepDescription, selection.Key, StringComparison.InvariantCulture) == 0)
+                            {
+                                doAdd = selection.Value;
+                                break;
+                            }
+                    }
+                    if (doAdd)
+                    {
+                        if (string.IsNullOrWhiteSpace(jep.ExtractName) && !string.IsNullOrWhiteSpace(preset.Name))
+                            jep.ExtractName = preset.Name;
+                        toExtract.Add(new KeyValuePair<JsonExportProfile, bool>(jep, false));
+                    }
+                }
+            if (toExtract.Count > 0)
+            {
+                if (SelectExportPresetPopup.IsOpen)
+                    SelectExportPresetPopup.IsOpen = false;
+                if (SettingsPage._page != null)
+                    SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                    {
+                        await Task.Delay(250);
+                        OnCurrentExtractionComplete(toExtract);
+                    });
+                MainWindow.ShowToast($"{ASILang.Get("ExtractionStarted")} {ASILang.Get("PleaseWait")}", BackgroundColor.SUCCESS);
+            }
+            else
+                MainWindow.ShowToast(ASILang.Get("PresetIsEmpty"), BackgroundColor.WARNING);
         }
 
         private void btn_ExportPresetExtract_Click(object sender, RoutedEventArgs e)
@@ -1587,39 +1640,8 @@ namespace ASA_Save_Inspector.Pages
                             MainWindow.ShowToast(ASILang.Get("NoExportProfileSelected"), BackgroundColor.WARNING);
                             return;
                         }
-                        List<KeyValuePair<JsonExportProfile, bool>> toExtract = new List<KeyValuePair<JsonExportProfile, bool>>();
-                        foreach (JsonExportProfile jep in preset.ExportProfiles)
-                            if (jep != null)
-                            {
-                                bool doAdd = false;
-                                string jepDescription = jep.ToString();
-                                foreach (var selection in selected)
-                                    if (string.Compare(jepDescription, selection.Key, StringComparison.InvariantCulture) == 0)
-                                    {
-                                        doAdd = selection.Value;
-                                        break;
-                                    }
-                                if (doAdd)
-                                {
-                                    if (string.IsNullOrWhiteSpace(jep.ExtractName) && !string.IsNullOrWhiteSpace(preset.Name))
-                                        jep.ExtractName = preset.Name;
-                                    toExtract.Add(new KeyValuePair<JsonExportProfile, bool>(jep, false));
-                                }
-                            }
-                        if (toExtract.Count > 0)
-                        {
-                            if (SelectExportPresetPopup.IsOpen)
-                                SelectExportPresetPopup.IsOpen = false;
-                            if (SettingsPage._page != null)
-                                SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
-                                {
-                                    await Task.Delay(250);
-                                    OnCurrentExtractionComplete(toExtract);
-                                });
-                            MainWindow.ShowToast($"{ASILang.Get("ExtractionStarted")} {ASILang.Get("PleaseWait")}", BackgroundColor.SUCCESS);
-                        }
-                        else
-                            MainWindow.ShowToast(ASILang.Get("PresetIsEmpty"), BackgroundColor.WARNING);
+
+                        DoExtractPreset(preset, selected);
                     }
                     else
                         MainWindow.ShowToast(ASILang.Get("PresetIsEmpty"), BackgroundColor.WARNING);

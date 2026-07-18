@@ -16,6 +16,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "IsFemale",
             "Level",
             "MapCoords",
+            "SubMapName",
             "NumOfDeaths",
             "PlayerName",
             "PlayerCharacterName",
@@ -45,6 +46,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Female",
             "Pawn found",
             "Map coords",
+            "Sub map",
             "Num deaths",
             "XP",
             "Level",
@@ -65,6 +67,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "FoundOnMap", "Pawn found" },
             { "IsFemale", "Female" },
             { "MapCoords", "Map coords" },
+            { "SubMapName", "Sub map" },
             { "NumOfDeaths", "Num deaths" },
             { "PlayerName", "Platform name" },
             { "PlayerCharacterName", "Name" },
@@ -87,6 +90,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Level",
             "LoginTime",
             "LoginTimeReadable",
+            "MapCoords",
             "NumOfDeaths",
             "PercentageOfFacialHairGrowth",
             "PerMapExplorerNoteUnlocks",
@@ -97,6 +101,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "PlayerState_TotalEngramPoints",
             "RawBoneModifiers",
             "SavedNetworkAddress",
+            "SubMapName",
             //"TribeID",
             //"TribeName",
             "UniqueID",
@@ -164,6 +169,12 @@ namespace ASA_Save_Inspector.ObjectModel
         public string? MapCoords
         {
             get { return $"{GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}"; }
+            private set { }
+        }
+
+        public string? SubMapName
+        {
+            get { return GetSubMapName(); }
             private set { }
         }
 

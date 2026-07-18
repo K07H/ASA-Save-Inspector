@@ -28,6 +28,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "ItemRating",
             "SavedDurability",
             "MapCoords",
+            "SubMapName"
         };
 
         public static List<string> DefaultColumnsOrder = new List<string>()
@@ -37,6 +38,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "Container tribe ID",
             "Container tribe name",
             "Map coords",
+            "Sub map",
             "Quantity",
             "Blueprint",
             "Equipped",
@@ -76,6 +78,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ContainerTribeID", "Container tribe ID" },
             { "ContainerTribeName", "Container tribe name" },
             { "MapCoords", "Map coords" },
+            { "SubMapName", "Sub map" }
         };
 
         public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
@@ -112,6 +115,7 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             "OriginalItemDropLocation",
             "OwnerInventoryUUID",
             "SavedDurability",
+            "SubMapName",
             //"ShortName",
             "UECoords",
             "UUID",
@@ -441,6 +445,37 @@ namespace ASA_Save_Inspector.ObjectModel
                         Structure? obj = owner.Value.Value as Structure;
                         if (obj != null)
                             return $"{obj.GetGPSCoords().Key.ToString("F1", CultureInfo.InvariantCulture)} {obj.GetGPSCoords().Value.ToString("F1", CultureInfo.InvariantCulture)}";
+                    }
+                }
+                return null;
+            }
+            private set { }
+        }
+
+        public string? SubMapName
+        {
+            get
+            {
+                KeyValuePair<ArkObjectType, object?>? owner = Owner();
+                if (owner != null && owner.HasValue && owner.Value.Value != null)
+                {
+                    if (owner.Value.Key == ArkObjectType.PLAYER_PAWN)
+                    {
+                        PlayerPawn? obj = owner.Value.Value as PlayerPawn;
+                        if (obj != null)
+                            return obj.GetSubMapName();
+                    }
+                    else if (owner.Value.Key == ArkObjectType.DINO)
+                    {
+                        Dino? obj = owner.Value.Value as Dino;
+                        if (obj != null)
+                            return obj.GetSubMapName();
+                    }
+                    else if (owner.Value.Key == ArkObjectType.STRUCTURE)
+                    {
+                        Structure? obj = owner.Value.Value as Structure;
+                        if (obj != null)
+                            return obj.GetSubMapName();
                     }
                 }
                 return null;
