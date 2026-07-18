@@ -12,10 +12,11 @@ Note: This application is still under development, more features will be added i
 4. [Quick start](#4-quick-start)
 5. [Filters and groups](#5-filters-and-groups)
 6. [Custom maps](#6-custom-maps)
-7. [Feature requests and bug reports](#7-feature-requests-and-bug-reports)
-8. [Contributing](#8-contributing)
-9. [Donations](#9-donations)
-10. [Discord](#10-discord)
+7. [Command Line Interface](#7-command-line-interface)
+8. [Feature requests and bug reports](#8-feature-requests-and-bug-reports)
+9. [Contributing](#9-contributing)
+10. [Donations](#10-donations)
+11. [Discord](#11-discord)
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
@@ -48,14 +49,26 @@ Here's an example of a custom map added in "maps_info.json": [Custom map example
 Your map image must be 5096 by 5096 pixels for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)<br>
 *If you want me to add some modded maps just let me know on the [Discord](https://discord.gg/dPgTprNyn9) inside #asa-save-inspector channel.*
 
-## 7) Feature requests and bug reports
+## 7) Command Line Interface
+Available commands:
+* `-ExtractPreset`
+  * This command takes the preset name as argument (in double quotes).
+  * Optionally you can specify a timeout with "-Timeout Seconds", but it needs to be placed at the end of the command (order matters). Default timeout value is 1800 seconds (so if after 30 minutes the entire preset is still not extracted, ASA Save Inspector gets shutdown).
+  * Usage example: `ASA_Save_Inspector.exe -ExtractPreset "My preset name" -Timeout 1800`
+* `-CleanOldData`
+  * This command removes previous extractions data that has been stored on your drive (it only keeps latest extraction data for each map).
+  * Usage example: `ASA_Save_Inspector.exe -CleanOldData` 
+<br>
+And here's a powershell script example that copy save files into a specific folder, extracts data from these saves files and cleans old data: [Automation script](ASI_Automation.ps1)
+
+## 8) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## 8) Contributing
+## 9) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## 9) Donations
+## 10) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## 10) Discord
+## 11) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
