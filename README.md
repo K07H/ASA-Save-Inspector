@@ -59,7 +59,7 @@ Available commands:
   * This command removes previous extractions data that has been stored on your drive (it only keeps latest extraction data for each map).
   * Usage example: `ASA_Save_Inspector.exe -CleanOldData`
 
-And here's a powershell script example that copy save files into a specific folder, extracts data from these saves files and cleans old data: https://raw.githubusercontent.com/K07H/ASA-Save-Inspector/refs/heads/main/ASI_Automation.ps1
+And here's a powershell script example that copy save files into a specific folder, extracts data from these saves files and cleans old data: [ASI_Automation.ps1](https://github.com/K07H/ASA-Save-Inspector/blob/main/ASI_Automation.ps1)
 
 ## 8) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
