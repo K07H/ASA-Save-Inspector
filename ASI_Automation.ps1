@@ -42,7 +42,7 @@ foreach ($file in $arkFiles) {
 
 # Extract data with ASI, and then clean old data.
 if (Test-Path $asiPath) {
-	Start-Process -FilePath $asiPath -ArgumentList "-ExtractData `"$asiPresetName`" -Timeout 1800" -Wait
+	Start-Process -FilePath $asiPath -ArgumentList "-ExtractPreset `"$asiPresetName`" -Timeout 1800" -Wait
 	Write-Host "ASA_Save_Inspector.exe executed with preset '$asiPresetName'." -ForegroundColor Green
 	Start-Process -FilePath $asiPath -ArgumentList "-CleanOldData" -Wait
 } else {
