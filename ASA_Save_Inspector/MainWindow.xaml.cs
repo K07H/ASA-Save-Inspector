@@ -477,7 +477,10 @@ namespace ASA_Save_Inspector
                 Minimap.InitMap(points, allMapFilenames, onDoubleTap);
             }
             else
-                Minimap.ChangePoints(points, onDoubleTap);
+            {
+                if (!Minimap.PauseMinimapRefresh)
+                    Minimap.ChangePoints(points, onDoubleTap);
+            }
         }
 
         public static bool ShowMinimap() => (_minimap != null ? _minimap.Show() && _minimap.SetForegroundWindow() : false);

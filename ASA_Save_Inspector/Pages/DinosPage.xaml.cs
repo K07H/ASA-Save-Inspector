@@ -402,7 +402,6 @@ namespace ASA_Save_Inspector.Pages
                     if (d.bIsCryopodded != null && d.bIsCryopodded.HasValue && d.bIsCryopodded.Value)
                     {
                         var cryopodPos = Utils.GetCryopodCoordsByUUID(d.CryopodUUID);
-                        //minimapCoords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
                         var coords = Utils.GetASIMinimapCoords(SettingsPage._currentlyLoadedMapName, cryopodPos.Item1, cryopodPos.Item2, cryopodPos.Item3);
                         if (coords != null)
                         {
@@ -425,9 +424,7 @@ namespace ASA_Save_Inspector.Pages
                         SubMapName = subMapName
                     };
                 });
-                var t1 = dinosPoints.ToList();
                 var dinosFiltered = dinosPoints.Where(d => string.Compare(d.SubMapName, SettingsPage._currentlyLoadedSubMapName, StringComparison.InvariantCultureIgnoreCase) == 0);
-                var t2 = dinosFiltered.ToList();
                 MainWindow.UpdateMinimap(dinosFiltered, LastDinoDoubleTap);
             }
         }

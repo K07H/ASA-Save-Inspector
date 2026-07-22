@@ -648,6 +648,9 @@ namespace ASA_Save_Inspector
             { "RemoveJsonData", "Delete all JSON data except the latest (for each save file)" },
             { "RemovingJsonData", "Deleting JSON data." },
             { "DeprecatedExportProfileFormat", "Your JSON export profile \"#JSON_EXPORT_PROFILE_NAME#\" is deprecated and cannot be used anymore." },
+            { "StopRefreshingMinimap", "Pause minimap refresh:" },
+            { "StopRefreshingMinimap_Description", "Allows to pause the minimap. Markers on the map will no longer change until you untick this box. (Improves performance when switching between filters or tabs multiple times)" },
+            { "SubMap", "Sub map:" },
 
             // Python manager
             { "GetArkParseVersionFailed", "Could not get ArkParse version." },
@@ -1091,6 +1094,9 @@ namespace ASA_Save_Inspector
             { "RemoveJsonData", "Supprimer les données JSON sauf les plus récentes (pour chaque fichier de sauvegarde)" },
             { "RemovingJsonData", "Suppression des données JSON." },
             { "DeprecatedExportProfileFormat", "Votre profil d'export JSON \"#JSON_EXPORT_PROFILE_NAME#\" possède un ancien format non supporté et ne peut plus être utilisé." },
+            { "StopRefreshingMinimap", "Mettre en pause le rafraîchissement :" },
+            { "StopRefreshingMinimap_Description", "Permet de mettre en pause la minicarte. Les points sur la carte ne changeront plus tant que vous ne décochez pas cette case. (Améliore la rapidité lorsque l'on change plusieurs fois de filtre ou d'onglet)" },
+            { "SubMap", "Sous carte :" },
 
             // Python manager
             { "GetArkParseVersionFailed", "Impossible de récupérer la version de ArkParse." },

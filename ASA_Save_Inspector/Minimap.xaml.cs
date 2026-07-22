@@ -22,6 +22,7 @@ using Mapsui.Widgets.BoxWidgets;
 using Mapsui.Widgets.InfoWidgets;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace ASA_Save_Inspector
@@ -113,6 +114,10 @@ namespace ASA_Save_Inspector
                 _appWindow.SetTaskbarIcon(@"Assets\ASI.ico");
             }
 
+            // Restore "Pause minimap refresh" checkbox state.
+            CB_StopRefreshingMinimap.IsChecked = PauseMinimapRefresh;
+
+            // Resize window.
             AppWindow.Resize(new Windows.Graphics.SizeInt32(WINDOW_WIDTH, WINDOW_HEIGHT + TITLE_BAR_HEIGHT));
 
             ActiveMode activeMode = (displayDebug ? ActiveMode.Yes : ActiveMode.No);
@@ -194,12 +199,12 @@ namespace ASA_Save_Inspector
 
             if (foundSubMaps > 1)
             {
-                TBSubMapName.Text = "Sub map";
+                TBSubMapName.Text = ASILang.Get("SubMap");
                 if (!string.IsNullOrWhiteSpace(SettingsPage._currentlyLoadedMapName))
                 {
                     var mapInfo = Utils.GetMapInfoFromName(SettingsPage._currentlyLoadedMapName);
                     if (mapInfo != null && !string.IsNullOrWhiteSpace(mapInfo.SubMapName))
-                        TBSubMapName.Text = $"Sub map : {mapInfo.SubMapName}";
+                        TBSubMapName.Text = $"{ASILang.Get("SubMap")} {mapInfo.SubMapName}";
                 }
                 SPSubMap.Visibility = Visibility.Visible;
             }
@@ -375,7 +380,7 @@ namespace ASA_Save_Inspector
                 SPSubMap.Visibility = Visibility.Collapsed;
             else
             {
-                TBSubMapName.Text = $"Sub map : {mapInfo.SubMapName}";
+                TBSubMapName.Text = $"{ASILang.Get("SubMap")} {mapInfo.SubMapName}";
                 SPSubMap.Visibility = Visibility.Visible;
             }
             if (!string.IsNullOrWhiteSpace(mapInfo.MinimapFilename))
@@ -681,6 +686,31 @@ namespace ASA_Save_Inspector
                         ChangeToSubMapForLayer(firstLayer);
                     }
             }
+        }
+
+        public static bool PauseMinimapRefresh = false;
+
+        private void CB_StopRefreshingMinimap_Checked(object sender, RoutedEventArgs e)
+        {
+            PauseMinimapRefresh = true;
+        }
+
+        private void CB_StopRefreshingMinimap_Unchecked(object sender, RoutedEventArgs e)
+        {
+            PauseMinimapRefresh = false;
+            RefreshPointsForCurrentSubMap();
+        }
+
+        private bool? _isSmallState = null;
+        private void SPTopBar_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            bool isSmall = e.NewSize.Width < (ASILang._selectedLanguage == ASILang.DEFAULT_LANGUAGE_CODE ? 680.0d : 800.0d);
+            if (_isSmallState == isSmall)
+                return;
+            if (isSmall)
+                Grid.SetRow(SPRightButtons, 1);
+            else
+                Grid.SetRow(SPRightButtons, 0);
         }
     }
 }
