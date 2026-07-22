@@ -85,7 +85,9 @@ namespace ASA_Save_Inspector
         private static ImageStyle? _pinStyle = null;
         private static bool _initialized = false;
         private static Minimap? _minimap = null;
-        private static Func<MapPoint?, bool>? _doubleTapCallback = null;
+
+        public static IEnumerable<MapPoint?>? _points = null;
+        public static Func<MapPoint?, bool>? _doubleTapCallback = null;
 
         public AppWindow? _appWindow = null;
 
@@ -137,13 +139,19 @@ namespace ASA_Save_Inspector
                 TitleBarTextBlock.Foreground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
         }
 
-        public static void InitMap(IEnumerable<MapPoint?> points, List<string> minimapFilename, Func<MapPoint?, bool>? doubleTapCallback)
+        public static void UpdatePointsAndDoubleTapData(IEnumerable<MapPoint?>? points, Func<MapPoint?, bool>? doubleTapCallback)
+        {
+            _points = points;
+            _doubleTapCallback = doubleTapCallback;
+        }
+
+        public static void InitMap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? doubleTapCallback, List<string> minimapFilenames)
         {
             if (!_initialized && _minimap != null)
             {
                 _initialized = true;
-                _doubleTapCallback = doubleTapCallback;
-                _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.CreateMap(points, minimapFilename); });
+                UpdatePointsAndDoubleTapData(points, doubleTapCallback);
+                _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.CreateMap(points, minimapFilenames); });
             }
         }
 
@@ -151,18 +159,24 @@ namespace ASA_Save_Inspector
         {
             if (_minimap != null)
             {
-                _doubleTapCallback = doubleTapCallback;
+                UpdatePointsAndDoubleTapData(points, doubleTapCallback);
                 _minimap.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => { _minimap.ModifyPoints(points); });
             }
         }
 
-        private void CreateMap(IEnumerable<MapPoint?> points, List<string> minimapFilename)
+        public static void StopMinimapPause()
+        {
+            if (_points != null)
+                MainWindow.UpdateMinimap(_points, _doubleTapCallback);
+        }
+
+        private void CreateMap(IEnumerable<MapPoint?> points, List<string> minimapFilenames)
         {
             if (_pinStyle == null)
                 _pinStyle = CreatePinSymbol();
             bool isFirstLayer = true;
             int foundSubMaps = 0;
-            foreach (var filename in minimapFilename)
+            foreach (var filename in minimapFilenames)
                 if (!string.IsNullOrWhiteSpace(filename))
                 {
                     var backgroundLayer = CreateLayerWithRasterFeature(_mapDimensions, filename);
@@ -698,7 +712,7 @@ namespace ASA_Save_Inspector
         private void CB_StopRefreshingMinimap_Unchecked(object sender, RoutedEventArgs e)
         {
             PauseMinimapRefresh = false;
-            RefreshPointsForCurrentSubMap();
+            StopMinimapPause();
         }
 
         private bool? _isSmallState = null;

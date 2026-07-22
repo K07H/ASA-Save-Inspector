@@ -444,7 +444,7 @@ namespace ASA_Save_Inspector
             }
         }
 
-        public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap, string? subMapName = null)
+        public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap)
         {
             if (_minimap == null)
             {
@@ -452,16 +452,6 @@ namespace ASA_Save_Inspector
                 string mapName = SettingsPage._currentlyLoadedMapName != null ? SettingsPage._currentlyLoadedMapName : ASILang.Get("Unknown");
                 ArkMapInfo? mapInfo = Utils.GetMapInfoFromName(mapName);
 
-                /*
-                string? currentSubMapName = !string.IsNullOrWhiteSpace(subMapName) ? subMapName : SettingsPage._currentlyLoadedSubMapName;
-                if (!string.IsNullOrWhiteSpace(currentSubMapName) && mapInfo?.SubMinimaps != null && mapInfo.SubMinimaps.Count > 0)
-                    foreach (ArkMapInfo subMapInfo in mapInfo.SubMinimaps)
-                        if (subMapInfo != null && string.Compare(currentSubMapName, subMapInfo.SubMapName, StringComparison.InvariantCultureIgnoreCase) == 0)
-                        {
-                            mapInfo = subMapInfo;
-                            break;
-                        }
-                */
                 List<string> allMapFilenames = new List<string>();
                 if (mapInfo != null)
                 {
@@ -474,11 +464,13 @@ namespace ASA_Save_Inspector
                 }
                 else
                     allMapFilenames.Add("TheIsland_Minimap_Margin.jpg");
-                Minimap.InitMap(points, allMapFilenames, onDoubleTap);
+                Minimap.InitMap(points, onDoubleTap, allMapFilenames);
             }
             else
             {
-                if (!Minimap.PauseMinimapRefresh)
+                if (Minimap.PauseMinimapRefresh)
+                    Minimap.UpdatePointsAndDoubleTapData(points, onDoubleTap);
+                else
                     Minimap.ChangePoints(points, onDoubleTap);
             }
         }
