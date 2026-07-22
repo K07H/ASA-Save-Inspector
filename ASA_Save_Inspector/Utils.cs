@@ -1087,6 +1087,7 @@ namespace ASA_Save_Inspector
             return totalSize;
         }
 
+        /*
         public static IEnumerable<string>? GetPreviousASIFolders()
         {
             string? actualDirName = null;
@@ -1160,6 +1161,7 @@ namespace ASA_Save_Inspector
 
             return (from dir in foundDirs orderby dir.Value descending select dir.Key);
         }
+        */
 
         public static bool IsDarkTheme() => (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
 

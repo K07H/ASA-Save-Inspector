@@ -979,29 +979,6 @@ namespace ASA_Save_Inspector.Pages
             return null;
         }
 
-        /*
-        private async Task<List<T>?> DeserializeJsonObjectsAsync<T>(string filepath)
-        {
-            if (!File.Exists(filepath))
-                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", $"\"{filepath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-            else
-            {
-                try
-                {
-                    using (FileStream fs = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        return await JsonSerializer.DeserializeAsync<List<T>?>(fs);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                }
-            }
-            return null;
-        }
-        */
-
         private static void RemoveJsonExportProfile(JsonExportProfile jep)
         {
             if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
@@ -1023,12 +1000,16 @@ namespace ASA_Save_Inspector.Pages
             if (jep == null)
                 return 0;
 
+            bool deleteFolder = true;
             string folderPath = jep.GetExportFolderName();
+            if (Directory.Exists(folderPath))
+            {
+                deleteFolder = false;
+                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+            }
+            folderPath = Path.Combine(Utils.JsonExportsFolder(), jep.GetExportFolderName());
             if (!Directory.Exists(folderPath))
-                folderPath = Path.Combine(Utils.JsonExportsFolder(), jep.GetExportFolderName());
-
-            if (!Directory.Exists(folderPath))
-                Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed_AlreadyRemoved").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed_AlreadyRemoved").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
 
             List<JsonExportProfile> toRemove = new List<JsonExportProfile>();
             if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
@@ -1041,7 +1022,7 @@ namespace ASA_Save_Inspector.Pages
                         toRemove.Add(jsonExportProfile);
                 }
 
-            if (Directory.Exists(folderPath))
+            if (deleteFolder && Directory.Exists(folderPath))
                 try
                 {
                     Directory.Delete(folderPath, true);
@@ -2304,93 +2285,6 @@ namespace ASA_Save_Inspector.Pages
                 _deserializationTasks["tribes"] = true;
         }
 
-        /*
-        private void DeserializeAllData(string folderPath)
-        {
-            if (_selectedJsonExportProfile == null)
-                return;
-
-            if (_selectedJsonExportProfile.ExtractedDinos)
-                DeserializeJsonObjectsAsync<Dino>(Path.Combine(folderPath, "dinos.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["dinos"] = true;
-                    _dinosData = result.Result;
-                    if (_dinosData == null)
-                        _deserializationHasErrors = true;
-                    else if (_dinosData.Count > 0)
-                        foreach (var dinoData in _dinosData)
-                            dinoData.InitStats();
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["dinos"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedPlayerPawns)
-                DeserializeJsonObjectsAsync<PlayerPawn>(Path.Combine(folderPath, "player_pawns.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["player_pawns"] = true;
-                    _playerPawnsData = result.Result;
-                    if (_playerPawnsData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["player_pawns"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedItems)
-                DeserializeJsonObjectsAsync<Item>(Path.Combine(folderPath, "items.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["items"] = true;
-                    _itemsData = result.Result;
-                    if (_itemsData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["items"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedStructures)
-                DeserializeJsonObjectsAsync<Structure>(Path.Combine(folderPath, "structures.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["structures"] = true;
-                    _structuresData = result.Result;
-                    if (_structuresData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["structures"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedPlayers)
-                DeserializeJsonObjectsAsync<Player>(Path.Combine(folderPath, "players.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["players"] = true;
-                    _playersData = result.Result;
-                    if (_playersData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["players"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedTribes)
-                DeserializeJsonObjectsAsync<Tribe>(Path.Combine(folderPath, "tribes.json")).ContinueWith((result) =>
-                {
-                    _deserializationTasks["tribes"] = true;
-                    _tribesData = result.Result;
-                    if (_tribesData == null)
-                        _deserializationHasErrors = true;
-                    if (_tribesData != null && _tribesData.Count > 0)
-                        _tribeNames = _tribesData.DistinctBy(t => t.TribeID).Select(t => new KeyValuePair<int, string>(t.TribeID != null && t.TribeID.HasValue ? t.TribeID.Value : -1, t.TribeName ?? string.Empty)).Where(s => s.Key != -1 && !string.IsNullOrEmpty(s.Value)).ToDictionary();
-                    if (_tribeNames == null)
-                        _tribeNames = new Dictionary<int, string>();
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["tribes"] = true;
-        }
-        */
-
         private void LoadJsonExportProfile_Click(object sender, RoutedEventArgs e)
         {
             JsonExportProfile? jep = GetJEPFromButton(e);
@@ -2409,8 +2303,10 @@ namespace ASA_Save_Inspector.Pages
             }
 
             string folderPath = _selectedJsonExportProfile.GetExportFolderName();
-            if (!Directory.Exists(folderPath))
-                folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
+            if (Directory.Exists(folderPath))
+                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+            folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
+            
             if (!Directory.Exists(folderPath))
             {
                 Logger.Instance.Log(ASILang.Get("LoadJsonFailed_ExportFolderNotFound"), Logger.LogLevel.ERROR);
@@ -2465,7 +2361,6 @@ namespace ASA_Save_Inspector.Pages
 
             Utils.LockAllPages(true);
             ResetDeserializationTasks();
-            //DeserializeAllData(folderPath);
             DeserializeAllData_WithBufferedStream(folderPath);
             CheckForTasksCompletion();
 

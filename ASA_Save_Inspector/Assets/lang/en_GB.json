@@ -3,7 +3,7 @@
   "Code": "en_GB",
   "FlagFilepath": "/Assets/FlagGBIcon96.png",
     "Items": {
-        "Language_Version": "3.3",
+        "Language_Version": "3.7",
         "Language_Name": "English",
         "Language_Code": "en_GB",
         "MicrosoftDateTimeFormat": "G",
@@ -375,6 +375,7 @@
         "RemoveJsonData_Description": "High disk space usage detected. You can either delete JSON data one by one from the Settings page, or delete all JSON data except the latest for each save file using the button below.",
         "RemoveJsonData": "Delete all JSON data except the latest (for each save file)",
         "RemovingJsonData": "Deleting JSON data.",
+        "DeprecatedExportProfileFormat": "Your JSON export profile \u0022#JSON_EXPORT_PROFILE_NAME\u0022 is deprecated and cannot be used anymore.",
         "GetArkParseVersionFailed": "Could not get ArkParse version.",
         "ArkParseVersionFileNotFound": "Local file ASI_VERSION.txt not found.",
         "ArkParseVersionFileIsEmpty": "Local file ASI_VERSION.txt is empty.",

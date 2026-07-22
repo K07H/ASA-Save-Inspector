@@ -3,7 +3,7 @@
   "Code": "fr_FR",
   "FlagFilepath": "/Assets/FlagFRIcon96.png",
     "Items": {
-        "Language_Version": "3.3",
+        "Language_Version": "3.7",
         "Language_Name": "Fran\u00E7ais",
         "Language_Code": "fr_FR",
         "MicrosoftDateTimeFormat": "G",
@@ -375,6 +375,7 @@
         "RemoveJsonData_Description": "Consommation d\u0027espace disque \u00E9lev\u00E9e d\u00E9tect\u00E9e. Vous pouvez soit supprimer les donn\u00E9es JSON une par une depuis la page R\u00E9glages, ou supprimer toutes les donn\u00E9es JSON sauf les plus r\u00E9centes pour chaque fichier de sauvegarde via le boutton ci-dessous.",
         "RemoveJsonData": "Supprimer les donn\u00E9es JSON sauf les plus r\u00E9centes (pour chaque fichier de sauvegarde)",
         "RemovingJsonData": "Suppression des donn\u00E9es JSON.",
+        "DeprecatedExportProfileFormat": "Votre profil d\u0027export JSON \u0022#JSON_EXPORT_PROFILE_NAME#\u0022 poss\u00e8de un ancien format non support\u00e9 et ne peut plus \u00eatre utilis\u00e9.",
         "GetArkParseVersionFailed": "Impossible de r\u00E9cup\u00E9rer la version de ArkParse.",
         "ArkParseVersionFileNotFound": "Le fichier local ASI_VERSION.txt est introuvable.",
         "ArkParseVersionFileIsEmpty": "Le fichier local ASI_VERSION.txt est vide.",

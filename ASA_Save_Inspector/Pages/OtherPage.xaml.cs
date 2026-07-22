@@ -48,7 +48,7 @@ namespace ASA_Save_Inspector.Pages
 
             Task.Run(() => ComputeJsonExportsFolderSize());
             Task.Run(() => ComputeASIDataFolderTotalSize());
-            Task.Run(() => CheckForPreviousInstallsToRemove());
+            //Task.Run(() => CheckForPreviousInstallsToRemove());
 
             _initialized = true;
         }
@@ -596,6 +596,7 @@ namespace ASA_Save_Inspector.Pages
 
         private void cb_AppTheme_Unchecked(object sender, RoutedEventArgs e) => SwitchAppTheme(false, _initialized);
 
+        /*
         private void RemovePreviousInstalls()
         {
             IEnumerable<string>? previousFolders = Utils.GetPreviousASIFolders();
@@ -642,6 +643,7 @@ namespace ASA_Save_Inspector.Pages
             else
                 DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed);
         }
+        */
 
         public static bool DoRemoveOldJsonData(bool doLogFolderSizes)
         {

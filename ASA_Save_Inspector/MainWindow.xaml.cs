@@ -770,6 +770,7 @@ namespace ASA_Save_Inspector
             return new KeyValuePair<string?, List<string>?>((foundExports ? jsonExportsPath : null), (configFilesFound.Count > 0 ? configFilesFound : null));
         }
 
+        /*
         private KeyValuePair<string?, List<string>?> SearchPreviousData()
         {
             KeyValuePair<string?, List<string>?> emptyResult = new KeyValuePair<string?, List<string>?>(null, null);
@@ -788,7 +789,6 @@ namespace ASA_Save_Inspector
             return emptyResult;
         }
 
-        /*
         public async Task<bool> DownloadASI()
         {
             if (string.IsNullOrEmpty(_latestVersion))
@@ -877,6 +877,7 @@ namespace ASA_Save_Inspector
             RestorePreviousDataPopup.IsOpen = true;
         }
 
+        /*
         private void CheckPreviousData()
         {
             KeyValuePair<string?, List<string>?> previousData = SearchPreviousData();
@@ -888,6 +889,7 @@ namespace ASA_Save_Inspector
                         OpenRestorePreviousDataPopup();
             }
         }
+        */
 
         private async void btn_InstallUpdate_Click(object sender, RoutedEventArgs e)
         {

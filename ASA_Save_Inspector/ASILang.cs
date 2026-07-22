@@ -18,7 +18,7 @@ namespace ASA_Save_Inspector
 
     public static class ASILang
     {
-        public const string LANGUAGE_VERSION = "3.3";
+        public const string LANGUAGE_VERSION = "3.7";
         public const string DEFAULT_LANGUAGE_CODE = "en_GB";
         private const string UNKNOWN_LANGUAGE_FLAG_PATH = "/Assets/FlagUnknownIcon96.png";
         public static readonly List<string> IMAGE_EXTENSIONS = new List<string> { ".JPG", ".JPEG", ".BMP", ".GIF", ".PNG" };
@@ -647,6 +647,7 @@ namespace ASA_Save_Inspector
             { "RemoveJsonData_Description", "High disk space usage detected. You can either delete JSON data one by one from the Settings page, or delete all JSON data except the latest for each save file using the button below." },
             { "RemoveJsonData", "Delete all JSON data except the latest (for each save file)" },
             { "RemovingJsonData", "Deleting JSON data." },
+            { "DeprecatedExportProfileFormat", "Your JSON export profile \"#JSON_EXPORT_PROFILE_NAME#\" is deprecated and cannot be used anymore." },
 
             // Python manager
             { "GetArkParseVersionFailed", "Could not get ArkParse version." },
@@ -1089,6 +1090,7 @@ namespace ASA_Save_Inspector
             { "RemoveJsonData_Description", "Consommation d'espace disque élevée détectée. Vous pouvez soit supprimer les données JSON une par une depuis la page Réglages, ou supprimer toutes les données JSON sauf les plus récentes pour chaque fichier de sauvegarde via le boutton ci-dessous." },
             { "RemoveJsonData", "Supprimer les données JSON sauf les plus récentes (pour chaque fichier de sauvegarde)" },
             { "RemovingJsonData", "Suppression des données JSON." },
+            { "DeprecatedExportProfileFormat", "Votre profil d'export JSON \"#JSON_EXPORT_PROFILE_NAME#\" possède un ancien format non supporté et ne peut plus être utilisé." },
 
             // Python manager
             { "GetArkParseVersionFailed", "Impossible de récupérer la version de ArkParse." },

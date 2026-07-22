@@ -710,8 +710,12 @@ print(""PYTHONPATH: "" + str(os.getenv(""PYTHONPATH"")))
             }
 
             string finalExportFolderPath = jep.GetExportFolderName();
-            if (!Directory.Exists(finalExportFolderPath))
-                finalExportFolderPath = Path.Combine(exportFolderPath, jep.GetExportFolderName());
+            if (Directory.Exists(finalExportFolderPath))
+            {
+                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.ERROR);
+                return false;
+            }
+            finalExportFolderPath = Path.Combine(exportFolderPath, finalExportFolderPath);
             if (!Directory.Exists(finalExportFolderPath))
             {
                 try

@@ -51,6 +51,7 @@
                         <TextBlock x:Name="tb_RemovingJsonData" FontSize="14" FontStyle="Italic" Visibility="Collapsed" Margin="5,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('RemovingJsonData'), Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('PleaseWait'), Mode=OneWay}"/></TextBlock>
                     </StackPanel>
                 </StackPanel>
+                <!--
                 <StackPanel x:Name="sp_RemovePreviousInstalls" Orientation="Vertical" Margin="0,20,0,0" Visibility="Collapsed">
                     <TextBlock VerticalAlignment="Center" FontSize="18" Text="{x:Bind asi:ASILang.Get('PrivousInstallsFound_Title'), Mode=OneWay}"></TextBlock>
                     <TextBlock x:Name="run_RemovePreviousInstalls" VerticalAlignment="Center" Margin="0,5,0,0" FontSize="14" Text="{x:Bind asi:ASILang.Get('PrivousInstallsFound_Description'), Mode=OneWay}"></TextBlock>
@@ -59,6 +60,7 @@
                         <TextBlock x:Name="tb_RemovingPreviousInstalls" FontSize="14" FontStyle="Italic" Visibility="Collapsed" Margin="5,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('RemovingPreviousInstalls'), Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('PleaseWait'), Mode=OneWay}"/></TextBlock>
                     </StackPanel>
                 </StackPanel>
+                -->
             </StackPanel>
         </StackPanel>
 
