@@ -234,7 +234,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddStructureFilterPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20" 
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -311,7 +311,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditStructureFiltersPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         HorizontalAlignment="Center" VerticalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -332,7 +332,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ModifyColumnsPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -352,7 +352,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="FiltersPresetsPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -398,7 +398,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ColumnsPresetsPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -433,7 +433,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddStructureFiltersGroupPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                 BorderThickness="2" CornerRadius="4" Margin="20" 
                 VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -471,7 +471,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditStructureFiltersGroupPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                 BorderThickness="2" CornerRadius="4" Margin="20"
                 VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
@@ -492,7 +492,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="GroupPresetsPopup">
             <Border Width="{Binding ElementName=page_Structures, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Structures, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">

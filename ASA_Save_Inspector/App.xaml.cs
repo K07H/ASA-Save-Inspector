@@ -10,7 +10,7 @@ namespace ASA_Save_Inspector
         public App()
         {
             InitializeComponent();
-            Pages.SettingsPage.LoadSettingsStatic();
+            Pages.SettingsPage.LoadSettingsStatic(true);
             RequestedTheme = (Pages.SettingsPage._darkTheme != null && Pages.SettingsPage._darkTheme.HasValue && !Pages.SettingsPage._darkTheme.Value ? ApplicationTheme.Light : ApplicationTheme.Dark);
         }
 

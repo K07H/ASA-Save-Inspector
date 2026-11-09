@@ -72,6 +72,7 @@ namespace ASA_Save_Inspector.Pages
         public string? DefaultColumnsPreset_Structures { get; set; } = null;
         public string? DefaultColumnsPreset_Players { get; set; } = null;
         public string? DefaultColumnsPreset_Tribes { get; set; } = null;
+        public string? ClusterDataFolderPath { get; set; } = null;
     }
 
     public class MapBounds
@@ -398,7 +399,9 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public static void LoadSettingsStatic()
+        /// <summary>Loads settings statically.</summary>
+        /// <param name="pythonOrLanguageRefresh">Set this to true if Python path changed, if language changed, or if Python vEnv needs to be activated/updated.</param>
+        public static void LoadSettingsStatic(bool pythonOrLanguageRefresh = true)
         {
             string settingsPath = Utils.SettingsFilePath();
             if (!File.Exists(settingsPath))
@@ -425,12 +428,14 @@ namespace ASA_Save_Inspector.Pages
                     _defaultColumnsPreset_Structures = jsonSettings.DefaultColumnsPreset_Structures;
                     _defaultColumnsPreset_Players = jsonSettings.DefaultColumnsPreset_Players;
                     _defaultColumnsPreset_Tribes = jsonSettings.DefaultColumnsPreset_Tribes;
-                    if (_page != null)
-                        _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
-                        {
-                            await Task.Delay(250);
-                            _page.SettingsChanged();
-                        });
+                    ClusterDataPage.SelectedClusterDataFolderPath = jsonSettings.ClusterDataFolderPath;
+                    if (pythonOrLanguageRefresh)
+                        if (_page != null)
+                            _ = _page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                            {
+                                await Task.Delay(250);
+                                _page.SettingsChanged();
+                            });
                 }
             }
             catch (Exception ex)
@@ -456,7 +461,8 @@ namespace ASA_Save_Inspector.Pages
                     DefaultColumnsPreset_Items = _defaultColumnsPreset_Items,
                     DefaultColumnsPreset_Structures = _defaultColumnsPreset_Structures,
                     DefaultColumnsPreset_Players = _defaultColumnsPreset_Players,
-                    DefaultColumnsPreset_Tribes = _defaultColumnsPreset_Tribes
+                    DefaultColumnsPreset_Tribes = _defaultColumnsPreset_Tribes,
+                    ClusterDataFolderPath = ClusterDataPage.SelectedClusterDataFolderPath
                 };
                 string jsonString = JsonSerializer.Serialize<JsonSettings>(settings, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(Utils.SettingsFilePath(), jsonString, Encoding.UTF8);

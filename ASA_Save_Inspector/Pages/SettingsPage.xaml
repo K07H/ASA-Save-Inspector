@@ -229,7 +229,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="SelectExportPresetPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
@@ -263,7 +263,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ExtractProfilePresetsPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
@@ -322,7 +322,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ManageJEPPresetsPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}">
@@ -382,7 +382,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="StandardPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4">
                     <StackPanel Orientation="Vertical" Margin="10,5,0,0">
                         <TextBlock Text="{x:Bind asi:ASILang.Get('ExtractJsonData'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
@@ -446,7 +446,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ConfirmJsonExportRemovalPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicBackgroundFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4">
                     <StackPanel Orientation="Vertical" Margin="10,5,0,0">
                         <TextBlock Text="{x:Bind asi:ASILang.Get('JsonDataRemovalConfirm'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>

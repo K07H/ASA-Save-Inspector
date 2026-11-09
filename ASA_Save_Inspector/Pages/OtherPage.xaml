@@ -42,8 +42,7 @@
                 </StackPanel>
                 <TextBlock VerticalAlignment="Center" FontStyle="Italic" FontSize="14" TextWrapping="WrapWholeWords" Text="{x:Bind asi:ASILang.Get('DebugLogging_Description'), Mode=OneWay}"/>
                 <TextBlock VerticalAlignment="Center" Margin="0,20,0,0" FontSize="18"><Run Text="{x:Bind asi:ASILang.Get('Statistics'), Mode=OneWay}"/></TextBlock>
-                <TextBlock VerticalAlignment="Center" Margin="0,5,0,0" FontSize="14"><Run Text="{x:Bind asi:ASILang.Get('JsonExportsFolderSize'), Mode=OneWay}"/>: <Run Text="{x:Bind JsonExportsFolderSize, Mode=OneWay}"/></TextBlock>
-                <TextBlock VerticalAlignment="Center" Margin="0,5,0,0" FontSize="14"><Run Text="{x:Bind asi:ASILang.Get('ASIDataFolderTotalSize'), Mode=OneWay}"/>: <Run Text="{x:Bind ASIDataFolderTotalSize, Mode=OneWay}"/></TextBlock>
+                <TextBlock VerticalAlignment="Center" Margin="0,5,0,0" FontSize="14"><Run Text="{x:Bind asi:ASILang.Get('ASIDataFolderTotalSize'), Mode=OneWay}"/> <Run Text="{x:Bind ASIDataFolderTotalSize, Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('JsonExportsFolderSizeA'), Mode=OneWay}" FontStyle="Italic"/><Run Text="{x:Bind JsonExportsFolderSize, Mode=OneWay}" FontStyle="Italic"/><Run Text="{x:Bind asi:ASILang.Get('JsonExportsFolderSizeB'), Mode=OneWay}" FontStyle="Italic"/></TextBlock>
                 <StackPanel x:Name="sp_RemoveJsonData" Orientation="Vertical" Margin="0,5,0,0" Visibility="Collapsed">
                     <TextBlock x:Name="tb_RemoveJsonData" VerticalAlignment="Center" FontSize="14" Text="{x:Bind asi:ASILang.Get('RemoveJsonData_Description'), Mode=OneWay}"></TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
@@ -67,7 +66,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddCustomBlueprintsPopup">
             <Border Width="{Binding ElementName=page_Other, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Other, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}"
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">

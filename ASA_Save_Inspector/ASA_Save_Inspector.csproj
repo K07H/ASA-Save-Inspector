@@ -38,6 +38,7 @@
     <None Remove="EditSearchQuery.xaml" />
     <None Remove="ExtraWindows\Minimap.xaml" />
     <None Remove="Pages\AboutPage.xaml" />
+    <None Remove="Pages\ClusterDataPage.xaml" />
     <None Remove="Pages\DinosPage.xaml" />
     <None Remove="Pages\HomePage.xaml" />
     <None Remove="Pages\ItemsPage.xaml" />
@@ -134,15 +135,16 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+	<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
 	<PackageReference Include="CommunityToolkit.WinUI.UI" Version="7.1.2" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.2" />
-    <PackageReference Include="Mapsui.WinUI" Version="5.0.2" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.1" />
-    <PackageReference Include="System.Text.Json" Version="10.0.1" />
-    <PackageReference Include="WinUIEx" Version="2.9.0" />
+    <PackageReference Include="Mapsui.WinUI" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.4" />
+    <PackageReference Include="System.Text.Json" Version="10.0.14" />
+    <PackageReference Include="WinUIEx" Version="2.9.3" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="Assets\AboutIcon96.png">
@@ -163,7 +165,13 @@
     <Content Update="Assets\ASILogo512.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Update="Assets\asi_export_cluster_data.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\asi_export_fast.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\ClusterIcon96.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\DinoIcon96.png">
@@ -448,6 +456,9 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <Page Update="Pages\ClusterDataPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="EditSearchQuery.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -504,9 +515,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Assets\lang\" />
-  </ItemGroup>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
@@ -534,9 +542,9 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025-2026 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>3.0.7.0</AssemblyVersion>
-    <FileVersion>3.0.7.0</FileVersion>
-    <Version>3.0.7</Version>
+    <AssemblyVersion>3.0.8.0</AssemblyVersion>
+    <FileVersion>3.0.8.0</FileVersion>
+    <Version>3.0.8</Version>
     <Title>ASA Save Inspector</Title>
     <Authors>OSubMarin</Authors>
     <Company>LC-IT S.</Company>

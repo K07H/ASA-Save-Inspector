@@ -792,7 +792,7 @@ finalExportFolderPath,
             "\e[96m",
         };
 
-        private static string StripPythonColors(string str)
+        public static string StripPythonColors(string str)
         {
             for (int i = 0; i < 7; i++)
                 str = str.Replace(_pythonColorCodes[i], "", StringComparison.InvariantCulture);

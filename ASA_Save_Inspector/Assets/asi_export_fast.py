@@ -20,12 +20,13 @@ from arkparse.object_model.structures import Structure, StructureWithInventory
 from arkparse.parsing import ArkBinaryParser
 from arkparse.parsing.struct import ActorTransform, ObjectReference
 from arkparse.player.ark_player import ArkPlayer
+from arkparse.player.hexagon_state import HexagonState
 from arkparse.saves.save_connection import SaveConnection
 from arkparse.utils.json_utils import DefaultJsonEncoder
 
 BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "/Doorsystem/ButtonSystem",
-                                  "/Foliage",
+                                  "Script/Foliage",
                                   "/NPCZoneManagerBlueprint_",
                                   "/PlayerControllerBlueprint",
                                   "/Script/Engine.Texture2D",
@@ -36,6 +37,7 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "/Traps/DoorAndButtons",
                                   "/Trap/Multi_Switch_Door",
                                   "/Weapons/Weap",
+                                  "/Weapons/GeneScanner/WeapGeneScanner.WeapGeneScanner_C",
                                   "AnimSequence",
                                   "BossArenaManager",
                                   "Engine.BlockingVolume",
@@ -43,6 +45,7 @@ BLUEPRINTS_TO_SKIP: list[str] = [ "/ByteArrayObject",
                                   "InstancedFoliageActor",
                                   "NPCZoneManager",
                                   "NPCZoneVolume",
+                                  "MissionManager_LC_Overworld_Base",
                                   "PrimalPersistentWorldData",
                                   "PrimalInventory",
                                   "GargoyleHarvestComponent_",
@@ -59,6 +62,7 @@ BLUEPRINTS_NO_EXPORT: list[str] = [ "/AI/",
                                     "_AI_Blueprint.",
                                     "_AIController",
                                     "_AI_Controller",
+                                    "RAG_IceWyvern_AI_C",
                                     "Paracer_AI_Blueprint_Corrupt",
                                     "Spino_AI_Blueprint_Corrupt",
                                     "/DinoCharacterStatus_BP",
@@ -68,6 +72,9 @@ BLUEPRINTS_NO_EXPORT: list[str] = [ "/AI/",
                                     "/Buffs/",
                                     "Buff_DinoCompanion_YoungIceFox_C",
                                     "Buff_SanguineElixirUsed_C",
+                                    "Buff_TrickMeterBonuses_Concavenator_C",
+                                    "Buff_TimeRewind_Cooldown_C",
+                                    "Buff_WoundedFury_Gigant_C",
                                     "PrimalBuffPersistentData",
                                     "DayCycle" ]
 
@@ -95,6 +102,14 @@ def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str])
             or "MicrobeSwarmChar_BP.MicrobeSwarmChar_BP_C" in game_obj.blueprint \
             or "BrigShipBP.BrigShipBP_C" in game_obj.blueprint \
             or "SloopShipBP.SloopShipBP_C" in game_obj.blueprint \
+            or "GalleonShipBP.GalleonShipBP_C" in game_obj.blueprint \
+            or "TriremeShipBP.TriremeShipBP_C" in game_obj.blueprint \
+            or "TriremeShipPlayerFollowingBP.TriremeShipPlayerFollowingBP_C" in game_obj.blueprint \
+            or "BrigShipPlayerFollowingBP.BrigShipPlayerFollowingBP_C" in game_obj.blueprint \
+            or "SloopShipPlayerFollowingBP.SloopShipPlayerFollowingBP_C" in game_obj.blueprint \
+            or "TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet.TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet_C" in game_obj.blueprint \
+            or "TriremeShipPlayerFollowingBP_FleetEscort.TriremeShipPlayerFollowingBP_FleetEscort_C" in game_obj.blueprint \
+            or "Gargantar_Character_BP.Gargantar_Character_BP_C" in game_obj.blueprint \
             or "Lumina_Character_BP.Lumina_Character_BP_C" in game_obj.blueprint \
             or "Umbra_Character_BP.Umbra_Character_BP_C" in game_obj.blueprint \
             or "Polar_Bear.Polar_Bear_C" in game_obj.blueprint:
@@ -128,6 +143,8 @@ def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[
             or "/StructureBP_WoodBench" in game_obj.blueprint \
             or "MB_Button.MB_Button_C" in game_obj.blueprint \
             or "/PortableRope_Ladder_" in game_obj.blueprint \
+            or "BP_Bunker_Base.BP_Bunker_Base_C" in game_obj.blueprint \
+            or "BP_HeroPoisonPlant.BP_HeroPoisonPlant_C" in game_obj.blueprint \
             or "BP_HelperBot_DockingBay" in game_obj.blueprint:
         return True
     if additional_blueprints is not None and len(additional_blueprints) > 0:
@@ -383,9 +400,12 @@ def players_and_tribes_to_json(player_api: PlayerApi):
     players = []
     tribes = []
 
+    pawn_by_id = {p.get_property_value("LinkedPlayerDataID"): p for p in player_api.pawns.values()}
+
     # Format players into JSON.
     for player in player_api.players:
         player_json_obj = player.to_json_obj()
+
         found: bool = False
         for p in pawn_objects:
             platform_profile_id = p.get_property_value("PlatformProfileID")
@@ -395,6 +415,11 @@ def players_and_tribes_to_json(player_api: PlayerApi):
                     found = True
                     break
         player_json_obj["FoundOnMap"] = found
+        
+        hexagons = HexagonState.from_player(player, pawn_by_id.get(player.id_))
+        if hexagons.has_hexagons:
+            player_json_obj["Hexagons"] = hexagons.count
+
         players.append(player_json_obj)
 
     # Format tribes into JSON.
@@ -461,6 +486,7 @@ if __name__ == '__main__':
     # argv[6]: Export structures?
     # argv[7]: Export players?
     # argv[8]: Export tribes?
+    # argv[9]: Enable debug logging?
 
     if len(sys.argv) < 10:
         print('Wrong number of arguments provided.', flush=True)

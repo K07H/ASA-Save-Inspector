@@ -128,7 +128,7 @@
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="SaveQueryPopup">
             <Border Width="{Binding ElementName=page_SearchBuilder, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_SearchBuilder, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2" CornerRadius="4" Margin="20"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">

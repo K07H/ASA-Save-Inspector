@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="ASA_Save_Inspector.Pages.ClusterDataPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ASA_Save_Inspector.Pages"
+    xmlns:om="using:ASA_Save_Inspector.ObjectModel"
+    xmlns:asi="using:ASA_Save_Inspector"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    FontSize="16">
+
+    <Grid Padding="24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{x:Bind asi:ASILang.Get('ClusterData'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="18,0,0,0" TextWrapping="WrapWholeWords"/>
+            <toolkit:WrapPanel Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="8" Margin="0,15,0,0">
+                <TextBlock x:Name="tb_SelectClusterDataFolder" FontSize="18" VerticalAlignment="Center" TextWrapping="WrapWholeWords">
+        <Run Text="{x:Bind asi:ASILang.Get('SelectClusterDataFolder'), Mode=OneWay}"/>
+                </TextBlock>
+                <Button x:Name="btn_SelectClusterDataFolder" Content="{x:Bind asi:ASILang.Get('Browse'), Mode=OneWay}" Click="btn_SelectClusterDataFolder_Click" FontSize="16"/>
+                <TextBox x:Name="tb_SelectedClusterDataFolder" TextWrapping="Wrap" IsReadOnly="True" Visibility="Collapsed" MinWidth="200"/>
+                <Button x:Name="btn_InspectClusterDataFolder" IsEnabled="False" Content="{x:Bind asi:ASILang.Get('InspectClusterData'), Mode=OneWay}" Click="btn_InspectClusterDataFolder_Click" FontSize="16"/>
+            </toolkit:WrapPanel>
+        </StackPanel>
+
+        <toolkit:WrapPanel Grid.Row="1" x:Name="sp_ClusterEntrySelection" Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="8" Margin="0,5,0,0" Visibility="Collapsed">
+            <ComboBox x:Name="ClusterCombo"
+                      PlaceholderText="{x:Bind asi:ASILang.Get('SelectClusterDataEntry'), Mode=OneWay}"
+                      MinWidth="560"
+                      DisplayMemberPath="Label"
+                      SelectionChanged="ClusterCombo_SelectionChanged"
+                      FontSize="16" />
+
+            <CheckBox x:Name="HideEmptyCheck" Content="{x:Bind asi:ASILang.Get('HideEmptyClusterEntries'), Mode=OneWay}" FontSize="16"
+                      IsChecked="True" VerticalAlignment="Bottom" Click="HideEmptyCheck_Click" />
+
+            <CheckBox x:Name="IncludeCryopodCheck" Content="{x:Bind asi:ASILang.Get('IncludeDinosInCryopods'), Mode=OneWay}" FontSize="16"
+                      IsChecked="True" VerticalAlignment="Bottom" Click="IncludeCryopodCheck_Click" />
+
+            <ProgressRing x:Name="BusyRing" IsActive="False" Width="24" Height="24" FontSize="16"
+                          VerticalAlignment="Bottom" />
+        </toolkit:WrapPanel>
+
+        <Grid Grid.Row="2" x:Name="grd_Summary" ColumnSpacing="16" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="SummaryText" Grid.Column="0" VerticalAlignment="Center"
+                       Text="{x:Bind asi:ASILang.Get('NoFileLoaded'), Mode=OneWay}" FontSize="16"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextTrimming="CharacterEllipsis" />
+
+            <TextBox x:Name="FilterBox" Grid.Column="1" Width="300" FontSize="16"
+                     PlaceholderText="{x:Bind asi:ASILang.Get('FilterClusterData'), Mode=OneWay}"
+                     TextChanged="FilterBox_TextChanged" />
+        </Grid>
+
+        <Pivot x:Name="piv_ItemsDinos" Grid.Row="3" Visibility="Collapsed">
+
+            <PivotItem x:Name="ItemsPivot" Header="{x:Bind asi:ASILang.Get('Items'), Mode=OneWay}">
+                <Grid>
+                    <controls:DataGrid x:Name="ItemsGrid"
+                                       AutoGenerateColumns="False"
+                                       IsReadOnly="True"
+                                       CanUserResizeColumns="True"
+                                       CanUserReorderColumns="True"
+                                       CanUserSortColumns="True"
+                                       GridLinesVisibility="Horizontal"
+                                       HeadersVisibility="Column"
+                                       SelectionMode="Extended"
+                                       HorizontalScrollBarVisibility="Auto"
+                                       VerticalScrollBarVisibility="Auto"
+                                       Sorting="ItemsGrid_Sorting">
+                        <controls:DataGrid.Columns>
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Name'), Mode=OneWay}" Binding="{Binding Name}" Tag="Name" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Category'), Mode=OneWay}" Binding="{Binding Category}" Tag="Category" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Quantity'), Mode=OneWay}" Binding="{Binding Quantity}" Tag="Quantity" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Quality'), Mode=OneWay}" Binding="{Binding Quality}" Tag="QualityIndex" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Rating'), Mode=OneWay}" Binding="{Binding Rating}" Tag="RatingValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Durability'), Mode=OneWay}" Binding="{Binding Durability}" Tag="DurabilityValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Stats'), Mode=OneWay}" Binding="{Binding Stat}" Tag="StatValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Crafter'), Mode=OneWay}" Binding="{Binding Crafter}" Tag="Crafter" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Details'), Mode=OneWay}" Binding="{Binding Details}" Tag="Details" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Uploaded'), Mode=OneWay}" Binding="{Binding Uploaded}" Tag="UploadedValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('ClusterDataEntry'), Mode=OneWay}" Binding="{Binding Cluster}" Tag="Cluster" Width="Auto" Visibility="Collapsed" />
+                        </controls:DataGrid.Columns>
+                    </controls:DataGrid>
+
+                    <TextBlock x:Name="ItemsEmptyText" Text="{x:Bind asi:ASILang.Get('NoItemsToDisplay'), Mode=OneWay}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsHitTestVisible="False"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Visibility="Collapsed" />
+                </Grid>
+            </PivotItem>
+
+            <PivotItem x:Name="DinosPivot" Header="{x:Bind asi:ASILang.Get('Dinos'), Mode=OneWay}">
+                <Grid>
+                    <controls:DataGrid x:Name="DinosGrid"
+                                       AutoGenerateColumns="False"
+                                       IsReadOnly="True"
+                                       CanUserResizeColumns="True"
+                                       CanUserReorderColumns="True"
+                                       CanUserSortColumns="True"
+                                       GridLinesVisibility="Horizontal"
+                                       HeadersVisibility="Column"
+                                       SelectionMode="Extended"
+                                       HorizontalScrollBarVisibility="Auto"
+                                       VerticalScrollBarVisibility="Auto"
+                                       Sorting="DinosGrid_Sorting">
+                        <controls:DataGrid.Columns>
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Species'), Mode=OneWay}" Binding="{Binding Species}" Tag="Species" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Sex'), Mode=OneWay}" Binding="{Binding Sex}" Tag="Sex" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('BaseLevel'), Mode=OneWay}" Binding="{Binding BaseLevel}" Tag="BaseLevel" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Level'), Mode=OneWay}" Binding="{Binding CurrentLevel}" Tag="CurrentLevel" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Name'), Mode=OneWay}" Binding="{Binding Name}" Tag="Name" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}" Binding="{Binding Tribe}" Tag="Tribe" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Health'), Mode=OneWay}" Binding="{Binding Health}" Tag="HealthValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Stamina'), Mode=OneWay}" Binding="{Binding Stamina}" Tag="StaminaValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Weight'), Mode=OneWay}" Binding="{Binding Weight}" Tag="WeightValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Melee'), Mode=OneWay}" Binding="{Binding Melee}" Tag="MeleeValue" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Mutations'), Mode=OneWay}" Binding="{Binding Mutations}" Tag="Mutations" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Genes'), Mode=OneWay}" Binding="{Binding Genes}" Tag="Genes" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Server'), Mode=OneWay}" Binding="{Binding Server}" Tag="Server" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('Source'), Mode=OneWay}" Binding="{Binding Source}" Tag="Source" Width="Auto" />
+                            <controls:DataGridTextColumn Header="{x:Bind asi:ASILang.Get('ClusterDataEntry'), Mode=OneWay}" Binding="{Binding Cluster}" Tag="Cluster" Width="Auto" Visibility="Collapsed" />
+                        </controls:DataGrid.Columns>
+                    </controls:DataGrid>
+
+                    <TextBlock x:Name="DinosEmptyText" Text="{x:Bind asi:ASILang.Get('NoDinosToDisplay'), Mode=OneWay}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsHitTestVisible="False"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Visibility="Collapsed" />
+                </Grid>
+            </PivotItem>
+        </Pivot>
+    </Grid>
+</Page>

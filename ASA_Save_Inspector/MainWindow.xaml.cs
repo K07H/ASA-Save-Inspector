@@ -110,6 +110,7 @@ namespace ASA_Save_Inspector
             PythonManager.InitHttpClient();
             PythonManager.GetPythonExePaths();
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
+            PythonManager.CreateAsiExportScriptFile(Utils.AsiExportClusterDataOrigFilePath(), Utils.AsiExportClusterDataFilePath());
 
             // Load launch arguments.
             bool checkForUpdates = true;

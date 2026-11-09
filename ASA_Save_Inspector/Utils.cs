@@ -84,6 +84,7 @@ namespace ASA_Save_Inspector
         public static string PythonVenvFolder() => Path.Combine(GetDataDir(), "python_venv");
         public static string ArkParseFolder() => Path.Combine(GetDataDir(), "ark-save-parser-main");
         public static string JsonExportsFolder() => Path.Combine(GetDataDir(), "json_exports");
+        public static string ClusterDataExportFolder() => Path.Combine(GetDataDir(), "cluster_data");
         public static string GetTempDir() => Path.Combine(GetDataDir(), "temp");
 
         public static string PythonFilePathFromVenv() => Path.Combine(PythonVenvFolder(), "Scripts", "python.exe");
@@ -134,10 +135,13 @@ namespace ASA_Save_Inspector
         public static string ASIArchiveFilePath() => Path.Combine(GetTempDir(), "ASA_Save_Inspector_vVERSIONSTR_WinX64.zip");
         public static string AsiExportFastOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_fast.py");
         public static string AsiExportFastFilePath() => Path.Combine(GetDataDir(), "asi_export_fast.py");
+        public static string AsiExportClusterDataOrigFilePath() => Path.Combine(GetAssetsDir(), "asi_export_cluster_data.py");
+        public static string AsiExportClusterDataFilePath() => Path.Combine(GetDataDir(), "asi_export_cluster_data.py");
         public static string PythonVenvSetupFilePath() => Path.Combine(GetDataDir(), "python_venv_setup.bat");
         public static string PythonTestScriptPath() => Path.Combine(GetDataDir(), "python_test.py");
         public static string ArkParseSetupFilePath() => Path.Combine(GetDataDir(), "arkparse_setup.bat");
         public static string ArkParseRunnerFilePath() => Path.Combine(GetDataDir(), "arkparse_runner.bat");
+        public static string ArkParseClusterDataRunnerFilePath() => Path.Combine(GetDataDir(), "arkparse_cluster_data_runner.bat");
         public static string ArkParseRequiresReinstallFilePath() => Path.Combine(GetDataDir(), "reinstall_arkparse.txt");
 
         public static readonly string[] FilterableTypes = new string[]
@@ -1809,6 +1813,8 @@ namespace ASA_Save_Inspector
                 StructuresPage._page.IsEnabled = !doLock;
             if (TribesPage._page != null)
                 TribesPage._page.IsEnabled = !doLock;
+            if (ClusterDataPage._page != null)
+                ClusterDataPage._page.IsEnabled = !doLock;
         }
 
         public static Type? GetCurrentlyDisplayedPageType()

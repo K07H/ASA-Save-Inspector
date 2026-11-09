@@ -56,6 +56,7 @@
         public bool? bFirstSpawned { get; set; }
         public Config? Config { get; set; }
         public bool? FoundOnMap { get; set; }
+        public int? Hexagons { get; set; }
         public double? LastTimeDiedToEnemyTeam { get; set; }
         public double? LoginTime { get; set; }
         public object? MyPersistentBuffDatas { get; set; }

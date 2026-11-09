@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace ASA_Save_Inspector
 {
@@ -7,6 +9,7 @@ namespace ASA_Save_Inspector
     {
         public static Dictionary<string, string> Names = new Dictionary<string, string>()
         {
+            { "Version", "3.8" },
             { "ZombieWyvern_Character_BP_Poison", "Zombie Poison Wyvern" },
             { "ZombieWyvern_Character_BP_Lightning", "Zombie Lightning Wyvern" },
             { "ZombieWyvern_Character_BP_Fire", "Zombie Fire Wyvern" },
@@ -53,8 +56,10 @@ namespace ASA_Save_Inspector
             { "Volcano_Trike_Character_BP", "X-Triceratops" },
             { "Volcano_Rex_Character_BP", "X-Rex" },
             { "Volcano_Golem_Character_BP", "X-Rock Elemental" },
+            { "Volcano_Concavenator_Character_BP", "X-Concavenator" },
             { "Volcano_Ankylo_Character_BP", "X-Ankylosaurus" },
             { "Volcano_Allo_Character_BP", "X-Allosaurus" },
+            { "ValMegaraptor_Character_BP_Ghost_FE", "Ghost Megaraptor" },
             { "ValMegaraptor_Character_BP_Boss_Medium", "Megaraptor (Beta)" },
             { "ValMegaraptor_Character_BP_Boss_Hard", "Megaraptor (Alpha)" },
             { "ValMegaraptor_Character_BP_Boss_Easy", "Megaraptor (Gamma)" },
@@ -300,6 +305,7 @@ namespace ASA_Save_Inspector
             { "MegaDeathworm_Character_BP", "Alpha Deathworm" },
             { "MegaCrab_Character_BP", "Alpha Karkinos" },
             { "MegaCarno_Character_BP", "Alpha Carnotaurus" },
+            { "MegaBoaratos_Character_BP", "Boaratos (Astral)" },
             { "MegaBasilisk_Character_BP", "Alpha Basilisk" },
             { "Mega_Tusoteuthis_Character_BP", "Alpha Tusoteuthis" },
             { "MantisShrimp_Character_BP", "Mantis Shrimp" },
@@ -395,6 +401,7 @@ namespace ASA_Save_Inspector
             { "Ghost_YoungIceFox_DinoCompanion_Character_BP_FE", "Ghost Veilwyn" },
             { "Ghost_YiLing_Character_BP_FE", "Ghost Yi Ling" },
             { "Ghost_Xenomorph_Character_BP_Male_Surface_FE", "Ghost Reaper King (Surface)" },
+            { "Ghost_Therizino_Character_BP_FE", "Ghost Therizinosaur" },
             { "Ghost_Spino_Character_BP_FE", "Ghost Spinosaurus" },
             { "Ghost_ShoulderDragon_Character_BP_Winter_FE", "Ghost Drakeling (Winter)" },
             { "Ghost_ShoulderDragon_Character_BP_Summer_FE", "Ghost Drakeling (Summer)" },
@@ -406,17 +413,23 @@ namespace ASA_Save_Inspector
             { "Ghost_Megalodon_Character_BP_FE", "Ghost Megalodon" },
             { "Ghost_Mantis_Character_BP_FE", "Ghost Mantis" },
             { "Ghost_LanternPug_Character_BP_FE", "Ghost Bulbdog" },
+            { "Ghost_Jackalope_Character_BP_FE", "Ghost Burrowbuck" },
             { "Ghost_Gigantoraptor_Character_BP_FE", "Ghost Gigantoraptor" },
+            { "Ghost_Gargantar_Character_BP_FE", "Ghost Gargantar" },
             { "Ghost_Direwolf_Character_BP_FE", "Ghost Direwolf" },
             { "Ghost_Deinonychus_Character_BP_FE", "Ghost Deinonychus" },
             { "Ghost_Ceratosaurus_Character_BP_ASA_FE", "Ghost Ceratosaurus" },
             { "Ghost_Cat_Character_BP_FE", "Ghost Cat" },
+            { "Ghost_BogSpider_Character_BP_FE", "Ghost Bloodstalker" },
             { "Ghost_Basilisk_Character_BP_FE", "Ghost Basilisk" },
+            { "Ghost_Axolotl_Large_Character_BP_FE", "Ghost Tidepup (Large)" },
+            { "Ghost_Axolotl_Small_Character_BP_FE", "Ghost Tidepup" },
             { "Ghost_Argent_Character_BP_FE", "Ghost Argentavis" },
             { "Ghost_Ankylo_Character_BP_FE", "Ghost Ankylosaurus" },
             { "Ghost_Angler_Character_BP_FE", "Ghost Anglerfish" },
             { "GasBags_Character_BP_Eden", "R-Gasbags" },
             { "GasBags_Character_BP", "Gasbags" },
+            { "Gargantar_Character_BP", "Gargantar" },
             { "Galli_Character_BP", "Gallimimus" },
             { "Gacha_Claus_Character_BP", "Gacha Claus" },
             { "Gacha_Character_BP_Claus", "Gacha Claus" },
@@ -541,6 +554,8 @@ namespace ASA_Save_Inspector
             { "Cryolophosaurus_Character_BP", "Cryolophosaurus" },
             { "Crab_Character_BP", "Karkinos" },
             { "CorruptTumor_Character_BP", "Corrupt Tumor" },
+            { "Concavenator_Character_BP_Aberrant", "Aberrant Concavenator" },
+            { "Concavenator_Character_BP", "Concavenator" },
             { "Compy_Character_BP", "Compy" },
             { "Coel_Character_BP_VDay", "Coelacanth (Valentine)" },
             { "Coel_Character_BP_Ocean", "Coelacanth (Ocean)" },
@@ -552,10 +567,12 @@ namespace ASA_Save_Inspector
             { "ChupaCabra_Character_BP", "Nameless" },
             { "Chrysaora_Character_BP", "Chrysaora" },
             { "Cherufe_Character_BP", "Magmasaur" },
+            { "Chameleon_Character_BP", "Enigmasaur" },
             { "ChalkGolem_Character_BP", "Chalk Golem" },
             { "Chalico_Character_BP_Lightning", "Chalicotherium (Lightning)" },
             { "Chalico_Character_BP_Corrupt", "Corrupted Chalicotherium" },
             { "Chalico_Character_BP", "Chalicotherium" },
+            { "Cerberus_Character_BP", "Cerberus" },
             { "Ceratosaurus_Character_BP_Thrall", "Ceratosaurus (Thrall)" },
             { "Ceratosaurus_Character_BP_ASA", "Ceratosaurus" },
             { "CaveWolf_Character_BP", "Ravager" },
@@ -604,6 +621,7 @@ namespace ASA_Save_Inspector
             { "Bone_Jerboa_Character_BP", "Skeletal Jerboa" },
             { "Bone_Gigant_Character_BP_FE", "Skeletal Giganotosaurus" },
             { "Bone_Gigant_Character_BP", "Skeletal Gigantosaurus" },
+            { "BogSpider_Character_STA", "Bloodstalker (Gauntlet2)" },
             { "BogSpider_Character_BP", "Bloodstalker" },
             { "Bog_Tapejara_Character_BP", "X-Tapejara" },
             { "Bog_Spino_Character_BP", "X-Spino" },
@@ -612,6 +630,7 @@ namespace ASA_Save_Inspector
             { "Bog_Para_Character_BP", "X-Parasaur" },
             { "Bog_Deinosuchus_Character_BP", "X-Deinosuchus" },
             { "Bog_Acrocanthosaurus_Character_BP", "X-Acrocanthosaurus" },
+            { "Boaratos_Character_BP", "Boaratos" },
             { "BoaFrill_Character_BP_Aberrant", "Aberrant Titanoboa" },
             { "BoaFrill_Character_BP", "Titanoboa" },
             { "Bison_Character_BP", "Bison" },
@@ -630,6 +649,7 @@ namespace ASA_Save_Inspector
             { "Berserk_Raptor_Character_BP", "Raptor (Berserk)" },
             { "Berserk_Otter_Character_BP", "Otter (Berserk)" },
             { "Berserk_Mosa_Character_BP", "Mosasaur (Berserk)" },
+            { "Berserk_CaveTroll_Character_BP", "Cave Troll (Berserk)" },
             { "Berserk_Carno_Character_BP", "Carnotaurus (Berserk)" },
             { "Bee_Queen_Character_BP", "Giant Queen Bee" },
             { "Bee_Character_BP", "Giant Bee" },
@@ -647,6 +667,7 @@ namespace ASA_Save_Inspector
             { "AstralMegalodon_Character_BP", "Megalodon (Astral)" },
             { "AstralMammoth_Character_BP", "Mammoth (Astral)" },
             { "AstralDirewolf_Character_BP", "Direwolf (Astral)" },
+            { "AstralDeinosuchusASA_Character_BP", "Deinosuchus (Astral)" },
             { "AstralCarno_Character_BP", "Carnotaurus (Astral)" },
             { "AstralArgent_Character_BP", "Argentavis (Astral)" },
             { "Astral_Tusoteuthis_Character_BP", "Tusoteuthis (Astral)" },
@@ -676,8 +697,63 @@ namespace ASA_Save_Inspector
             { "Achatina_Character_BP", "Achatina" }
         };
 
+        public static bool _initialized = false;
+
+        public static void InitializeDinoNames()
+        {
+            string dinoNamesFilepath = Path.Combine(Utils.GetLangDir(), $"dino_names.json");
+            try
+            {
+                bool replace = false;
+                if (!File.Exists(dinoNamesFilepath))
+                {
+                    Logger.Instance.Log($"Dino names file not found.", Logger.LogLevel.WARNING);
+                    replace = true;
+                }
+                else
+                {
+                    string json = File.ReadAllText(dinoNamesFilepath);
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        replace = true;
+                        Logger.Instance.Log($"Dino names file is empty.", Logger.LogLevel.WARNING);
+                    }
+                    else
+                    {
+                        var content = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+                        if (content == null || content.Count <= 0 || !content.ContainsKey("Version") || string.Compare(content["Version"], Names["Version"], StringComparison.InvariantCulture) != 0)
+                        {
+                            Logger.Instance.Log($"Dino names file versions did not match.", Logger.LogLevel.WARNING);
+                            replace = true;
+                        }
+                        else
+                        {
+                            Names = new Dictionary<string, string>(content);
+                            Logger.Instance.Log($"Dino names imported from [{dinoNamesFilepath}].", Logger.LogLevel.INFO);
+                        }
+                    }
+                }
+                if (replace)
+                {
+                    var options = new JsonSerializerOptions { WriteIndented = true };
+                    string json = JsonSerializer.Serialize(Names, options);
+                    File.WriteAllText(dinoNamesFilepath, json);
+                    Logger.Instance.Log($"Dino names file at [{dinoNamesFilepath}] has been updated to version {Names["Version"]}.", Logger.LogLevel.INFO);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught while updating dino names file at [{dinoNamesFilepath}]. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+        }
+
         public static string? GetNameFromArchetype(string? archetype)
         {
+            if (!_initialized)
+            {
+                InitializeDinoNames();
+                _initialized = true;
+            }
             if (string.IsNullOrWhiteSpace(archetype))
                 return null;
             int dotPos = archetype.LastIndexOf(".", StringComparison.InvariantCulture);

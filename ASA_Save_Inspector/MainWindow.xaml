@@ -60,7 +60,7 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2"
                         CornerRadius="4"
                         Margin="30"
@@ -94,7 +94,7 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         BorderThickness="2"
                         CornerRadius="4"
                         Margin="30"
@@ -115,7 +115,7 @@
 
         <Popup VerticalOffset="52" HorizontalOffset="0" x:Name="MainWindowPopup">
             <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource AcrylicInAppFillColorDefaultBrush}"
+                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
                         Width="{Binding ElementName=w_MainWindow, Path=WindowWidth, Mode=TwoWay}"
                         Height="{Binding ElementName=w_MainWindow, Path=WindowHeight, Mode=TwoWay}"
                         BorderThickness="2"
@@ -198,6 +198,12 @@
                 <NavigationViewItem x:Name="nvi_Tribes" Tag="ASA_Save_Inspector.Pages.TribesPage" Content="{x:Bind local:ASILang.Get('Tribes'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/TribesIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_ClusterData" Tag="ASA_Save_Inspector.Pages.ClusterDataPage" Content="{x:Bind local:ASILang.Get('ClusterDataLeftMenu'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/ClusterIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator/>
