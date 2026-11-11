@@ -105,7 +105,6 @@
         </Style>
     </Page.Resources>
     <Grid x:Name="gr_SettingsPage">
-        <!--<StackPanel Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">-->
         <TextBlock Text="{x:Bind asi:ASILang.Get('Settings'), Mode=OneWay}" Style="{ThemeResource TitleLargeTextBlockStyle}" Margin="42,0,0,0" TextWrapping="WrapWholeWords"/>
         <Border BorderBrush="Transparent" BorderThickness="0" Margin="0,40,24,24"
                           styling:CustomScrollBar.KeepHorizontalExpanded="True"
@@ -125,19 +124,7 @@
                             </Paragraph>
                         </RichTextBlock>
                         <DropDownButton.Flyout>
-                            <MenuFlyout x:Name="mf_LanguageSlect" Placement="BottomEdgeAlignedLeft">
-                                <!--
-                            <MenuFlyoutItem x:Name="mfi_LanguageEnglish" Text="{x:Bind asi:ASILang.Get('English'), Mode=OneWay}" Click="mfi_LanguageEnglish_Click">
-                                <MenuFlyoutItem.Icon>
-                                    <ImageIcon Source="ms-appx:///Assets/FlagGBIcon96.png" Width="20" Height="20"/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Name="mfi_LanguageFrench" Text="{x:Bind asi:ASILang.Get('French'), Mode=OneWay}" Click="mfi_LanguageFrench_Click">
-                                <MenuFlyoutItem.Icon>
-                                    <ImageIcon Source="ms-appx:///Assets/FlagFRIcon96.png" Width="20" Height="20"/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            -->
+                            <MenuFlyout x:Name="mf_LanguageSelect" Placement="BottomEdgeAlignedLeft">
                             </MenuFlyout>
                         </DropDownButton.Flyout>
                     </DropDownButton>
@@ -214,17 +201,10 @@
                             </controls:DataGrid.Columns>
                         </controls:DataGrid>
                     </Border>
-                    <!--
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                        <Button x:Name="btn_LoadJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Load'), Mode=OneWay}" Click="btn_LoadJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="0,10,0,0"/>
-                        <Button x:Name="btn_RemoveJsonData" Content="{x:Bind asi:ASILang.Get('JsonData_Remove'), Mode=OneWay}" Click="btn_RemoveJsonData_Click" FontSize="18" Visibility="Collapsed" Margin="10,10,0,0"/>
-                    </StackPanel>
-                    -->
                     <TextBlock x:Name="tb_JsonDataLoaded" Text="{x:Bind asi:ASILang.Get('JsonData_SuccessfullyLoaded'), Mode=OneWay}" Foreground="Green" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
                 </StackPanel>
             </ScrollViewer>
         </Border>
-        <!--</StackPanel>-->
 
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="SelectExportPresetPopup">
             <Border Width="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Settings, Path=WindowHeight, Mode=TwoWay}">
@@ -389,19 +369,6 @@
                         <Button Content="{x:Bind asi:ASILang.Get('SelectASASaveFile'), Mode=OneWay}" Click="SelectASASaveFileClicked" Margin="0,15,0,0" FontSize="18"/>
                         <StackPanel x:Name="sp_extractJsonPopup" Orientation="Vertical" Margin="0,5,0,0" Visibility="Collapsed">
                             <TextBlock x:Name="tb_ASASaveFilePath" Text="..." TextWrapping="WrapWholeWords" FontSize="18"/>
-                            <!--
-                            <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExtractType'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton x:Name="ddb_ExtractionType" MinWidth="250" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                                <TextBlock x:Name="tb_ExtractionType" FontSize="14" Text="{x:Bind asi:ASILang.Get('ExtractType_Fast'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_ExtractionType" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_ExtractFast" Text="{x:Bind asi:ASILang.Get('ExtractType_Fast'), Mode=OneWay}" Click="mfi_ExtractFast_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_ExtractLegacy" Text="{x:Bind asi:ASILang.Get('ExtractType_Legacy'), Mode=OneWay}" Click="mfi_ExtractLegacy_Click"/>
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                            <TextBlock Text="{x:Bind asi:ASILang.Get('ExtractType_Description'), Mode=OneWay}" TextWrapping="WrapWholeWords" FontSize="14" FontStyle="Italic" Margin="0,5,0,0"/>
-                            -->
                             <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExtractName'), Mode=OneWay}"/>:</TextBlock>
                             <TextBox x:Name="tb_ExtractionName" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" MinWidth="250" MaxWidth="{Binding ElementName=page_Settings, Path=WindowWidth, Mode=TwoWay}" Text="" Margin="0,5,0,0"/>
                             <TextBlock TextWrapping="WrapWholeWords" FontSize="18" Margin="0,15,0,0"><Run Text="{x:Bind asi:ASILang.Get('JsonDataSelection'), Mode=OneWay}"/>:</TextBlock>

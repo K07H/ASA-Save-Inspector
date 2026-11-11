@@ -64,7 +64,6 @@ namespace ASA_Save_Inspector.Pages
         public string? PythonExeFilePath { get; set; } = string.Empty;
         public bool? DarkTheme { get; set; } = true;
         public bool? DebugLogging { get; set; } = false;
-        public bool? LegacySearch { get; set; } = false;
         public bool? NoPythonVenv { get; set; } = false;
         public string? DefaultColumnsPreset_PlayerPawns { get; set; } = null;
         public string? DefaultColumnsPreset_Dinos { get; set; } = null;
@@ -150,7 +149,6 @@ namespace ASA_Save_Inspector.Pages
 
         public static SettingsPage? _page = null;
         public static bool? _darkTheme = true;
-        public static bool? _legacySearch = false;
         public static bool? _noPythonVenv = false;
         public static bool? _debugLogging = false;
 
@@ -269,7 +267,7 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS1998
                         };
 
-                        mf_LanguageSlect.Items.Add(mfi);
+                        mf_LanguageSelect.Items.Add(mfi);
                     }
 
             AdjustToSizeChange();
@@ -382,7 +380,6 @@ namespace ASA_Save_Inspector.Pages
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
-                    _legacySearch = jsonSettings.LegacySearch;
                     _noPythonVenv = jsonSettings.NoPythonVenv;
                     _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
                     _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
@@ -420,7 +417,6 @@ namespace ASA_Save_Inspector.Pages
                     _language = ASILang.GetLanguageCode(jsonSettings.LanguageCode);
                     _darkTheme = jsonSettings.DarkTheme;
                     _debugLogging = jsonSettings.DebugLogging;
-                    _legacySearch = jsonSettings.LegacySearch;
                     _noPythonVenv = jsonSettings.NoPythonVenv;
                     _defaultColumnsPreset_PlayerPawns = jsonSettings.DefaultColumnsPreset_PlayerPawns;
                     _defaultColumnsPreset_Dinos = jsonSettings.DefaultColumnsPreset_Dinos;
@@ -454,7 +450,6 @@ namespace ASA_Save_Inspector.Pages
                     PythonExeFilePath = _pythonExePath,
                     DarkTheme = _darkTheme,
                     DebugLogging = _debugLogging,
-                    LegacySearch = _legacySearch,
                     NoPythonVenv = _noPythonVenv,
                     DefaultColumnsPreset_PlayerPawns = _defaultColumnsPreset_PlayerPawns,
                     DefaultColumnsPreset_Dinos = _defaultColumnsPreset_Dinos,
@@ -2322,7 +2317,7 @@ namespace ASA_Save_Inspector.Pages
                 return;
             }
 
-            Utils.ClearAllPagesFiltersAndGroups();
+            Utils.ClearAllPagesFilters();
             _allTribesForDinosSorted.Clear();
             _allTribesForDinos.Clear();
 

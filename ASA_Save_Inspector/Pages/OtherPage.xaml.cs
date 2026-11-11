@@ -31,10 +31,6 @@ namespace ASA_Save_Inspector.Pages
             cb_AppTheme.Checked += cb_AppTheme_Checked;
             cb_AppTheme.Unchecked += cb_AppTheme_Unchecked;
 
-            cb_LegacySearch.IsChecked = (SettingsPage._legacySearch != null && SettingsPage._legacySearch.HasValue && SettingsPage._legacySearch.Value);
-            cb_LegacySearch.Checked += cb_LegacySearch_Checked;
-            cb_LegacySearch.Unchecked += cb_LegacySearch_Unchecked;
-
             cb_NoPythonVenv.IsChecked = (SettingsPage._noPythonVenv != null && SettingsPage._noPythonVenv.HasValue && SettingsPage._noPythonVenv.Value);
             cb_NoPythonVenv.Checked += Cb_NoPythonVenv_Checked;
             cb_NoPythonVenv.Unchecked += Cb_NoPythonVenv_Unchecked;
@@ -711,18 +707,6 @@ namespace ASA_Save_Inspector.Pages
         private void cb_DebugLogging_Unchecked(object sender, RoutedEventArgs e)
         {
             SettingsPage._debugLogging = false;
-            SettingsPage.SaveSettings();
-        }
-
-        private void cb_LegacySearch_Checked(object sender, RoutedEventArgs e)
-        {
-            SettingsPage._legacySearch = true;
-            SettingsPage.SaveSettings();
-        }
-
-        private void cb_LegacySearch_Unchecked(object sender, RoutedEventArgs e)
-        {
-            SettingsPage._legacySearch = false;
             SettingsPage.SaveSettings();
         }
 

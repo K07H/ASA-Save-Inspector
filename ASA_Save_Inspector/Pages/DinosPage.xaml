@@ -134,24 +134,15 @@
             </Grid.RowDefinitions>
             <StackPanel x:Name="sp_EditFilters" Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock x:Name="tb_Filters" FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('Filters'), Mode=OneWay}"/>:</TextBlock>
-                    <Button x:Name="btn_AddFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddFilter'), Mode=OneWay}" Height="32" Click="btn_AddFilter_Click"/>
-                    <Button x:Name="btn_EditFilters" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditFilters'), Mode=OneWay}" Height="32" Click="btn_EditFilters_Click"/>
-                    <Button x:Name="btn_FiltersPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_FiltersPresets_Click"/>
                     <TextBlock x:Name="tb_CreateFilter" FontSize="14" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('CreateFilter'), Mode=OneWay}"/>
                     <Button x:Name="btn_CreateFilter" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Create'), Mode=OneWay}" Height="32" Click="btn_CreateFilter_Click"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="sp_EditFiltersGroup" Grid.Row="1" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,5,0,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <TextBlock x:Name="tb_FiltersGroup" FontSize="14" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('FiltersGroups'), Mode=OneWay}"/>:</TextBlock>
-                    <Button x:Name="btn_AddFiltersGroup" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('AddToGroup'), Mode=OneWay}" Height="32" Click="btn_AddFiltersGroup_Click"/>
-                    <Button x:Name="btn_EditFiltersGroup" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('EditGroup'), Mode=OneWay}" Height="32" Click="btn_EditFiltersGroup_Click"/>
-                    <Button x:Name="btn_FiltersGroupPresets" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="14" Content="{x:Bind asi:ASILang.Get('Presets'), Mode=OneWay}" Height="32" Click="btn_GroupPresets_Click"/>
                     <TextBlock x:Name="tb_SavedQueries" FontSize="14" VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('SavedFilters'), Mode=OneWay}"/>
                     <ComboBox x:Name="cbb_ExistingQueries" Margin="10,0,0,0" SelectionChanged="cbb_ExistingQueries_SelectionChanged"></ComboBox>
                     <Button x:Name="btn_LoadQuery" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_LoadQuery_Click" IsEnabled="False"/>
-                    <!--<Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_EditQuery_Click" IsEnabled="False"/>-->
                     <Button x:Name="btn_EditQuery" Content="{x:Bind asi:ASILang.Get('Edit'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_DuplicateQuery_Click" IsEnabled="False"/>
                     <Button x:Name="btn_DeleteQuery" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" Margin="10,0,0,0" Click="btn_DeleteQuery_Click" IsEnabled="False"/>
                 </StackPanel>
@@ -234,104 +225,6 @@
             </controls:DataGrid.RowStyle>
         </controls:DataGrid>
         
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddDinoFilterPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                        BorderThickness="2" CornerRadius="4" Margin="20" 
-                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_DinoFilterOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFilterOperator" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorAnd" Text="{x:Bind asi:ASILang.Get('OperatorAND'), Mode=OneWay}" Click="mfi_FilterOperatorAnd_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterOperatorOr" Text="{x:Bind asi:ASILang.Get('OperatorOR'), Mode=OneWay}" Click="mfi_FilterOperatorOr_Click"/>
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterBy'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_DinoFilterName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFilterName" Placement="BottomEdgeAlignedLeft">
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterType'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_DinoFilterType" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFilterType" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FilterByExactMatch" Text="{x:Bind asi:ASILang.Get('FilterType_ExactMatch'), Mode=OneWay}" Click="mfi_FilterByExactMatch_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByStartingWith" Text="{x:Bind asi:ASILang.Get('FilterType_StartingWith'), Mode=OneWay}" Click="mfi_FilterByStartingWith_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByEndingWith" Text="{x:Bind asi:ASILang.Get('FilterType_EndingWith'), Mode=OneWay}" Click="mfi_FilterByEndingWith_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByContaining" Text="{x:Bind asi:ASILang.Get('FilterType_Containing'), Mode=OneWay}" Click="mfi_FilterByContaining_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByNotContaining" Text="{x:Bind asi:ASILang.Get('FilterType_NotContaining'), Mode=OneWay}" Click="mfi_FilterByNotContaining_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByLowerThan" Text="{x:Bind asi:ASILang.Get('FilterType_LowerThan'), Mode=OneWay}" Click="mfi_FilterByLowerThan_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FilterByGreaterThan" Text="{x:Bind asi:ASILang.Get('FilterType_GreaterThan'), Mode=OneWay}" Click="mfi_FilterByGreaterThan_Click"/>
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel x:Name="sp_FilterByExactMatch" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120"  HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFilterValue" Placement="BottomEdgeAlignedLeft">
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel x:Name="sp_FilterByExactMatchSelection" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,10,0,0" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SelectedValues'), Mode=OneWay}"/>:</TextBlock>
-                            <Border x:Name="b_dinoFilterValues" Visibility="Collapsed" BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" BorderThickness="1" Margin="0,5,0,0">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Width="480" MaxHeight="85">
-                                    <TextBlock x:Name="tb_dinoFilterValues" FontSize="14" VerticalAlignment="Center" Text="" MaxWidth="480" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                                </ScrollViewer>
-                            </Border>
-                        </StackPanel>
-                        <StackPanel x:Name="sp_FilterByOther" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FilterValue'), Mode=OneWay}"/>:</TextBlock>
-                            <TextBox x:Name="tb_FilterByOther" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,5,0,0" Text="" TextChanged="tb_FilterByOther_TextChanged"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToDinoFilters" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToDinoFilters_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_CloseDinoFiltersPopup_Click" FontSize="18" Margin="10,0,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditDinoFiltersPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                        BorderThickness="2" CornerRadius="4" Margin="20"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" MaxHeight="400">
-                            <StackPanel x:Name="sp_ExistingDinoFilters" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch">
-
-                            </StackPanel>
-                        </ScrollViewer>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFilters'), Mode=OneWay}" Click="btn_RemoveAllDinoFilters_Click" FontSize="18" />
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditDinoFiltersPopup_Click" FontSize="18" Margin="10,0,0,0" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ModifyColumnsPopup">
             <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
@@ -352,40 +245,6 @@
             </Border>
         </Popup>
 
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="FiltersPresetsPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                        BorderThickness="2" CornerRadius="4" Margin="20"
-                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SaveFiltersIntoPreset'), Mode=OneWay}"/>:</TextBlock>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
-                            <TextBox x:Name="tb_FiltersPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_FiltersPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentFilters" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentFilters_Click" FontSize="16" Margin="10,0,0,0" />
-                        </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
-                        <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_ExistingFiltersPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout x:Name="mf_ExistingFiltersPresets" Placement="BottomEdgeAlignedLeft">
-                                    <MenuFlyoutItem x:Name="mfi_DefaultFiltersPreset" Text="{x:Bind asi:ASILang.Get('DefaultPreset'), Mode=OneWay}" Click="mfi_DefaultFiltersPreset_Click"/>
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadFiltersPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadFiltersPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveFiltersPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveFiltersPreset_Click" FontSize="16" Margin="10,0,0,0" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseFiltersPresetsPopup_Click" FontSize="16" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-        
         <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="ColumnsPresetsPopup">
             <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
@@ -415,99 +274,6 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
                             <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseColumnsPresetsPopup_Click" FontSize="16" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="AddDinoFiltersGroupPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                BorderThickness="2" CornerRadius="4" Margin="20" 
-                VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('Operator'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_DinoFiltersGroupOperator" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFiltersGroupOperator" Placement="BottomEdgeAlignedLeft">
-                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorAnd" Text="{x:Bind asi:ASILang.Get('OperatorAND'), Mode=OneWay}" Click="mfi_FiltersGroupOperatorAnd_Click"/>
-                                        <MenuFlyoutItem x:Name="mfi_FiltersGroupOperatorOr" Text="{x:Bind asi:ASILang.Get('OperatorOR'), Mode=OneWay}" Click="mfi_FiltersGroupOperatorOr_Click"/>
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" Width="160"><Run Text="{x:Bind asi:ASILang.Get('FiltersPreset'), Mode=OneWay}"/>:</TextBlock>
-                            <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="5,5,0,0">
-                                <TextBlock x:Name="tb_DinoFiltersGroupName" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                                <DropDownButton.Flyout>
-                                    <MenuFlyout x:Name="mf_DinoFiltersGroupNames" Placement="BottomEdgeAlignedLeft">
-                                    </MenuFlyout>
-                                </DropDownButton.Flyout>
-                            </DropDownButton>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button x:Name="btn_AddToDinoFiltersGroup" Content="{x:Bind asi:ASILang.Get('Add'), Mode=OneWay}" Click="btn_AddToDinoFiltersGroup_Click" FontSize="18" Margin="10,0,0,0" IsEnabled="False"/>
-                            <Button Content="{x:Bind asi:ASILang.Get('Cancel'), Mode=OneWay}" Click="btn_CloseDinoFiltersGroupPopup_Click" FontSize="18" Margin="10,0,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="EditDinoFiltersGroupPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                BorderThickness="2" CornerRadius="4" Margin="20"
-                VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Auto" MaxHeight="400">
-                            <StackPanel x:Name="sp_DinoFiltersPresetsInGroup" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch">
-
-                            </StackPanel>
-                        </ScrollViewer>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('RemoveAllFiltersPresetsFromGroup'), Mode=OneWay}" Click="btn_RemoveAllDinoFiltersPresetsFromGroup_Click" Height="36" FontSize="16" />
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseEditDinoFiltersGroupPopup_Click" Height="36" FontSize="18" Margin="10,0,0,0" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Border>
-        </Popup>
-
-        <Popup VerticalOffset="0" HorizontalOffset="0" x:Name="GroupPresetsPopup">
-            <Border Width="{Binding ElementName=page_Dinos, Path=WindowWidth, Mode=TwoWay}" Height="{Binding ElementName=page_Dinos, Path=WindowHeight, Mode=TwoWay}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Border BorderBrush="{StaticResource AcrylicInAppFillColorDefaultBrush}" 
-                        Background="{StaticResource SolidBackgroundFillColorBaseAltBrush}"
-                        BorderThickness="2" CornerRadius="4" Margin="20"
-                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('SaveGroupIntoPreset'), Mode=OneWay}"/>:</TextBlock>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"><Run Text="{x:Bind asi:ASILang.Get('PresetName'), Mode=OneWay}"/>:</TextBlock>
-                            <TextBox x:Name="tb_GroupPresetName" FontSize="14" VerticalAlignment="Center" MinWidth="120" MaxWidth="350" Margin="5,0,0,0" Text="" TextChanged="tb_GroupPresetName_TextChanged"/>
-                            <Button x:Name="btn_SaveCurrentGroup" Content="{x:Bind asi:ASILang.Get('Save'), Mode=OneWay}" IsEnabled="False" Click="btn_SaveCurrentGroup_Click" FontSize="16" Margin="10,0,0,0" />
-                        </StackPanel>
-                        <TextBlock FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,30,0,0"><Run Text="{x:Bind asi:ASILang.Get('ExistingPresets'), Mode=OneWay}"/>:</TextBlock>
-                        <DropDownButton MinWidth="120" MaxWidth="350" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Margin="0,5,0,0">
-                            <TextBlock x:Name="tb_ExistingGroupPreset" FontSize="14" Text="{x:Bind asi:ASILang.Get('ClickHere'), Mode=OneWay}" HorizontalAlignment="Left" HorizontalTextAlignment="Left" TextWrapping="WrapWholeWords"/>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout x:Name="mf_ExistingGroupPresets" Placement="BottomEdgeAlignedLeft">
-
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0">
-                            <Button x:Name="btn_LoadGroupPreset" Content="{x:Bind asi:ASILang.Get('Load'), Mode=OneWay}" IsEnabled="False" Click="btn_LoadGroupPreset_Click" FontSize="16" />
-                            <Button x:Name="btn_RemoveGroupPreset" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" IsEnabled="False" Click="btn_RemoveGroupPreset_Click" FontSize="16" Margin="10,0,0,0" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Button Content="{x:Bind asi:ASILang.Get('Close'), Mode=OneWay}" Click="btn_CloseGroupPresetsPopup_Click" FontSize="16" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

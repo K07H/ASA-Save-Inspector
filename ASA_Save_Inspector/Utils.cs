@@ -976,14 +976,12 @@ namespace ASA_Save_Inspector
             return ret;
         }
 
-        public static void ClearAllPagesFiltersAndGroups()
+        public static void ClearAllPagesFilters()
         {
-            PlayerPawnsPage.ClearPageFiltersAndGroups();
-            DinosPage.ClearPageFiltersAndGroups();
-            StructuresPage.ClearPageFiltersAndGroups();
-            ItemsPage.ClearPageFiltersAndGroups();
-            PlayersPage.ClearPageFiltersAndGroups();
-            TribesPage.ClearPageFiltersAndGroups();
+            PlayerPawnsPage.ClearPageFilters();
+            DinosPage.ClearPageFilters();
+            StructuresPage.ClearPageFilters();
+            ItemsPage.ClearPageFilters();
         }
 
         public static bool MoveDirectory(string source, string target)

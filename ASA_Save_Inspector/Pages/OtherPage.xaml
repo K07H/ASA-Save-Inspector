@@ -26,10 +26,6 @@
                     <TextBlock VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('ApplicationTheme'), Mode=OneWay}"/>:</TextBlock>
                     <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Margin="15,2,0,0" Content="{x:Bind asi:ASILang.Get('ApplicationTheme_Dark'), Mode=OneTime}" VerticalAlignment="Center"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('LegacySearch'), Mode=OneWay}"/>
-                    <CheckBox x:Name="cb_LegacySearch" FontSize="16" IsChecked="False" Margin="15,2,0,0" Content="" VerticalAlignment="Center"/>
-                </StackPanel>
                 <TextBlock VerticalAlignment="Center" FontStyle="Italic" FontSize="14" TextWrapping="WrapWholeWords" Text="{x:Bind asi:ASILang.Get('LegacySearch_Description'), Mode=OneWay}"/>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('NoPythonVenv'), Mode=OneWay}"/>
