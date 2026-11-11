@@ -1,5 +1,4 @@
-﻿using System;
-using WinUIEx;
+﻿using WinUIEx;
 
 namespace ASA_Save_Inspector
 {
@@ -8,6 +7,7 @@ namespace ASA_Save_Inspector
         protected override Windows.UI.Composition.CompositionBrush CreateBrush(Windows.UI.Composition.Compositor compositor) => compositor.CreateHostBackdropBrush();
     }
 
+    /*
     public class ColorAnimatedBackdrop : CompositionBrushBackdrop
     {
         protected override Windows.UI.Composition.CompositionBrush CreateBrush(Windows.UI.Composition.Compositor compositor)
@@ -25,4 +25,5 @@ namespace ASA_Save_Inspector
             return brush;
         }
     }
+    */
 }

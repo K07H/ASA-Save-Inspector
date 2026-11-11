@@ -70,80 +70,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "SubMapName", "Sub Map" }
         };
 
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "ActivatedAtTime",
-            "ActivatedAtTimeReadable",
-            "ActorTransformX",
-            "ActorTransformY",
-            "ActorTransformZ",
-            "AutoCloseTimeSetting",
-            "bHasResetDecayTime",
-            "CropRefreshTimeCache",
-            "CropRefreshTimeCacheReadable",
-            "CurrentFuelTimeCache",
-            "CurrentFuelTimeCacheReadable",
-            "Health",
-            "InventoryUUID",
-            "ItemArchetype",
-            "LastActivatedTime",
-            "LastActivatedTimeReadable",
-            "LastAppliedEffectTime",
-            "LastAppliedEffectTimeReadable",
-            "LastAttachedDinoTime",
-            "LastAttachedDinoTimeReadable",
-            "LastAutoDurabilityDecreaseTime",
-            "LastAutoDurabilityDecreaseTimeReadable",
-            "LastCheckedFuelTime",
-            "LastCheckedFuelTimeReadable",
-            "LastCropRefreshTime",
-            "LastCropRefreshTimeReadable",
-            "LastDamagedAtTime",
-            "LastDamagedAtTimeReadable",
-            "LastDeactivatedTime",
-            "LastDeactivatedTimeReadable",
-            "LastEnterStasisTime",
-            "LastEnterStasisTimeReadable",
-            "LastFireTime",
-            "LastFireTimeReadable",
-            "LastHarvestedTime",
-            "LastHarvestedTimeReadable",
-            "LastInAllyRangeTimeSerialized",
-            "LastInAllyRangeTimeSerializedReadable",
-            "LastInventoryRefreshTime",
-            "LastInventoryRefreshTimeReadable",
-            "LastLongReloadStartTime",
-            "LastLongReloadStartTimeReadable",
-            "LinkedStructureUUIDs",
-            "Location",
-            "MapCoords",
-            "NetDestructionTime",
-            "NetDestructionTimeReadable",
-            "NetOrigCreationTime",
-            "NetOrigCreationTimeReadable",
-            "NextAllowedUseTime",
-            "NextAllowedUseTimeReadable",
-            "NextBoostActivationTime",
-            "NextBoostActivationTimeReadable",
-            "NextBoostDeactivationTime",
-            "NextBoostDeactivationTimeReadable",
-            "OriginalCreationTime",
-            "OriginalCreationTimeReadable",
-            "OriginalPlacedTimeStamp",
-            "OriginalRespecStartTime",
-            "OriginalRespecStartTimeReadable",
-            "PlacedOnFloorStructure",
-            "PreventCryopodDeploymentTilTime",
-            "PreventCryopodDeploymentTilTimeReadable",
-            //"ShortName",
-            "StructureID",
-            "StructuresPlacedOnFloor",
-            "SubMapName",
-            "timeStateStarted",
-            "timeStateStartedReadable",
-            "UUID",
-        };
-
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
         public static string? GetPropertyNameFromCleanName(string? cleanName) => Utils.GetPropertyNameFromCleanName(CleanNames, cleanName);
     }
@@ -178,18 +104,6 @@ namespace ASA_Save_Inspector.ObjectModel
         public int CompareTo(object? obj) => string.Compare(this.ToString(), (obj != null ? obj.ToString() : string.Empty));
 
         public int CompareTo(Structure? other) => string.Compare(this.ToString(), (other != null ? other.ToString() : string.Empty));
-
-        /*
-        private double? _lat = null;
-        private double? _long = null;
-
-        public void InitMapCoords(string? mapName)
-        {
-            KeyValuePair<double, double> mapCoords = Utils.GetMapCoords(mapName, ActorTransformX, ActorTransformY, ActorTransformZ);
-            _lat = mapCoords.Key;
-            _long = mapCoords.Value;
-        }
-        */
 
         public string? ShortName
         {

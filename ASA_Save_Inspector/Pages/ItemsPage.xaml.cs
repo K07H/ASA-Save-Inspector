@@ -187,7 +187,7 @@ namespace ASA_Save_Inspector.Pages
             InitItemsQuickFilter();
 
             // Apply filters, sort and reorder columns.
-            bool isQueued = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+            this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
             {
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
@@ -282,7 +282,9 @@ namespace ASA_Save_Inspector.Pages
             PropertyInfo? prop = Utils.GetProperty(typeof(Item), "OwnerInventoryUUID");
             if (prop != null)
             {
-                SearchBuilder._query = new SearchQuery() { Parts = new List<SearchQueryPart>() {
+                SearchBuilder._query = new SearchQuery()
+                {
+                    Parts = new List<SearchQueryPart>() {
                     new SearchQueryPart()
                     {
                         Type = SearchType.ITEMS,
@@ -292,7 +294,8 @@ namespace ASA_Save_Inspector.Pages
                         PropertyCleanName = ItemUtils.GetCleanNameFromPropertyName("OwnerInventoryUUID"),
                         Value = inventoryUUID
                     }
-                } };
+                }
+                };
                 ApplyFiltersAndSort();
             }
             return true;

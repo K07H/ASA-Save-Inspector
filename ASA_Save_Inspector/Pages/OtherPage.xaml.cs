@@ -592,55 +592,6 @@ namespace ASA_Save_Inspector.Pages
 
         private void cb_AppTheme_Unchecked(object sender, RoutedEventArgs e) => SwitchAppTheme(false, _initialized);
 
-        /*
-        private void RemovePreviousInstalls()
-        {
-            IEnumerable<string>? previousFolders = Utils.GetPreviousASIFolders();
-            if (previousFolders != null && previousFolders.Count() > 0)
-                foreach (string folder in previousFolders)
-                    if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
-                    {
-                        try { Directory.Delete(folder, true); }
-                        catch (Exception ex)
-                        {
-                            Logger.Instance.Log($"Failed to delete previous ASI installation located at [{folder}]. Exception=[{ex}]", Logger.LogLevel.WARNING);
-                        }
-                    }
-            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
-            {
-                tb_RemovingPreviousInstalls.Visibility = Visibility.Collapsed;
-                sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed;
-                btn_RemovePreviousInstalls.IsEnabled = true;
-            });
-        }
-
-        private void btn_RemovePreviousInstalls_Click(object sender, RoutedEventArgs e)
-        {
-            btn_RemovePreviousInstalls.IsEnabled = false;
-            tb_RemovingPreviousInstalls.Visibility = Visibility.Visible;
-            Task.Run(() => RemovePreviousInstalls());
-        }
-
-        private void CheckForPreviousInstallsToRemove()
-        {
-            IEnumerable<string>? previousFolders = Utils.GetPreviousASIFolders();
-            if (previousFolders != null && previousFolders.Count() > 0)
-            {
-                double totalSize = 0.0d;
-                foreach (string folder in previousFolders)
-                    if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
-                        totalSize += Utils.GetDirectorySize(folder);
-                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
-                {
-                    run_RemovePreviousInstalls.Text = ASILang.Get("PrivousInstallsFound_Description").Replace("#STORAGE_SIZE#", Utils.BytesSizeToReadableString(totalSize), StringComparison.InvariantCulture);
-                    sp_RemovePreviousInstalls.Visibility = Visibility.Visible;
-                });
-            }
-            else
-                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => sp_RemovePreviousInstalls.Visibility = Visibility.Collapsed);
-        }
-        */
-
         public static bool DoRemoveOldJsonData(bool doLogFolderSizes)
         {
             bool retVal = false;
@@ -651,27 +602,31 @@ namespace ASA_Save_Inspector.Pages
                 SettingsPage.LoadJsonExportProfiles();
             if (SettingsPage._jsonExportProfiles != null && SettingsPage._jsonExportProfiles.Count > 0)
             {
-                var groupedProfiles = SettingsPage._jsonExportProfiles.OrderByDescending(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
-                if (groupedProfiles != null && groupedProfiles.Count() > 0)
+                // Only the most recent extraction for each save file is kept.
+                // Profiles without a save file path, or using the deprecated format (where the "save file path" is a directory), are ignored.
+                List<JsonExportProfile> toDelete = SettingsPage._jsonExportProfiles
+                    .Where(o => o != null && !string.IsNullOrWhiteSpace(o.SaveFilePath) && !Directory.Exists(o.SaveFilePath))
+                    .GroupBy(o => o.SaveFilePath, StringComparer.OrdinalIgnoreCase)
+                    .SelectMany(g => g.OrderByDescending(o => o.ID).Skip(1))
+                    .ToList();
+
+                foreach (JsonExportProfile jep in toDelete)
                 {
-                    foreach (var group in groupedProfiles)
-                        if (group != null && group.Count() > 1)
-                        {
-                            bool isFirst = true;
-                            foreach (var jep in group)
-                                if (jep != null)
-                                {
-                                    if (isFirst)
-                                        isFirst = false;
-                                    else
-                                        try { SettingsPage.DeleteJsonExportProfile(jep); }
-                                        catch { }
-                                }
-                        }
-                    if (doLogFolderSizes)
-                        LogFoldersSizes();
-                    retVal = true;
+                    try
+                    {
+                        Logger.Instance.Log($"Removing old extraction: {jep.GetLabel()} (a more recent extraction exists for the same save file).", Logger.LogLevel.INFO);
+                        if (SettingsPage.DeleteJsonExportProfile(jep) < 0)
+                            Logger.Instance.Log($"Failed to remove old extraction: {jep.GetLabel()}.", Logger.LogLevel.WARNING);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Log($"Exception caught while removing old extraction {jep.GetLabel()}. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    }
                 }
+
+                if (doLogFolderSizes)
+                    LogFoldersSizes();
+                retVal = true;
             }
             return retVal;
         }

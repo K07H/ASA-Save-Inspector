@@ -134,12 +134,6 @@ namespace ASA_Save_Inspector.Pages
         public List<string> Structures { get; set; } = new List<string>();
     }
 
-    public class ButtonLabels
-    {
-        public string LabelLoad { get; set; } = ASILang.Get("Load");
-        public string LabelRemove { get; set; } = ASILang.Get("Remove");
-    }
-
     public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     {
         private const double _scrollBarWidth = 24.0d;
@@ -161,7 +155,6 @@ namespace ASA_Save_Inspector.Pages
 
         public static string? _language = ASILang.DEFAULT_LANGUAGE_CODE;
         public static string? _pythonExePath = null;
-        public static string? _jsonDataFolderPath = null;
         public static string? _asaSaveFilePath = null;
         public static string? _mapName = null;
 
@@ -692,16 +685,6 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        private static readonly List<string> _validJsonFileNames = new List<string>()
-        {
-            "dinos.json",
-            "player_pawns.json",
-            "items.json",
-            "structures.json",
-            "players.json",
-            "tribes.json"
-        };
-
         public void MapNameChanged()
         {
             if (!string.IsNullOrWhiteSpace(_mapName))
@@ -799,6 +782,18 @@ namespace ASA_Save_Inspector.Pages
         private bool _isExtracting = false;
         private async Task DoExtract(bool useJsonResultTb, string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
         {
+            bool started = await DoExtractCore(useJsonResultTb, saveFilePath, mapName, extractName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract, extractions, callback);
+            // When an extraction cannot be started, PythonManager never calls the "extraction complete" callback.
+            // Call it here, otherwise the rest of the preset is never extracted and the CLI waits until timeout.
+            if (!started && extractions != null && callback != null)
+            {
+                MainWindow.PresetExtractionFailed = true;
+                callback(extractions);
+            }
+        }
+
+        private async Task<bool> DoExtractCore(bool useJsonResultTb, string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
+        {
             if (string.IsNullOrWhiteSpace(saveFilePath) || !File.Exists(saveFilePath))
             {
                 Logger.Instance.Log(ASILang.Get("CannotExtractJsonData_IncorrectSaveFilePath"), Logger.LogLevel.WARNING);
@@ -810,7 +805,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 else
                     MainWindow.ShowToast(ASILang.Get("IncorrectASASaveFile"), BackgroundColor.WARNING);
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(mapName))
@@ -824,7 +819,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 else
                     MainWindow.ShowToast(ASILang.Get("IncorrectMapName"), BackgroundColor.WARNING);
-                return;
+                return false;
             }
 
             if (!extractDinos && !extractPlayerPawns && !extractItems && !extractStructures && !extractPlayers && !extractTribes)
@@ -838,7 +833,7 @@ namespace ASA_Save_Inspector.Pages
                 }
                 else
                     MainWindow.ShowToast(ASILang.Get("NoDataTypeSelected"), BackgroundColor.WARNING);
-                return;
+                return false;
             }
 
             if (useJsonResultTb)
@@ -873,6 +868,7 @@ namespace ASA_Save_Inspector.Pages
                 else
                     MainWindow.ShowToast(ASILang.Get("JsonDataExtractionFailed"), BackgroundColor.WARNING);
             }
+            return ret;
         }
 
         private async void ExtractASASaveFileClicked(object sender, RoutedEventArgs e)
@@ -1516,6 +1512,10 @@ namespace ASA_Save_Inspector.Pages
         private async void OnCurrentExtractionComplete(List<KeyValuePair<JsonExportProfile, bool>>? extractions)
         {
             if (extractions == null || extractions.Count <= 0)
+                return;
+
+            // CLI timeout reached: do not start any new extraction.
+            if (MainWindow.PresetExtractionAborted)
                 return;
 
             for (int i = 0; i < extractions.Count; i++)
@@ -2307,7 +2307,7 @@ namespace ASA_Save_Inspector.Pages
             if (Directory.Exists(folderPath))
                 Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
             folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
-            
+
             if (!Directory.Exists(folderPath))
             {
                 Logger.Instance.Log(ASILang.Get("LoadJsonFailed_ExportFolderNotFound"), Logger.LogLevel.ERROR);

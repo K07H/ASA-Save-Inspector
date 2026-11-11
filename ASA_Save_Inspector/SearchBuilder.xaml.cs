@@ -850,13 +850,6 @@ namespace ASA_Save_Inspector
             }
 
             SaveQueryPopup.IsOpen = true;
-
-            /*
-            string? json = SearchQuery.ToJson(_query);
-            if (!string.IsNullOrWhiteSpace(json))
-                try { File.WriteAllText("C:\\Users\\Mangem0rt\\Documents\\test_query.json", json, Encoding.UTF8); }
-                catch (Exception ex) { Logger.Instance.Log($"Failed to save SearchQuery to JSON at \"C:\\Users\\Mangem0rt\\Documents\\test_query.json\". Exception=[{ex}]"); }
-            */
         }
 
         private void btn_CloseQueryBuilder_Click(object sender, RoutedEventArgs e) => this.Close();
@@ -880,18 +873,6 @@ namespace ASA_Save_Inspector
                 ShowNotificationMsg(ASILang.Get("FilterNotFound"), BackgroundColor.WARNING);
                 return;
             }
-
-            /*
-            if (!File.Exists("C:\\Users\\Mangem0rt\\Documents\\test_query.json"))
-                return;
-
-            string? json = null;
-            try { json = File.ReadAllText("C:\\Users\\Mangem0rt\\Documents\\test_query.json", Encoding.UTF8); }
-            catch (Exception ex) { json = null; Logger.Instance.Log($"Failed to read SearchQuery from JSON at \"C:\\Users\\Mangem0rt\\Documents\\test_query.json\". Exception=[{ex}]"); }
-            if (string.IsNullOrWhiteSpace(json))
-                return;
-            _query = SearchQuery.FromJson(json);
-            */
         }
 
         private void tb_SearchQueryName_TextChanged(object sender, TextChangedEventArgs e)
@@ -1109,8 +1090,6 @@ namespace ASA_Save_Inspector
 
         private void page_SearchBuilder_Closed(object sender, WindowEventArgs args)
         {
-            //_queries = null;
-            //_savedQueriesFilePath = null;
             _query = null;
             _searchBuilder = null;
         }

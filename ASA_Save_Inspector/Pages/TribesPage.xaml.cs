@@ -167,7 +167,7 @@ namespace ASA_Save_Inspector.Pages
                 _lastDisplayed = SettingsPage._tribesData;
 
             // Apply filters, sort and reorder columns.
-            bool isQueued = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+            this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
             {
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
@@ -218,15 +218,6 @@ namespace ASA_Save_Inspector.Pages
 
         private void RefreshPrimarySortLabel() => run_PrimarySort.Text = $"{_currentSort} {(AscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
         private void RefreshSecondarySortLabel() => run_SecondarySort.Text = $"{_secondaryCurrentSort} {(SecondaryAscendingSort ? ASILang.Get("SortAscending") : ASILang.Get("SortDescending"))}";
-
-        /*
-        private static void InitDefaultPresets()
-        {
-            _defaultColumnsPreset = new JsonColumnsPreset() { Name = ASILang.Get("DefaultPreset"), Columns = new List<string>(TribeUtils.DefaultSelectedColumns) };
-
-            _defaultFiltersPreset = new JsonFiltersPreset() { Name = ASILang.Get("DefaultPreset"), Filters = new List<JsonFilter>() };
-        }
-        */
 
         public bool GoToTribe(int? tribeID)
         {

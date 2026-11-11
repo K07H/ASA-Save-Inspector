@@ -60,6 +60,15 @@ namespace ASA_Save_Inspector
             return result;
         }
 
+        private static string BatchEscape(string? value) => (value ?? string.Empty).Replace("%", "%%", StringComparison.Ordinal);
+
+        private static string BatchPythonExe() => BatchEscape(SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
+
+        private static string BatchPythonPathLine() => (SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={BatchEscape(Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages"))}\"" : string.Empty);
+
+        /// <summary>Writes a .bat file in UTF-8 (without BOM) and switches cmd.exe to code page 65001 first, so that paths containing non-ASCII characters (ex: "C:\Users\Testé\...") are not converted to "?".</summary>
+        private static void WriteBatchFile(string path, string content) => File.WriteAllText(path, "@chcp 65001 >nul" + Environment.NewLine + content, new UTF8Encoding(false));
+
         public static bool IsArkParsePresent() => File.Exists(Utils.ArkParseJsonApiFilePath());
 
         public static async Task<bool> DownloadArkParse()
@@ -558,11 +567,11 @@ namespace ASA_Save_Inspector
             string pythonVenvSetupContent = string.Format(
 @"
 ""{0}"" -m venv python_venv
-", SettingsPage._pythonExePath);
+", BatchEscape(SettingsPage._pythonExePath));
 
             try
             {
-                File.WriteAllText(pythonVenvSetupPath, pythonVenvSetupContent, Encoding.ASCII);
+                WriteBatchFile(pythonVenvSetupPath, pythonVenvSetupContent);
             }
             catch (Exception ex)
             {
@@ -606,9 +615,9 @@ echo %PYTHONPATH%
 ""{1}"" -m pip list -v
 ""{1}"" -m pip freeze --path ""{0}""
 ",
-SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
-SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
-Utils.PythonTestScriptPath());
+BatchPythonPathLine(),
+BatchPythonExe(),
+BatchEscape(Utils.PythonTestScriptPath()));
             else
                 arkParseSetupContent = string.Format(
 @"
@@ -616,8 +625,8 @@ Utils.PythonTestScriptPath());
 ""{1}"" -m ensurepip --upgrade
 ""{1}"" -m pip install --upgrade pip
 ",
-SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
-SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
+BatchPythonPathLine(),
+BatchPythonExe());
 
             if (string.IsNullOrWhiteSpace(arkParseSetupContent))
             {
@@ -641,9 +650,9 @@ SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._py
 ""{0}"" -m pip install --upgrade pandas --prefer-binary
 ""{0}"" -m pip install -e .
 ",
-SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
+BatchPythonExe());
 
-            try { File.WriteAllText(arkParseSetupPath, arkParseSetupContent, Encoding.ASCII); }
+            try { WriteBatchFile(arkParseSetupPath, arkParseSetupContent); }
             catch (Exception ex) { Logger.Instance.Log($"{ASILang.Get("ArkParseAddSetupError")} (B) Exception=[{ex}]", Logger.LogLevel.ERROR); }
 
             return File.Exists(arkParseSetupPath);
@@ -742,15 +751,15 @@ echo PYTHONPATH environment variable
 echo %PYTHONPATH%
 ""{1}"" ""{2}""
 ",
-SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
-SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
-Utils.PythonTestScriptPath());
+BatchPythonPathLine(),
+BatchPythonExe(),
+BatchEscape(Utils.PythonTestScriptPath()));
             else
                 arkParseRunnerContent = string.Format(
 @"
 {0}
 ",
-SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty);
+BatchPythonPathLine());
 
             if (string.IsNullOrWhiteSpace(arkParseRunnerContent) && SettingsPage.UsePythonVenv())
             {
@@ -762,10 +771,10 @@ SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenv
 @"
 ""{0}"" ""{1}"" ""{2}"" ""{3}"" {4} {5} {6} {7} {8} {9} {10}{11}
 ",
-SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
-asiExportAllPath,
-jep.SaveFilePath,
-finalExportFolderPath,
+BatchPythonExe(),
+BatchEscape(asiExportAllPath),
+BatchEscape(jep.SaveFilePath),
+BatchEscape(finalExportFolderPath),
 (jep.ExtractedDinos ? "1" : "0"),
 (jep.ExtractedPlayerPawns ? "1" : "0"),
 (jep.ExtractedItems ? "1" : "0"),
@@ -775,7 +784,7 @@ finalExportFolderPath,
 (SettingsPage._debugLogging != null && SettingsPage._debugLogging.HasValue && SettingsPage._debugLogging.Value ? "1" : "0"),
 (customBlueprintsB64.Length > 0 ? $" {customBlueprintsB64}" : string.Empty));
 
-            try { File.WriteAllText(arkParseRunnerPath, arkParseRunnerContent, Encoding.ASCII); }
+            try { WriteBatchFile(arkParseRunnerPath, arkParseRunnerContent); }
             catch (Exception ex) { Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} (D) Exception=[{ex}]", Logger.LogLevel.ERROR); }
 
             return File.Exists(arkParseRunnerPath);
@@ -797,6 +806,28 @@ finalExportFolderPath,
             for (int i = 0; i < 7; i++)
                 str = str.Replace(_pythonColorCodes[i], "", StringComparison.InvariantCulture);
             return str.Replace("\e", "");
+        }
+
+        private static volatile Process? _runningArkParseProcess = null;
+
+        /// <summary>Kills the running ArkParse extraction process and its children, if any.</summary>
+        public static void KillRunningProcess()
+        {
+            Process? process = _runningArkParseProcess;
+            if (process == null)
+                return;
+            try
+            {
+                if (!process.HasExited)
+                {
+                    Logger.Instance.Log("Killing running ArkParse process.", Logger.LogLevel.WARNING);
+                    process.Kill(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Failed to kill ArkParse process. Exception=[{ex}]", Logger.LogLevel.WARNING);
+            }
         }
 
         private static List<string> _processErrors = new List<string>();
@@ -888,10 +919,9 @@ finalExportFolderPath,
 
             if (SettingsPage._page != null)
             {
-                bool isQueued = SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+                SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
                 {
                     SettingsPage._page.InitDatagrid(false, false);
-                    //SettingsPage._page.AddJsonExportProfileToDropDown(jep);
                 });
             }
         }
@@ -924,6 +954,7 @@ finalExportFolderPath,
                 _processOutput.Clear();
                 _processErrors.Clear();
                 process.Start();
+                _runningArkParseProcess = process;
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
@@ -942,6 +973,7 @@ finalExportFolderPath,
                 catch { exitCode = -1; }
                 if (process != null)
                 {
+                    _runningArkParseProcess = null;
                     process.Dispose();
                     process = null;
                 }
@@ -960,6 +992,10 @@ finalExportFolderPath,
                 }
                 else
                 {
+                    // Let the CLI (-ExtractPreset) know that this extraction has failed.
+                    if (exitCode != 0)
+                        MainWindow.PresetExtractionFailed = true;
+
                     bool hidden = false;
                     int cnt = 0;
                     while (!hidden && cnt < 10)

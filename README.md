@@ -55,6 +55,7 @@ Available commands:
   * This command takes the preset name as argument (in double quotes).
   * Optionally you can specify a timeout with "-Timeout Seconds", but it needs to be placed at the end of the command (order matters). Default timeout value is 1800 seconds (so if after 30 minutes the entire preset is still not extracted, ASA Save Inspector gets shutdown).
   * Usage example: `ASA_Save_Inspector.exe -ExtractPreset "My preset name" -Timeout 1800`
+  * ASI returns one of the following exit code: `0` = success, `1` = at least one extraction failed, `2` = preset not found or empty, `3` = timeout (the extraction process is automatically killed), `4` = unexpected error.
 * `-CleanOldData`
   * This command removes previous extractions data that has been stored on your drive (it only keeps latest extraction data for each map).
   * Usage example: `ASA_Save_Inspector.exe -CleanOldData`

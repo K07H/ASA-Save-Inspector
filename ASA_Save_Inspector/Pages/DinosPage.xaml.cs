@@ -187,7 +187,7 @@ namespace ASA_Save_Inspector.Pages
             InitDinosQuickFilter();
 
             // Apply filters, sort and reorder columns.
-            bool isQueued = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
+            this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
             {
                 await Task.Delay(250);
                 ApplyFiltersAndSort();
