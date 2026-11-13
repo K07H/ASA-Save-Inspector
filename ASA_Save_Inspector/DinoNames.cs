@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -9,7 +10,7 @@ namespace ASA_Save_Inspector
     {
         public static Dictionary<string, string> Names = new Dictionary<string, string>()
         {
-            { "Version", "3.8" },
+            { "Version", "4.0" },
             { "ZombieWyvern_Character_BP_Poison", "Zombie Poison Wyvern" },
             { "ZombieWyvern_Character_BP_Lightning", "Zombie Lightning Wyvern" },
             { "ZombieWyvern_Character_BP_Fire", "Zombie Fire Wyvern" },
@@ -74,6 +75,10 @@ namespace ASA_Save_Inspector
             { "Tropeognathus_Character_BP", "Tropeognathus" },
             { "Troodon_Character_BP_Corrupted_Zombie", "Troodon (Revenant)" },
             { "Troodon_Character_BP", "Troodon" },
+            { "TriremeShipPlayerFollowingBP_FleetEscort", "Trireme Fleet (Escort)" },
+            { "TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet", "Trireme Fleet (Captain)" },
+            { "TriremeShipPlayerFollowingBP", "Trireme Ship (Following Player)" },
+            { "TriremeShipBP", "Trireme Ship" },
             { "Trilobite_Character_Aberrant", "Aberrant Trilobite" },
             { "Trilobite_Character", "Trilobite" },
             { "Trike_Character_BP_Lightning", "Triceratops (Lightning)" },
@@ -152,6 +157,7 @@ namespace ASA_Save_Inspector
             { "Snow_Otter_Character_BP", "X-Otter" },
             { "Snow_Cryolophosaurus_Character_BP", "X-Cryolophosaurus" },
             { "Snow_Argent_Character_BP", "X-Argentavis" },
+            { "SloopShipPlayerFollowingBP", "Sloop Ship (Following Player)" },
             { "SloopShipBP", "Sloop Ship" },
             { "Skeleton_Character_BP_WithCrossbow", "Skeleton (Crossbow)" },
             { "Skeleton_Character_BP_WithBola", "Skeleton (Bola)" },
@@ -431,6 +437,7 @@ namespace ASA_Save_Inspector
             { "GasBags_Character_BP", "Gasbags" },
             { "Gargantar_Character_BP", "Gargantar" },
             { "Galli_Character_BP", "Gallimimus" },
+            { "GalleonShipBP", "Galleon Ship" },
             { "Gacha_Claus_Character_BP", "Gacha Claus" },
             { "Gacha_Character_BP_Claus", "Gacha Claus" },
             { "Gacha_Character_BP", "Gacha" },
@@ -590,6 +597,7 @@ namespace ASA_Save_Inspector
             { "Canoe_BP", "Canoe" },
             { "camelsaurus_Character_BP", "Morellatops" },
             { "BunnyOviraptor_Character_BP", "Bunny Oviraptor" },
+            { "BrigShipPlayerFollowingBP", "Brigantine Ship (Following Player)" },
             { "BrigShipBP", "Brigantine Ship" },
             { "BrainSlug_Character_BP", "Noglin" },
             { "Boss_Gorgon_Character_BP_Medium", "Natrix (Beta)" },
@@ -697,7 +705,23 @@ namespace ASA_Save_Inspector
             { "Achatina_Character_BP", "Achatina" }
         };
 
-        public static bool _initialized = false;
+        private static readonly object _initLock = new object();
+        private static volatile bool _initialized = false;
+
+        private static readonly ConcurrentDictionary<string, byte> _unknownArchetypes = new ConcurrentDictionary<string, byte>(StringComparer.Ordinal);
+
+        private static void EnsureInitialized()
+        {
+            if (_initialized)
+                return;
+            lock (_initLock)
+            {
+                if (_initialized)
+                    return;
+                InitializeDinoNames();
+                _initialized = true;
+            }
+        }
 
         public static void InitializeDinoNames()
         {
@@ -705,6 +729,7 @@ namespace ASA_Save_Inspector
             try
             {
                 bool replace = false;
+                Dictionary<string, string>? userEntries = null;
                 if (!File.Exists(dinoNamesFilepath))
                 {
                     Logger.Instance.Log($"Dino names file not found.", Logger.LogLevel.WARNING);
@@ -725,6 +750,7 @@ namespace ASA_Save_Inspector
                         {
                             Logger.Instance.Log($"Dino names file versions did not match.", Logger.LogLevel.WARNING);
                             replace = true;
+                            userEntries = content;
                         }
                         else
                         {
@@ -735,10 +761,21 @@ namespace ASA_Save_Inspector
                 }
                 if (replace)
                 {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    string json = JsonSerializer.Serialize(Names, options);
-                    File.WriteAllText(dinoNamesFilepath, json);
-                    Logger.Instance.Log($"Dino names file at [{dinoNamesFilepath}] has been updated to version {Names["Version"]}.", Logger.LogLevel.INFO);
+                    Dictionary<string, string> merged = new Dictionary<string, string>(Names);
+                    int keptEntries = 0;
+                    if (userEntries != null)
+                        foreach (var entry in userEntries)
+                            if (!string.IsNullOrWhiteSpace(entry.Key) && entry.Value != null && !merged.ContainsKey(entry.Key))
+                            {
+                                merged[entry.Key] = entry.Value;
+                                ++keptEntries;
+                            }
+                    Names = merged;
+
+                    string json = JsonSerializer.Serialize(Names, Utils.IndentedJson);
+                    Directory.CreateDirectory(Utils.GetLangDir());
+                    Utils.WriteAllTextAtomic(dinoNamesFilepath, json);
+                    Logger.Instance.Log($"Dino names file at [{dinoNamesFilepath}] has been updated to version {Names["Version"]}{(keptEntries > 0 ? $" ({keptEntries} custom entries kept)" : string.Empty)}.", Logger.LogLevel.INFO);
                 }
             }
             catch (Exception ex)
@@ -749,11 +786,7 @@ namespace ASA_Save_Inspector
 
         public static string? GetNameFromArchetype(string? archetype)
         {
-            if (!_initialized)
-            {
-                InitializeDinoNames();
-                _initialized = true;
-            }
+            EnsureInitialized();
             if (string.IsNullOrWhiteSpace(archetype))
                 return null;
             int dotPos = archetype.LastIndexOf(".", StringComparison.InvariantCulture);
@@ -761,9 +794,10 @@ namespace ASA_Save_Inspector
                 archetype = archetype.Substring(dotPos + 1);
             if (archetype.Length > 2 && archetype.EndsWith("_C", StringComparison.InvariantCultureIgnoreCase))
                 archetype = archetype.Substring(0, archetype.Length - 2);
-            if (Names.ContainsKey(archetype))
-                return Names[archetype];
-            Logger.Instance.Log($"Clean dino name not found for [{archetype}].", Logger.LogLevel.WARNING);
+            if (Names.TryGetValue(archetype, out string? cleanName))
+                return cleanName;
+            if (_unknownArchetypes.TryAdd(archetype, 0))
+                Logger.Instance.Log($"Clean dino name not found for [{archetype}].", Logger.LogLevel.WARNING);
             return null;
         }
     }

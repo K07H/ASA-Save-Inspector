@@ -43,7 +43,7 @@
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
-        "Compression" = "3:2"
+        "Compression" = "3:3"
         "SignOutput" = "11:FALSE"
         "CertificateFile" = "8:"
         "PrivateKeyFile" = "8:"
@@ -63,10 +63,10 @@
                     "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 et x64)"
                     "ProductCode" = "8:.NETFramework,Version=v4.7.2"
                     }
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.10.0.x64"
                     {
-                    "Name" = "8:Runtime .NET Desktop 8.0.20 (x64)"
-                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    "Name" = "8:Runtime .NET Desktop 10.0 (x64)"
+                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.10.0.x64"
                     }
                 }
             }
@@ -100,10 +100,10 @@
                     "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 et x64)"
                     "ProductCode" = "8:.NETFramework,Version=v4.7.2"
                     }
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.10.0.x64"
                     {
-                    "Name" = "8:Runtime .NET Desktop 8.0.20 (x64)"
-                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    "Name" = "8:Runtime .NET Desktop 10.0 (x64)"
+                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.10.0.x64"
                     }
                 }
             }
@@ -245,15 +245,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:ASA Save Inspector"
-        "ProductCode" = "8:{F84FBFCB-6E7D-4DF5-93AC-408138736C2A}"
-        "PackageCode" = "8:{172B6C45-B69D-49BE-87BE-1AD0DA591606}"
+        "ProductCode" = "8:{9F0F7075-8D26-4E5A-9924-BA4A9DC96D78}"
+        "PackageCode" = "8:{8DEEFEC2-11D4-45D8-8AC4-CBDDC594B906}"
         "UpgradeCode" = "8:{31E75B23-3256-45F3-80BD-64BCEA713DF4}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:3.8.0"
+        "ProductVersion" = "8:4.0.0"
         "Manufacturer" = "8:OSubMarin (LC-IT S.)"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:https://discord.gg/dPgTprNyn9"
@@ -407,7 +407,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_1648D8AD99054A008EF2013EB9903E88"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Progression"
+                    "DisplayName" = "8:Progress"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminProgressDlg.wid"
@@ -452,7 +452,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_D430C34BE60142F994C891D3E91A6D3B"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Terminé"
+                    "DisplayName" = "8:Finished"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminFinishedDlg.wid"
@@ -484,7 +484,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_4E712E2118FD4C3CB1DAD64C773ABC7B"
                     {
                     "Sequence" = "3:300"
-                    "DisplayName" = "8:Confirmer l'installation"
+                    "DisplayName" = "8:Confirm Installation"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminConfirmDlg.wid"
@@ -507,7 +507,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_96084C26712D4277887AB01F39CD5B2A"
                     {
                     "Sequence" = "3:200"
-                    "DisplayName" = "8:Dossier d'installation"
+                    "DisplayName" = "8:Installation Folder"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminFolderDlg.wid"
@@ -530,7 +530,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_EC252481F12649948CED2CF647950A08"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Bienvenue"
+                    "DisplayName" = "8:Welcome"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdAdminWelcomeDlg.wid"
@@ -594,7 +594,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_78CE3BA0BBF04546B187F6CFC056A8B1"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Bienvenue"
+                    "DisplayName" = "8:Welcome"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdWelcomeDlg.wid"
@@ -643,7 +643,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_DBD6BEC057CD4A0B99F3C5E8BEA81060"
                     {
                     "Sequence" = "3:300"
-                    "DisplayName" = "8:Confirmer l'installation"
+                    "DisplayName" = "8:Confirm Installation"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdConfirmDlg.wid"
@@ -666,7 +666,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_F2698700FD4D4036B2C443D6243A6693"
                     {
                     "Sequence" = "3:200"
-                    "DisplayName" = "8:Dossier d'installation"
+                    "DisplayName" = "8:Installation Folder"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdFolderDlg.wid"
@@ -717,7 +717,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_A672B4FAE05D43F2B0C11FA23CD9D89F"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Progression"
+                    "DisplayName" = "8:Progress"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdProgressDlg.wid"
@@ -762,7 +762,7 @@
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_0B0295DAE19341209C5D213B3326BDCE"
                     {
                     "Sequence" = "3:100"
-                    "DisplayName" = "8:Terminé"
+                    "DisplayName" = "8:Finished"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
                     "SourcePath" = "8:<VsdDialogDir>\\VsdFinishedDlg.wid"
@@ -805,7 +805,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_DABF458F660B41298B128C050D1356BB"
             {
-            "SourcePath" = "8:..\\ASA_Save_Inspector\\obj\\x64\\Release\\net8.0-windows10.0.19041.0\\win-x64\\apphost.exe"
+            "SourcePath" = "8:..\\ASA_Save_Inspector\\obj\\x64\\Release\\net10.0-windows10.0.19041.0\\win-x64\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_FCC92804DE2B4FC18850AAF8EE677477"

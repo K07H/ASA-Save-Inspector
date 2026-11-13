@@ -41,12 +41,22 @@ foreach ($file in $arkFiles) {
 }
 
 # Extract data with ASI, and then clean old data if the extraction succeeded.
-# ASI exit codes for -ExtractPreset: 0 = OK, 1 = at least one extraction failed, 2 = preset not found or empty, 3 = timeout, 4 = unexpected error.
+# ASI exit codes for -ExtractPreset: 0 = OK, 1 = at least one extraction failed, 2 = preset not found or empty, 3 = timeout, 4 = unexpected error, 5 = initialization timeout, 6 = ASI is already running (close the ASI window first).
 if (Test-Path $asiPath) {
 	$extract = Start-Process -FilePath $asiPath -ArgumentList "-ExtractPreset `"$asiPresetName`" -Timeout 1800" -Wait -PassThru
 	if ($extract.ExitCode -eq 0) {
 		Write-Host "ASA_Save_Inspector.exe executed with preset '$asiPresetName'." -ForegroundColor Green
-		Start-Process -FilePath $asiPath -ArgumentList "-CleanOldData" -Wait
+		$clean = Start-Process -FilePath $asiPath -ArgumentList "-CleanOldData" -Wait -PassThru
+		if ($clean.ExitCode -eq 0) {
+			Write-Host "Old data has been cleaned." -ForegroundColor Green
+		} elseif ($clean.ExitCode -eq 6) {
+			Write-Host "Old data has NOT been cleaned: another ASI instance is running." -ForegroundColor Yellow
+		} else {
+			Write-Host "Old data cleaning failed (exit code $($clean.ExitCode))." -ForegroundColor Red
+		}
+	} elseif ($extract.ExitCode -eq 6) {
+		Write-Host "Extraction of preset '$asiPresetName' skipped: another ASI instance is running (close the ASI window, or wait for the other extraction to finish)." -ForegroundColor Red
+		exit $extract.ExitCode
 	} else {
 		Write-Host "Extraction of preset '$asiPresetName' failed (exit code $($extract.ExitCode)). Old data has NOT been cleaned." -ForegroundColor Red
 		exit $extract.ExitCode

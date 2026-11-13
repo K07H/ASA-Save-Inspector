@@ -28,10 +28,10 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 
 ## 3) Installation
 1. Download and install the following two requirements:<br>
-[.NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)<br>
+[.NET Desktop Runtime 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)<br>
 [Python 3](https://www.python.org/downloads/)<br>
 2. Download the latest installer here: [https://github.com/K07H/ASA-Save-Inspector/releases/latest](https://github.com/K07H/ASA-Save-Inspector/releases/latest)<br>
-*You can choose either x64 or x86 installer (if you don't know which one to download, simply get the x64 one).*
+*Installers are available for x64, x86 and ARM64 (if you don't know which one to download, simply get the x64 one).*
 3. Once the installer is downloaded, launch it and follow the installation guide.
 
 ## 4) Quick start
@@ -55,12 +55,14 @@ Available commands:
   * This command takes the preset name as argument (in double quotes).
   * Optionally you can specify a timeout with "-Timeout Seconds", but it needs to be placed at the end of the command (order matters). Default timeout value is 1800 seconds (so if after 30 minutes the entire preset is still not extracted, ASA Save Inspector gets shutdown).
   * Usage example: `ASA_Save_Inspector.exe -ExtractPreset "My preset name" -Timeout 1800`
-  * ASI returns one of the following exit code: `0` = success, `1` = at least one extraction failed, `2` = preset not found or empty, `3` = timeout (the extraction process is automatically killed), `4` = unexpected error.
+  * ASI returns one of the following exit codes: `0` = success, `1` = at least one extraction failed, `2` = preset not found or empty, `3` = timeout (the extraction process is automatically killed), `4` = unexpected error, `5` = initialization timeout (settings or ArkParse were not ready after 3 minutes), `6` = ASI is already running.
 * `-CleanOldData`
   * This command removes previous extractions data that has been stored on your drive (it only keeps latest extraction data for each map).
   * Usage example: `ASA_Save_Inspector.exe -CleanOldData`
 
-And here's a powershell script example that copy save files into a specific folder, extracts data from these saves files and cleans old data: [ASI_Automation.ps1](https://github.com/K07H/ASA-Save-Inspector/blob/main/ASI_Automation.ps1)
+Here's a powershell script example that copy save files into a specific folder, extracts data from these saves files and cleans old data: [ASI_Automation.ps1](https://github.com/K07H/ASA-Save-Inspector/blob/main/ASI_Automation.ps1)
+
+Note: Only one instance of ASI can run at a time (the window and the commands above share the same data). When a command is launched while ASI is already running, it waits up to 30 seconds for the other instance to close, then exits with code `6`. Close the ASI window before running scheduled commands.
 
 ## 8) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues

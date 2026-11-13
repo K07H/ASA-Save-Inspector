@@ -1,3 +1,6 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -6,9 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Animation;
 
 namespace ASA_Save_Inspector.Pages
 {
@@ -42,9 +42,8 @@ namespace ASA_Save_Inspector.Pages
             SettingsPage.LoadCustomBlueprints();
             RefreshRegisteredBlueprints();
 
-            Task.Run(() => ComputeJsonExportsFolderSize());
-            Task.Run(() => ComputeASIDataFolderTotalSize());
-            //Task.Run(() => CheckForPreviousInstallsToRemove());
+            Task.Run(() => ComputeJsonExportsFolderSize()).FireAndForget(nameof(ComputeJsonExportsFolderSize));
+            Task.Run(() => ComputeASIDataFolderTotalSize()).FireAndForget(nameof(ComputeASIDataFolderTotalSize));
 
             _initialized = true;
         }
@@ -66,7 +65,7 @@ namespace ASA_Save_Inspector.Pages
                 if (PropertyChanged != null)
                     PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(ASIDataFolderTotalSize)));
             }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("OtherPage.UpdateASIDataFolderTotalSize", ignoredEx); }
         }
 
         private void ComputeASIDataFolderTotalSize()
@@ -81,7 +80,7 @@ namespace ASA_Save_Inspector.Pages
                     DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateASIDataFolderTotalSize(folderSizeStr));
                 }
             }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("OtherPage.ComputeASIDataFolderTotalSize", ignoredEx); }
         }
 
         private string? _jsonExportsFolderSize = null;
@@ -99,7 +98,7 @@ namespace ASA_Save_Inspector.Pages
                 if (PropertyChanged != null)
                     PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(JsonExportsFolderSize)));
             }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("OtherPage.UpdateJsonExportsFolderSize", ignoredEx); }
         }
 
         private void ComputeJsonExportsFolderSize()
@@ -116,7 +115,7 @@ namespace ASA_Save_Inspector.Pages
                     DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => UpdateJsonExportsFolderSize(folderSizeStr));
                 }
             }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("OtherPage.ComputeJsonExportsFolderSize", ignoredEx); }
         }
 
         private static void LogFoldersSizes()
@@ -229,27 +228,40 @@ namespace ASA_Save_Inspector.Pages
 
         private async void btn_ForceReinstallPythonVenv_Click(object sender, RoutedEventArgs e)
         {
-            if (Directory.Exists(Utils.PythonVenvFolder()))
+            try
             {
-                try
+                // Never delete Python's venv while an extraction (or an ArkParse install) is using it.
+                if (PythonManager.IsBusy)
                 {
-                    Directory.Delete(Utils.PythonVenvFolder(), true);
-
-                    PythonManager.ShowInstallingPopup($"{ASILang.Get("PythonVenvReinstalling")} {ASILang.Get("PleaseWait")}");
-
-                    if (SettingsPage.UsePythonVenv())
-                        PythonManager.AddPythonVenvSetup();
-                    if (await PythonManager.SetupPythonVenv())
-                        MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvSuccess")}");
+                    PythonManager.NotifyBusy();
+                    return;
                 }
-                catch (Exception ex)
+                if (Directory.Exists(Utils.PythonVenvFolder()))
                 {
-                    Logger.Instance.Log($"Failed to delete Python's vEnv folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                    MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvFailed")} {ASILang.Get("SeeLogsForDetails")}");
+                    try
+                    {
+                        Directory.Delete(Utils.PythonVenvFolder(), true);
+
+                        PythonManager.ShowInstallingPopup($"{ASILang.Get("PythonVenvReinstalling")} {ASILang.Get("PleaseWait")}");
+
+                        if (SettingsPage.UsePythonVenv())
+                            PythonManager.AddPythonVenvSetup();
+                        if (await PythonManager.SetupPythonVenv())
+                            MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvSuccess")}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Log($"Failed to delete Python's vEnv folder. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        MainWindow.ShowToast($"{ASILang.Get("ReinstallPythonVenvFailed")} {ASILang.Get("SeeLogsForDetails")}");
+                    }
                 }
+                else
+                    Logger.Instance.Log($"Failed to delete Python's vEnv folder (vEnv folder not found).", Logger.LogLevel.WARNING);
             }
-            else
-                Logger.Instance.Log($"Failed to delete Python's vEnv folder (vEnv folder not found).", Logger.LogLevel.WARNING);
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in OtherPage.btn_ForceReinstallPythonVenv_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
         }
 
         private void ResetCustomBlueprintPopup()
@@ -585,7 +597,7 @@ namespace ASA_Save_Inspector.Pages
             SettingsPage._darkTheme = darkTheme;
             SettingsPage.SaveSettings();
             if (showToast)
-                MainWindow.ShowToast($"{ASILang.Get("ThemeSwitched_RestartAppToApplyChanges").Replace("#THEME_NAME#", $"{themeLabel}", StringComparison.InvariantCulture)}", BackgroundColor.SUCCESS, 4000);
+                MainWindow.ShowToast($"{ASILang.Get("ThemeSwitched_RestartAppToApplyChanges").Replace("#THEME_NAME#", themeLabel ?? string.Empty, StringComparison.InvariantCulture)}", BackgroundColor.SUCCESS, 4000);
         }
 
         private void cb_AppTheme_Checked(object sender, RoutedEventArgs e) => SwitchAppTheme(true, _initialized);
@@ -598,29 +610,41 @@ namespace ASA_Save_Inspector.Pages
 
             if (doLogFolderSizes)
                 LogFoldersSizes();
-            if (SettingsPage._jsonExportProfiles == null || SettingsPage._jsonExportProfiles.Count <= 0)
-                SettingsPage.LoadJsonExportProfiles();
-            if (SettingsPage._jsonExportProfiles != null && SettingsPage._jsonExportProfiles.Count > 0)
+            List<JsonExportProfile> profiles = SettingsPage.GetJsonExportProfilesSnapshot();
+            if (profiles.Count <= 0)
             {
-                // Only the most recent extraction for each save file is kept.
+                SettingsPage.LoadJsonExportProfiles();
+                profiles = SettingsPage.GetJsonExportProfilesSnapshot();
+            }
+            if (profiles.Count > 0)
+            {
+                // For each save file, keep the most recent COMPLETE extraction, and remove the extractions older than it.
+                //  - A failed extraction is never used as "the one to keep" (before, a failed extraction could cause the last good one to be removed).
+                //  - Extractions more recent than the last complete one are kept (one may still be running).
+                //  - If a save file has no complete extraction, nothing is removed for it.
                 // Profiles without a save file path, or using the deprecated format (where the "save file path" is a directory), are ignored.
-                List<JsonExportProfile> toDelete = SettingsPage._jsonExportProfiles
+                List<JsonExportProfile> toDelete = new List<JsonExportProfile>();
+                foreach (var group in profiles
                     .Where(o => o != null && !string.IsNullOrWhiteSpace(o.SaveFilePath) && !Directory.Exists(o.SaveFilePath))
-                    .GroupBy(o => o.SaveFilePath, StringComparer.OrdinalIgnoreCase)
-                    .SelectMany(g => g.OrderByDescending(o => o.ID).Skip(1))
-                    .ToList();
+                    .GroupBy(o => o.SaveFilePath, StringComparer.OrdinalIgnoreCase))
+                {
+                    JsonExportProfile? lastComplete = group.OrderByDescending(o => o.ID).FirstOrDefault(o => o.IsExtractionComplete());
+                    if (lastComplete == null)
+                        continue;
+                    toDelete.AddRange(group.Where(o => o.ID < lastComplete.ID));
+                }
 
                 foreach (JsonExportProfile jep in toDelete)
                 {
                     try
                     {
-                        Logger.Instance.Log($"Removing old extraction: {jep.GetLabel()} (a more recent extraction exists for the same save file).", Logger.LogLevel.INFO);
+                        Logger.Instance.Log(ASILang.Get("RemovingOldExtraction").Replace("#EXTRACTION_NAME#", jep.GetLabel() ?? string.Empty, StringComparison.InvariantCulture), Logger.LogLevel.INFO);
                         if (SettingsPage.DeleteJsonExportProfile(jep) < 0)
-                            Logger.Instance.Log($"Failed to remove old extraction: {jep.GetLabel()}.", Logger.LogLevel.WARNING);
+                            Logger.Instance.Log(ASILang.Get("RemovingOldExtractionFailed").Replace("#EXTRACTION_NAME#", jep.GetLabel() ?? string.Empty, StringComparison.InvariantCulture), Logger.LogLevel.WARNING);
                     }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log($"Exception caught while removing old extraction {jep.GetLabel()}. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        Logger.Instance.Log($"{ASILang.Get("RemovingOldExtractionFailed").Replace("#EXTRACTION_NAME#", jep.GetLabel() ?? string.Empty, StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
                     }
                 }
 
@@ -635,8 +659,8 @@ namespace ASA_Save_Inspector.Pages
         {
             if (DoRemoveOldJsonData(false))
             {
-                Task.Run(() => ComputeJsonExportsFolderSize());
-                Task.Run(() => ComputeASIDataFolderTotalSize());
+                Task.Run(() => ComputeJsonExportsFolderSize()).FireAndForget(nameof(ComputeJsonExportsFolderSize));
+                Task.Run(() => ComputeASIDataFolderTotalSize()).FireAndForget(nameof(ComputeASIDataFolderTotalSize));
             }
             DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
             {
@@ -650,7 +674,7 @@ namespace ASA_Save_Inspector.Pages
         {
             btn_RemoveJsonData.IsEnabled = false;
             tb_RemovingJsonData.Visibility = Visibility.Visible;
-            Task.Run(() => RemoveOldJsonData());
+            Task.Run(() => RemoveOldJsonData()).FireAndForget(nameof(RemoveOldJsonData));
         }
 
         private void cb_DebugLogging_Checked(object sender, RoutedEventArgs e)
@@ -669,7 +693,7 @@ namespace ASA_Save_Inspector.Pages
         {
             if (!File.Exists(Utils.ArkParseRequiresReinstallFilePath()))
                 try { File.WriteAllText(Utils.ArkParseRequiresReinstallFilePath(), "1", System.Text.Encoding.UTF8); }
-                catch (Exception ex) { Logger.Instance.Log($"Exception caught while creating file at \"{Utils.ArkParseRequiresReinstallFilePath()}\". Exception=[{ex}]"); }
+                catch (Exception ex) { Logger.Instance.Log($"Exception caught while creating file at '{Utils.ArkParseRequiresReinstallFilePath()}'. Exception=[{ex}]"); }
         }
 
         private void Cb_NoPythonVenv_Checked(object sender, RoutedEventArgs e)

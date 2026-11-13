@@ -1,3 +1,12 @@
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,15 +18,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ASA_Save_Inspector.Pages;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
 using WinUIEx;
 
 namespace ASA_Save_Inspector
@@ -101,9 +101,16 @@ namespace ASA_Save_Inspector
             // Load maps data.
             LoadMapsInfo();
 
+            // Show the warnings about user files that could not be read (ex: settings.json, read before this window existed).
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, async () =>
+            {
+                await Task.Delay(2000);
+                Utils.ShowPendingUserFileWarnings();
+            });
+
             // Init Python.
             PythonManager.InitHttpClient();
-            PythonManager.GetPythonExePaths();
+            //PythonManager.GetPythonExePaths();
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportFastOrigFilePath(), Utils.AsiExportFastFilePath());
             PythonManager.CreateAsiExportScriptFile(Utils.AsiExportClusterDataOrigFilePath(), Utils.AsiExportClusterDataFilePath());
 
@@ -123,25 +130,19 @@ namespace ASA_Save_Inspector
                                 if (string.Compare(args[3], "-Timeout", StringComparison.InvariantCultureIgnoreCase) == 0)
                                     if (int.TryParse(args[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedTimeout) && parsedTimeout >= 120 && parsedTimeout <= 10800) // Minimum timeout 2 minutes, maximum timeout 3 hours.
                                         timeout = parsedTimeout;
-#pragma warning disable CS4014
-                        CLI_ExtractPreset(args[2], timeout);
-#pragma warning restore CS4014
+                        CLI_ExtractPreset(args[2], timeout).FireAndForget(nameof(CLI_ExtractPreset));
                     }
                 }
                 else if (args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]))
                 {
                     if (string.Compare(args[1], "-CleanOldData", StringComparison.InvariantCultureIgnoreCase) == 0)
-#pragma warning disable CS4014
-                        CLI_CleanOldData();
-#pragma warning restore CS4014
+                        CLI_CleanOldData().FireAndForget(nameof(CLI_CleanOldData));
                 }
             }
 
             // Check for updates.
             if (checkForUpdates)
-#pragma warning disable CS4014
-                CheckForUpdateIfEnabled();
-#pragma warning restore CS4014
+                CheckForUpdateIfEnabled().FireAndForget(nameof(CheckForUpdateIfEnabled));
         }
 
         public static bool SettingsPageFinishedLoading = false;
@@ -155,6 +156,9 @@ namespace ASA_Save_Inspector
         private const int CLI_EXIT_PRESET_ERROR = 2;      // Preset not found or empty.
         private const int CLI_EXIT_TIMEOUT = 3;           // Extraction did not complete before timeout.
         private const int CLI_EXIT_UNEXPECTED_ERROR = 4;  // Unexpected error (ASI not ready, exception and other errors).
+        private const int CLI_EXIT_INIT_TIMEOUT = 5;      // Settings or ArkParse were not ready before the initialization timeout.
+        // Exit code 6 (SingleInstance.EXIT_ALREADY_RUNNING): another ASI instance is running (returned by App before this window is created).
+        private const int CLI_INIT_TIMEOUT_SECONDS = 180; // Maximum time to wait for settings and ArkParse initialization.
 
         private async Task CLI_ExtractPreset(string presetName, int timeout = 1800)
         {
@@ -172,7 +176,7 @@ namespace ASA_Save_Inspector
                 // Always close the app, otherwise the caller would wait forever.
                 PythonManager.KillRunningProcess();
                 Logger.Instance.Log($"CLI: -ExtractPreset exits with code {exitCode.ToString(CultureInfo.InvariantCulture)}.");
-                await Task.Delay(1000);
+                Logger.Instance.Flush();
                 Environment.ExitCode = exitCode;
                 Application.Current.Exit();
             }
@@ -199,7 +203,7 @@ namespace ASA_Save_Inspector
             int i = 0;
             bool settingsPageLoaded = false;
             bool arkParseUpdated = false;
-            while (i < 180 && (!SettingsPageFinishedLoading || !ArkParseUpdateCompleted))
+            while (i < CLI_INIT_TIMEOUT_SECONDS && (!SettingsPageFinishedLoading || !ArkParseUpdateCompleted))
             {
                 await Task.Delay(1000);
                 if (!settingsPageLoaded && SettingsPageFinishedLoading)
@@ -218,12 +222,19 @@ namespace ASA_Save_Inspector
                 ++i;
             }
 
+            // Stop here if initialization did not complete.
+            if (!SettingsPageFinishedLoading || !ArkParseUpdateCompleted)
+            {
+                Logger.Instance.Log($"CLI: Initialization did not complete within {CLI_INIT_TIMEOUT_SECONDS.ToString(CultureInfo.InvariantCulture)} seconds (settings loaded: {SettingsPageFinishedLoading}, ArkParse ready: {ArkParseUpdateCompleted}).", Logger.LogLevel.ERROR);
+                return CLI_EXIT_INIT_TIMEOUT;
+            }
+
             // Lock settings page.
             if (SettingsPage._page != null)
                 SettingsPage._page.IsEnabled = false;
 
             // Search requested preset.
-            Logger.Instance.Log($"CLI: Searching extraction preset \"{presetName}\"...");
+            Logger.Instance.Log($"CLI: Searching extraction preset '{presetName}'...");
             JsonExportPreset? foundPreset = null;
             if (SettingsPage._jsonExportPresets != null && SettingsPage._jsonExportPresets.Count > 0)
                 foreach (var preset in SettingsPage._jsonExportPresets)
@@ -236,12 +247,12 @@ namespace ASA_Save_Inspector
             // Extract preset (if it has been found and if is valid).
             if (foundPreset == null)
             {
-                Logger.Instance.Log($"CLI: Preset \"{presetName}\" has not been found.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"CLI: Preset '{presetName}' has not been found.", Logger.LogLevel.ERROR);
                 return CLI_EXIT_PRESET_ERROR;
             }
             if (foundPreset.ExportProfiles == null || foundPreset.ExportProfiles.Count <= 0)
             {
-                Logger.Instance.Log($"CLI: Preset \"{presetName}\" is empty.", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"CLI: Preset '{presetName}' is empty.", Logger.LogLevel.ERROR);
                 return CLI_EXIT_PRESET_ERROR;
             }
             if (SettingsPage._page == null)
@@ -256,7 +267,7 @@ namespace ASA_Save_Inspector
             PresetExtractionAborted = false;
             bool queued = SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
             {
-                Logger.Instance.Log($"CLI: Extracting preset \"{presetName}\"...");
+                Logger.Instance.Log($"CLI: Extracting preset '{presetName}'...");
                 await Task.Delay(250);
                 SettingsPage._page.DoExtractPreset(foundPreset, null); // Extract preset.
             });
@@ -276,113 +287,18 @@ namespace ASA_Save_Inspector
 
             if (!PresetExtractionCompleted)
             {
-                Logger.Instance.Log($"CLI: Failed to extract preset \"{presetName}\" (timed out).", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"CLI: Failed to extract preset '{presetName}' (timed out).", Logger.LogLevel.ERROR);
                 PresetExtractionAborted = true; // Prevents the preset chain from starting a new extraction.
                 return CLI_EXIT_TIMEOUT; // The running ArkParse process gets killed by the caller.
             }
             if (PresetExtractionFailed)
             {
-                Logger.Instance.Log($"CLI: Preset \"{presetName}\" has been extracted with errors (see logs above).", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"CLI: Preset '{presetName}' has been extracted with errors (see logs above).", Logger.LogLevel.ERROR);
                 return CLI_EXIT_EXTRACTION_FAILED;
             }
-            Logger.Instance.Log($"CLI: Preset \"{presetName}\" has been successfully extracted.");
+            Logger.Instance.Log($"CLI: Preset '{presetName}' has been successfully extracted.");
             return CLI_EXIT_OK;
         }
-
-        /*
-        private async Task CLI_ExtractPreset(string presetName, int timeout = 1800)
-        {
-            Utils.LockAllPages(true);
-            Logger.Instance.Log($"CLI: Running -ExtractPreset CLI with preset name [{presetName}] and timeout[{timeout.ToString(CultureInfo.InvariantCulture)}].");
-            await Task.Delay(250);
-            if (MainWindow._mainWindow != null)
-            {
-                Logger.Instance.Log("CLI: Loading settings and initializing ArkParse...");
-
-                // Open settings page so that presets are loaded.
-                SettingsPageFinishedLoading = false;
-                ArkParseUpdateCompleted = false;
-                if (MainWindow._mainWindow._navView != null)
-                    MainWindow._mainWindow._navView.SelectedItem = MainWindow._mainWindow._navBtnSettings;
-                MainWindow._mainWindow.NavView_Navigate(typeof(SettingsPage), new EntranceNavigationTransitionInfo());
-
-                // Wait for settings page to finish opening (wait 3 minutes max).
-                int i = 0;
-                bool settingsPageLoaded = false;
-                bool arkParseUpdated = false;
-                while (i < 180 && (!SettingsPageFinishedLoading || !ArkParseUpdateCompleted))
-                {
-                    await Task.Delay(1000);
-                    if (!settingsPageLoaded && SettingsPageFinishedLoading)
-                    {
-                        settingsPageLoaded = true;
-                        Logger.Instance.Log("CLI: Settings loaded.");
-                        // Lock settings page.
-                        if (SettingsPage._page != null)
-                            SettingsPage._page.IsEnabled = false;
-                    }
-                    if (!arkParseUpdated && ArkParseUpdateCompleted)
-                    {
-                        arkParseUpdated = true;
-                        Logger.Instance.Log("CLI: ArkParse initialized.");
-                    }
-                    ++i;
-                }
-
-                // Lock settings page.
-                if (SettingsPage._page != null)
-                    SettingsPage._page.IsEnabled = false;
-
-                // Search requested preset.
-                Logger.Instance.Log($"CLI: Searching extraction preset \"{presetName}\"...");
-                JsonExportPreset? foundPreset = null;
-                if (SettingsPage._jsonExportPresets != null && SettingsPage._jsonExportPresets.Count > 0)
-                    foreach (var preset in SettingsPage._jsonExportPresets)
-                        if (preset != null && string.Compare(presetName, preset.Name, StringComparison.InvariantCultureIgnoreCase) == 0)
-                        {
-                            foundPreset = preset;
-                            break;
-                        }
-
-                // Extract preset (if it has been found and if is valid).
-                if (foundPreset == null)
-                {
-                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" has not been found.", Logger.LogLevel.ERROR);
-                    return;
-                }
-                if (foundPreset.ExportProfiles == null || foundPreset.ExportProfiles.Count <= 0)
-                {
-                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" is empty.", Logger.LogLevel.ERROR);
-                    return;
-                }
-                if (SettingsPage._page != null) // If SettingsPage is valid.
-                    SettingsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, async () =>
-                    {
-                        Logger.Instance.Log($"CLI: Extracting preset \"{presetName}\"...");
-                        await Task.Delay(250);
-                        PresetExtractionCompleted = false;
-                        SettingsPage._page.DoExtractPreset(foundPreset, null); // Extract preset.
-                    });
-
-                // Wait for preset extraction to complete (wait "timeout" seconds max).
-                int j = 0;
-                while (!PresetExtractionCompleted && j < timeout)
-                {
-                    await Task.Delay(1000);
-                    ++j;
-                }
-                if (PresetExtractionCompleted)
-                    Logger.Instance.Log($"CLI: Preset \"{presetName}\" has been successfully extracted.");
-                else
-                    Logger.Instance.Log($"CLI: Failed to extract preset \"{presetName}\" (timed out).", Logger.LogLevel.ERROR);
-
-                // Close app.
-                await Task.Delay(1000);
-                Environment.ExitCode = 0;
-                Application.Current.Exit();
-            }
-        }
-        */
 
         private async Task CLI_CleanOldData()
         {
@@ -394,7 +310,7 @@ namespace ASA_Save_Inspector
             Logger.Instance.Log("CLI: Old data has been successfully cleaned up.");
 
             // Close app.
-            await Task.Delay(1000);
+            Logger.Instance.Flush();
             Environment.ExitCode = 0;
             Application.Current.Exit();
         }
@@ -417,16 +333,26 @@ namespace ASA_Save_Inspector
             nvi_About.Content = ASILang.Get("About");
         }
 
+        private const int MAX_HANDLED_EXCEPTIONS = 20;
+        private static int _handledExceptionsCount = 0;
+
+        private static bool IsFatalException(Exception? ex) => ex is OutOfMemoryException || ex is AccessViolationException || ex is InvalidProgramException || ex is BadImageFormatException;
+
         private void Current_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             Logger.Instance.Log($"An unhandled exception got caught. Exception=[{e.Exception}]", Logger.LogLevel.ERROR);
-            if (SettingsPage.UsePythonVenv())
+
+            // A non fatal exception (ex: in an event handler of the UI) no longer closes ASI: it is logged and the user is notified.
+            // ASI is still closed for fatal exceptions, or if exceptions keep happening (the app is then probably in a broken state).
+            if (!IsFatalException(e.Exception) && ++_handledExceptionsCount <= MAX_HANDLED_EXCEPTIONS)
             {
-                var t = PythonManager.DeactivatePythonVenv();
-                if (t != null)
-                    t.Wait(4000);
+                e.Handled = true;
+                ShowToast($"{ASILang.Get("ErrorHappened")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
+                return;
             }
+
             Logger.Instance.Log("ASA Save Inspector has stopped.");
+            Logger.Instance.Flush();
             App.Current.Exit();
         }
 
@@ -483,7 +409,7 @@ namespace ASA_Save_Inspector
             try
             {
                 string jsonString = JsonSerializer.Serialize<List<ArkMapInfo>>(Utils._allMaps, new JsonSerializerOptions() { WriteIndented = true });
-                File.WriteAllText(Utils.MapsInfoFilePath(), jsonString, Encoding.UTF8);
+                Utils.WriteAllTextAtomic(Utils.MapsInfoFilePath(), jsonString);
                 return true;
             }
             catch (Exception ex)
@@ -510,6 +436,9 @@ namespace ASA_Save_Inspector
             {
                 jsonMapsInfo = null;
                 Logger.Instance.Log($"Exception caught in LoadMapsInfo. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON (ex: after a manual edit to add a custom map): keep the file aside instead of overwriting it with the default maps.
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(mapsInfoFilepath, ex);
             }
             if (jsonMapsInfo == null || jsonMapsInfo.Count <= 0)
                 return UpdateMapsInfo();
@@ -541,14 +470,14 @@ namespace ASA_Save_Inspector
                             if (toDel >= 0)
                                 jsonMapsInfo.RemoveAt(toDel);
                         }
-                        catch { }
+                        catch (Exception ignoredEx) { Utils.LogIgnoredException("MainWindow.LoadMapsInfo", ignoredEx); }
                         // Add the new (or updated) map info.
                         if (toDel >= 0)
                             jsonMapsInfo.Insert(toDel, preconfig);
                         else
                             jsonMapsInfo.Add(preconfig);
                         requiresUpdate = true;
-                        Logger.Instance.Log($"Map \"{preconfig.MapName}\" was missing or incorrectly formatted inside \"maps_info.json\". JSON file has been updated.", Logger.LogLevel.WARNING);
+                        Logger.Instance.Log($"Map '{preconfig.MapName}' was missing or incorrectly formatted inside 'maps_info.json'. JSON file has been updated.", Logger.LogLevel.WARNING);
                     }
                 }
 
@@ -558,7 +487,7 @@ namespace ASA_Save_Inspector
 
         private static bool LastDoubleTap(MapPoint? point)
         {
-            Debug.WriteLine($"Point \"{(point?.Name ?? string.Empty)}\" has been double clicked.");
+            Debug.WriteLine($"Point '{(point?.Name ?? string.Empty)}' has been double clicked.");
             return true;
         }
 
@@ -586,6 +515,11 @@ namespace ASA_Save_Inspector
 
         public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap)
         {
+            // The pages give a lazy query (Select over the displayed objects, with coordinates and cryopod lookups): compute it ONCE here,
+            // it used to be enumerated several times (Count() then foreach). While the minimap refresh is paused, it stays lazy (computed on resume).
+            if (!(_minimap != null && Minimap.PauseMinimapRefresh) && points is not ICollection<MapPoint?>)
+                points = points.ToList();
+
             if (_minimap == null)
             {
                 _minimap = new Minimap();
@@ -641,8 +575,8 @@ namespace ASA_Save_Inspector
 
         private void ContentFrame_NavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            Logger.Instance.Log($"Failed to load page \"{e.SourcePageType.FullName}\".", Logger.LogLevel.ERROR);
-            throw new Exception($"Failed to load page \"{e.SourcePageType.FullName}\".");
+            Logger.Instance.Log($"Failed to load page '{e.SourcePageType.FullName}'.", Logger.LogLevel.ERROR);
+            throw new Exception($"Failed to load page '{e.SourcePageType.FullName}'.");
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)
@@ -820,48 +754,54 @@ namespace ASA_Save_Inspector
 
         private void w_MainWindow_Closed(object sender, WindowEventArgs args)
         {
-            if (SettingsPage.UsePythonVenv())
-            {
-                var t = PythonManager.DeactivatePythonVenv();
-                if (t != null)
-                    t.Wait(4000);
-            }
+            // (The venv "deactivation" has been removed: it had no effect and could delay the closing of ASI by up to 4 seconds.)
             Logger.Instance.Log(ASILang.Get("ASIStopped"));
+            Logger.Instance.Flush();
             App.Current.Exit();
         }
 
         private void tb_popupDetails_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             try { sv_popupDetails.ChangeView(null, sv_popupDetails.ScrollableHeight, null); }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("MainWindow.tb_popupDetails_SizeChanged", ignoredEx); }
         }
 
         private async Task<bool> CheckForUpdate()
         {
-            string projectFileContent = await PythonManager._client.GetStringAsync(Utils.ASIVersionFileUrl);
-            if (string.IsNullOrWhiteSpace(projectFileContent))
+            try
             {
-                Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
+                string projectFileContent = await PythonManager._client.GetStringAsync(Utils.ASIVersionFileUrl);
+                if (string.IsNullOrWhiteSpace(projectFileContent))
+                {
+                    Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{(projectFileContent ?? "NULL")}]", Logger.LogLevel.WARNING);
+                    return false;
+                }
+                string latestVersion = projectFileContent.Replace("\r\n", "", StringComparison.InvariantCulture).Replace("\n", "", StringComparison.InvariantCulture).Trim();
+                string currentVersion = Utils.GetVersionStr();
+                if (latestVersion.Length > 32 || !Version.TryParse(latestVersion, out Version? latest) || !Version.TryParse(currentVersion, out Version? current))
+                {
+                    Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{latestVersion}]", Logger.LogLevel.WARNING);
+                    return false;
+                }
+                // Only propose an update if the published version is NEWER than the current one (a development build must not be offered a "downgrade").
+                if (latest <= current)
+                {
+                    Logger.Instance.Log(ASILang.Get("ASIIsUpToDate"), Logger.LogLevel.INFO);
+                    return false;
+                }
+                if (!UpdateAvailablePopup.IsOpen)
+                {
+                    tb_updateAvailableDescription.Text = $"{ASILang.Get("UpdateAvailableDescription").Replace("#NEW_VERSION#", latestVersion ?? string.Empty, StringComparison.InvariantCulture).Replace("#MY_VERSION#", $"{currentVersion}", StringComparison.InvariantCulture)}";
+                    UpdateAvailablePopup.IsOpen = true;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Offline, GitHub unavailable...: not an error for the user, the check is just skipped.
+                Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Exception=[{ex}]", Logger.LogLevel.WARNING);
                 return false;
             }
-            string latestVersion = projectFileContent.Replace("\r\n", "", StringComparison.InvariantCulture).Replace("\n", "", StringComparison.InvariantCulture);
-            if (latestVersion.Length < 3 || latestVersion.Length > 7 || !latestVersion.Contains('.', StringComparison.InvariantCulture))
-            {
-                Logger.Instance.Log($"{ASILang.Get("CheckUpdateFailed")} Response=[{latestVersion}]", Logger.LogLevel.WARNING);
-                return false;
-            }
-            string currentVersion = Utils.GetVersionStr();
-            if (string.Compare(latestVersion, currentVersion, StringComparison.InvariantCulture) == 0)
-            {
-                Logger.Instance.Log(ASILang.Get("ASIIsUpToDate"), Logger.LogLevel.INFO);
-                return false;
-            }
-            if (!UpdateAvailablePopup.IsOpen)
-            {
-                tb_updateAvailableDescription.Text = $"{ASILang.Get("UpdateAvailableDescription").Replace("#NEW_VERSION#", $"{latestVersion}", StringComparison.InvariantCulture).Replace("#MY_VERSION#", $"{currentVersion}", StringComparison.InvariantCulture)}";
-                UpdateAvailablePopup.IsOpen = true;
-            }
-            return true;
         }
 
         private async Task CheckForUpdateIfEnabled()
@@ -872,15 +812,22 @@ namespace ASA_Save_Inspector
 
         private async void btn_InstallUpdate_Click(object sender, RoutedEventArgs e)
         {
-            if (UpdateAvailablePopup.IsOpen)
-                UpdateAvailablePopup.IsOpen = false;
             try
             {
-                _ = await Windows.System.Launcher.LaunchUriAsync(new Uri(Utils.ASILatestVersionUrl));
+                if (UpdateAvailablePopup.IsOpen)
+                    UpdateAvailablePopup.IsOpen = false;
+                try
+                {
+                    _ = await Windows.System.Launcher.LaunchUriAsync(new Uri(Utils.ASILatestVersionUrl));
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"{ASILang.Get("OpenURLFailed").Replace("#URL#", Utils.ASILatestVersionUrl ?? string.Empty, StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                }
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"{ASILang.Get("OpenURLFailed").Replace("#URL#", $"{Utils.ASILatestVersionUrl}", StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                Logger.Instance.Log($"Exception caught in MainWindow.btn_InstallUpdate_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
         }
 
@@ -895,7 +842,7 @@ namespace ASA_Save_Inspector
         private void btn_NeverUpdate_Click(object sender, RoutedEventArgs e)
         {
             try { File.WriteAllText(Utils.DontCheckForUpdateFilePath(), "1", Encoding.UTF8); }
-            catch { }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("MainWindow.btn_NeverUpdate_Click", ignoredEx); }
             CloseUpdateAvailablePopup();
         }
     }

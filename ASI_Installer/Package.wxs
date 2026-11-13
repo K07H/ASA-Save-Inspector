@@ -1,0 +1,123 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+
+  <?if $(var.Arch) = "x86" ?>
+    <?define UpgradeCode = "B65B2160-517F-460B-B390-1A122F173571" ?>
+  <?elseif $(var.Arch) = "x64" ?>
+    <?define UpgradeCode = "31E75B23-3256-45F3-80BD-64BCEA713DF4" ?>
+  <?elseif $(var.Arch) = "arm64" ?>
+    <?define UpgradeCode = "6F3577D5-40A4-40CC-92D3-448EB1B7D72F" ?>
+  <?else?>
+    <?error Unsupported platform "$(var.Arch)". Use x86, x64 or arm64. ?>
+  <?endif?>
+
+  <Package Name="ASA Save Inspector"
+           Manufacturer="OSubMarin (LC-IT S.)"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="$(var.UpgradeCode)"
+           Language="1033"
+           Scope="perUser">
+
+    <SummaryInformation Manufacturer="OSubMarin" Description="ASA Save Inspector Setup" />
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <Property Id="REINSTALLMODE" Value="amus" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="ASI.ico" SourceFile="$(var.RepoDir)ASA_Save_Inspector\Assets\ASI.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ASI.ico" />
+    <Property Id="ARPCONTACT" Value="OSubMarin" />
+    <Property Id="ARPCOMMENTS" Value="An ARK Survival Ascended save file analyzer." />
+    <Property Id="ARPURLINFOABOUT" Value="https://discord.gg/dPgTprNyn9" />
+    <Property Id="ARPHELPLINK" Value="https://discord.gg/dPgTprNyn9" />
+
+    <netfx:DotNetCompatibilityCheck Id="DotNetDesktop10Check"
+                                    Property="DOTNETDESKTOP10CHECK"
+                                    RuntimeType="desktop"
+                                    Platform="$(var.Arch)"
+                                    Version="10.0.0"
+                                    RollForward="latestMinor" />
+    <Launch Condition="Installed OR DOTNETDESKTOP10CHECK = &quot;0&quot;"
+            Message="[ProductName] requires the .NET Desktop Runtime 10 ($(var.Arch)). Please install it from https://dotnet.microsoft.com/download/dotnet/10.0 and run this setup again." />
+
+    <StandardDirectory Id="AppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="ASA Save Inspector" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.AppDir)**" />
+    </ComponentGroup>
+
+    <Component Id="InstallFolderCleanup" Directory="INSTALLFOLDER" Guid="F02E7F55-2E27-4820-AF66-227A8D7C21C8">
+      <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="InstallFolder"
+                     Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+    </Component>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="2DAA55AA-312A-4584-9B8F-4032E8DC3CC0">
+        <Shortcut Id="StartMenuShortcutLnk"
+                  Name="ASA Save Inspector"
+                  Description="An ARK Survival Ascended save file analyzer."
+                  Target="[INSTALLFOLDER]ASA_Save_Inspector.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="ASI.ico" />
+        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="StartMenuShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="93F794D3-8509-4426-924F-50223C91C16F">
+        <Shortcut Id="DesktopShortcutLnk"
+                  Name="ASA Save Inspector"
+                  Description="An ARK Survival Ascended save file analyzer."
+                  Target="[INSTALLFOLDER]ASA_Save_Inspector.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="ASI.ico" />
+        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="DesktopShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature"
+             Title="ASA Save Inspector"
+             Description="The ASA Save Inspector application."
+             Level="1"
+             Display="expand"
+             AllowAbsent="no"
+             AllowAdvertise="no"
+             ConfigurableDirectory="INSTALLFOLDER">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="InstallFolderCleanup" />
+
+      <Feature Id="StartMenuShortcutFeature"
+               Title="Start menu shortcut"
+               Description="Adds an ASA Save Inspector shortcut to the Start menu."
+               Level="1"
+               AllowAdvertise="no">
+        <ComponentRef Id="StartMenuShortcut" />
+      </Feature>
+
+      <Feature Id="DesktopShortcutFeature"
+               Title="Desktop shortcut"
+               Description="Adds an ASA Save Inspector shortcut to the desktop."
+               Level="1"
+               AllowAdvertise="no">
+        <ComponentRef Id="DesktopShortcut" />
+      </Feature>
+    </Feature>
+
+    <ui:WixUI Id="WixUI_FeatureTree" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.InstallerDir)Assets\Banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.InstallerDir)Assets\Dialog.bmp" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Join us on Discord: https://discord.gg/dPgTprNyn9" />
+
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg" Condition="NOT Installed" Order="99" />
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="NOT Installed" Order="99" />
+    </UI>
+  </Package>
+</Wix>

@@ -1,13 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using ASA_Save_Inspector.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI.UI.Controls;
@@ -18,6 +8,16 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
@@ -47,8 +47,38 @@ namespace ASA_Save_Inspector.Pages
         public string LabelRemove => ASILang.Get("Remove");
 
         public string GetLabel() => $"{ID.ToString(CultureInfo.InvariantCulture)}{(string.IsNullOrWhiteSpace(ExtractName) ? string.Empty : $" - {ExtractName}")} - {MapName} ({CreationDate.ToString("yyyy-MM-dd HH\\hmm\\mss\\s")})";
-        public string GetExportFolderName() => (Directory.Exists(SaveFilePath) ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
-        public override string ToString() => $"{ASILang.Get("Name")}: {(ExtractName ?? "")}, {ASILang.Get("Map")}: {(MapName ?? "")}, {ASILang.Get("Path")}: \"{(SaveFilePath ?? "")}\", {ASILang.Get("Extracts")}: {(ExtractedDinos ? $"{ASILang.Get("Dinos")}," : "")}{(ExtractedPlayerPawns ? $"{ASILang.Get("Pawns")}," : "")}{(ExtractedItems ? $"{ASILang.Get("Items")}," : "")}{(ExtractedStructures ? $"{ASILang.Get("Structures")}," : "")}{(ExtractedPlayers ? $"{ASILang.Get("Players")}," : "")}{(ExtractedTribes ? $"{ASILang.Get("Tribes")}," : "")}";
+        public string GetExportFolderName() => (IsDeprecatedFormat() ? $"{SaveFilePath}" : $"{ID.ToString(CultureInfo.InvariantCulture)}_{MapName}");
+
+        /// <summary>True for profiles using the deprecated format, where SaveFilePath is the (absolute) path of a folder.</summary>
+        public bool IsDeprecatedFormat() => !string.IsNullOrWhiteSpace(SaveFilePath) && Path.IsPathRooted(SaveFilePath) && Directory.Exists(SaveFilePath);
+
+        /// <summary>Absolute path of the JSON export folder.</summary>
+        public string GetExportFolderPath() => Path.Combine(Utils.JsonExportsFolder(), GetExportFolderName());
+
+        public bool IsExtractionComplete()
+        {
+            try
+            {
+                if (IsDeprecatedFormat())
+                    return false;
+                string folderPath = GetExportFolderPath();
+                if (!Directory.Exists(folderPath))
+                    return false;
+                bool FileOk(bool extracted, string fileName) => !extracted || File.Exists(Path.Combine(folderPath, fileName));
+                return FileOk(ExtractedDinos, "dinos.json") &&
+                    FileOk(ExtractedPlayerPawns, "player_pawns.json") &&
+                    FileOk(ExtractedItems, "items.json") &&
+                    FileOk(ExtractedStructures, "structures.json") &&
+                    FileOk(ExtractedPlayers, "players.json") &&
+                    FileOk(ExtractedTribes, "tribes.json");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public override string ToString() => $"{ASILang.Get("Name")}: {(ExtractName ?? string.Empty)}, {ASILang.Get("Map")}: {(MapName ?? string.Empty)}, {ASILang.Get("Path")}: '{(SaveFilePath ?? string.Empty)}', {ASILang.Get("Extracts")}: {(ExtractedDinos ? $"{ASILang.Get("Dinos")}," : string.Empty)}{(ExtractedPlayerPawns ? $"{ASILang.Get("Pawns")}," : string.Empty)}{(ExtractedItems ? $"{ASILang.Get("Items")}," : string.Empty)}{(ExtractedStructures ? $"{ASILang.Get("Structures")}," : string.Empty)}{(ExtractedPlayers ? $"{ASILang.Get("Players")}," : string.Empty)}{(ExtractedTribes ? $"{ASILang.Get("Tribes")}," : string.Empty)}";
     }
 
     public class JsonExportPreset
@@ -159,6 +189,15 @@ namespace ASA_Save_Inspector.Pages
         public static string? _mapName = null;
 
         public static List<JsonExportProfile> _jsonExportProfiles = new List<JsonExportProfile>();
+
+        public static readonly object _jsonExportProfilesLock = new object();
+
+        public static List<JsonExportProfile> GetJsonExportProfilesSnapshot()
+        {
+            lock (_jsonExportProfilesLock)
+                return (_jsonExportProfiles != null ? new List<JsonExportProfile>(_jsonExportProfiles) : new List<JsonExportProfile>());
+        }
+
         public static JsonExportProfile? _selectedJsonExportProfile = null;
 
         public static List<JsonExportPreset> _jsonExportPresets = new List<JsonExportPreset>();
@@ -386,6 +425,9 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadSettings. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON: keep the file aside, otherwise the next save would overwrite it (and its content would be lost).
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(settingsPath, ex);
             }
         }
 
@@ -430,6 +472,9 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadSettingsStatic. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON: keep the file aside, otherwise the next save would overwrite it (and its content would be lost).
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(settingsPath, ex);
             }
         }
 
@@ -453,7 +498,7 @@ namespace ASA_Save_Inspector.Pages
                     ClusterDataFolderPath = ClusterDataPage.SelectedClusterDataFolderPath
                 };
                 string jsonString = JsonSerializer.Serialize<JsonSettings>(settings, new JsonSerializerOptions() { WriteIndented = true });
-                File.WriteAllText(Utils.SettingsFilePath(), jsonString, Encoding.UTF8);
+                Utils.WriteAllTextAtomic(Utils.SettingsFilePath(), jsonString);
             }
             catch (Exception ex)
             {
@@ -480,6 +525,9 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadCustomBlueprints. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON: keep the file aside, otherwise the next save would overwrite it (and its content would be lost).
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(customBlueprintsFilepath, ex);
             }
         }
 
@@ -488,7 +536,7 @@ namespace ASA_Save_Inspector.Pages
             try
             {
                 string jsonString = JsonSerializer.Serialize<CustomBlueprints>(_customBlueprints, new JsonSerializerOptions() { WriteIndented = true });
-                File.WriteAllText(Utils.CustomBlueprintsFilePath(), jsonString, Encoding.UTF8);
+                Utils.WriteAllTextAtomic(Utils.CustomBlueprintsFilePath(), jsonString);
             }
             catch (Exception ex)
             {
@@ -496,40 +544,37 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-        public static string GetCustomBlueprintsB64()
+        /// <summary>
+        /// Writes the custom blueprints in a JSON file that is given to the export script, and returns its path (or an empty string if there is no custom blueprint).
+        /// They used to be given as a base64 command line argument: it could exceed the command line length limit of cmd.exe (8191 characters),
+        /// and blueprints containing the ";" or "|" separators were split.
+        /// </summary>
+        public static string WriteCustomBlueprintsForExport()
         {
-            string ret = string.Empty;
-
-            if (SettingsPage._customBlueprints?.Dinos != null && SettingsPage._customBlueprints.Dinos.Count > 0)
+            string filePath = Utils.CustomBlueprintsForExportFilePath();
+            CustomBlueprints toExport = new CustomBlueprints()
             {
-                ret += "Dinos=";
-                foreach (string str in SettingsPage._customBlueprints.Dinos)
-                    if (!string.IsNullOrWhiteSpace(str))
-                        ret += $"{str};";
-            }
-            if (SettingsPage._customBlueprints?.Items != null && SettingsPage._customBlueprints.Items.Count > 0)
-            {
-                if (ret.Length > 0)
-                    ret += "|";
-                ret += "Items=";
-                foreach (string str in SettingsPage._customBlueprints.Items)
-                    if (!string.IsNullOrWhiteSpace(str))
-                        ret += $"{str};";
-            }
-            if (SettingsPage._customBlueprints?.Structures != null && SettingsPage._customBlueprints.Structures.Count > 0)
-            {
-                if (ret.Length > 0)
-                    ret += "|";
-                ret += "Structures=";
-                foreach (string str in SettingsPage._customBlueprints.Structures)
-                    if (!string.IsNullOrWhiteSpace(str))
-                        ret += $"{str};";
-            }
+                Dinos = SettingsPage._customBlueprints?.Dinos?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList() ?? new List<string>(),
+                Items = SettingsPage._customBlueprints?.Items?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList() ?? new List<string>(),
+                Structures = SettingsPage._customBlueprints?.Structures?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList() ?? new List<string>()
+            };
 
-            if (ret.Length > 0)
-                ret = Convert.ToBase64String(Encoding.UTF8.GetBytes(ret), Base64FormattingOptions.None).Replace("=", ",", StringComparison.InvariantCulture).Replace("+", "-", StringComparison.InvariantCulture).Replace("/", "_", StringComparison.InvariantCulture);
-
-            return ret;
+            try
+            {
+                if (toExport.Dinos.Count <= 0 && toExport.Items.Count <= 0 && toExport.Structures.Count <= 0)
+                {
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+                    return string.Empty;
+                }
+                Utils.WriteAllTextAtomic(filePath, JsonSerializer.Serialize<CustomBlueprints>(toExport, new JsonSerializerOptions() { WriteIndented = true }));
+                return filePath;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in WriteCustomBlueprintsForExport. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            return string.Empty;
         }
 
         public static bool UsePythonVenv() => (SettingsPage._noPythonVenv == null || !SettingsPage._noPythonVenv.HasValue || !SettingsPage._noPythonVenv.Value);
@@ -567,19 +612,23 @@ namespace ASA_Save_Inspector.Pages
             if (!File.Exists(exportProfilesPath))
                 return;
 
-            string exportProfilesJson = File.ReadAllText(exportProfilesPath, Encoding.UTF8);
-            if (string.IsNullOrWhiteSpace(exportProfilesJson))
-                return;
-
             try
             {
+                string exportProfilesJson = File.ReadAllText(exportProfilesPath, Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(exportProfilesJson))
+                    return;
+
                 List<JsonExportProfile>? exportProfiles = JsonSerializer.Deserialize<List<JsonExportProfile>>(exportProfilesJson);
                 if (exportProfiles != null)
-                    _jsonExportProfiles = exportProfiles;
+                    lock (_jsonExportProfilesLock)
+                        _jsonExportProfiles = exportProfiles;
             }
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadJsonExportProfiles. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON: keep the file aside, otherwise the next save would overwrite it (and its content would be lost).
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(exportProfilesPath, ex);
             }
         }
 
@@ -587,8 +636,12 @@ namespace ASA_Save_Inspector.Pages
         {
             try
             {
-                string jsonString = JsonSerializer.Serialize<List<JsonExportProfile>>(_jsonExportProfiles, new JsonSerializerOptions() { WriteIndented = true });
-                File.WriteAllText(Utils.ExportProfilesFilePath(), jsonString, Encoding.UTF8);
+                // Serialized and written under the lock: the list cannot change during serialization, and writes happen in order.
+                lock (_jsonExportProfilesLock)
+                {
+                    string jsonString = JsonSerializer.Serialize<List<JsonExportProfile>>(_jsonExportProfiles, new JsonSerializerOptions() { WriteIndented = true });
+                    Utils.WriteAllTextAtomic(Utils.ExportProfilesFilePath(), jsonString);
+                }
             }
             catch (Exception ex)
             {
@@ -602,10 +655,28 @@ namespace ASA_Save_Inspector.Pages
                 return null;
 
             int highestId = 0;
-            if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
-                foreach (var jsonProfile in _jsonExportProfiles)
-                    if (jsonProfile != null && jsonProfile.ID > highestId)
-                        highestId = jsonProfile.ID;
+            lock (_jsonExportProfilesLock)
+            {
+                if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
+                    foreach (var jsonProfile in _jsonExportProfiles)
+                        if (jsonProfile != null && jsonProfile.ID > highestId)
+                            highestId = jsonProfile.ID;
+            }
+            // Also skip the IDs of the existing export folders ("[ID]_[MapName]"): if export_profiles.json has been lost or renamed,
+            // a new extraction must not reuse (and overwrite) the folder of a previous one.
+            try
+            {
+                string exportsFolder = Utils.JsonExportsFolder();
+                if (Directory.Exists(exportsFolder))
+                    foreach (string dir in Directory.GetDirectories(exportsFolder))
+                    {
+                        string dirName = Path.GetFileName(dir);
+                        int sep = dirName.IndexOf('_', StringComparison.Ordinal);
+                        if (sep > 0 && int.TryParse(dirName.AsSpan(0, sep), NumberStyles.None, CultureInfo.InvariantCulture, out int dirId) && dirId > highestId)
+                            highestId = dirId;
+                    }
+            }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("SettingsPage.FormatNewJsonExportProfile", ignoredEx); }
 
             return new JsonExportProfile()
             {
@@ -626,15 +697,20 @@ namespace ASA_Save_Inspector.Pages
 
         public static JsonExportProfile? AddNewJsonExportProfile(string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract)
         {
-            JsonExportProfile? p = FormatNewJsonExportProfile(saveFilePath, mapName, extractName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
-            if (p == null)
-                return null;
+            JsonExportProfile? p = null;
+            // ID computation and insertion are done under the same lock, so that two extractions cannot get the same ID.
+            lock (_jsonExportProfilesLock)
+            {
+                p = FormatNewJsonExportProfile(saveFilePath, mapName, extractName, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+                if (p == null)
+                    return null;
 
-            if (_jsonExportProfiles == null)
-                return null;
+                if (_jsonExportProfiles == null)
+                    return null;
 
-            _jsonExportProfiles.Add(p);
-            SettingsPage.SaveJsonExportProfiles();
+                _jsonExportProfiles.Add(p);
+                SettingsPage.SaveJsonExportProfiles();
+            }
             return p;
         }
 
@@ -642,9 +718,7 @@ namespace ASA_Save_Inspector.Pages
         private void PythonSelectPath(string path)
         {
             if (path == "MANUAL")
-#pragma warning disable CS4014 // Don't wait on purpose
-                OpenPythonFilePicker();
-#pragma warning restore CS4014
+                OpenPythonFilePicker().FireAndForget(nameof(OpenPythonFilePicker)); // Don't wait on purpose.
             else
             {
                 _pythonExePath = path;
@@ -775,9 +849,7 @@ namespace ASA_Save_Inspector.Pages
             }
         }
 
-#pragma warning disable CS4014 // Don't wait on purpose
-        private void SelectASASaveFileClicked(object sender, RoutedEventArgs e) => OpenAsaSaveFilePicker();
-#pragma warning restore CS4014
+        private void SelectASASaveFileClicked(object sender, RoutedEventArgs e) => OpenAsaSaveFilePicker().FireAndForget(nameof(OpenAsaSaveFilePicker)); // Don't wait on purpose.
 
         private bool _isExtracting = false;
         private async Task DoExtract(bool useJsonResultTb, string? saveFilePath, string? mapName, string? extractName, bool extractDinos, bool extractPlayerPawns, bool extractItems, bool extractStructures, bool extractPlayers, bool extractTribes, bool fastExtract, List<KeyValuePair<JsonExportProfile, bool>>? extractions = null, Action<List<KeyValuePair<JsonExportProfile, bool>>>? callback = null)
@@ -873,16 +945,23 @@ namespace ASA_Save_Inspector.Pages
 
         private async void ExtractASASaveFileClicked(object sender, RoutedEventArgs e)
         {
-            bool extractDinos = (cb_extractDinos.IsChecked != null && cb_extractDinos.IsChecked.HasValue ? cb_extractDinos.IsChecked.Value : false);
-            bool extractPlayerPawns = (cb_extractPlayerPawns.IsChecked != null && cb_extractPlayerPawns.IsChecked.HasValue ? cb_extractPlayerPawns.IsChecked.Value : false);
-            bool extractItems = (cb_extractItems.IsChecked != null && cb_extractItems.IsChecked.HasValue ? cb_extractItems.IsChecked.Value : false);
-            bool extractStructures = (cb_extractStructures.IsChecked != null && cb_extractStructures.IsChecked.HasValue ? cb_extractStructures.IsChecked.Value : false);
-            bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
-            bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
+            try
+            {
+                bool extractDinos = (cb_extractDinos.IsChecked != null && cb_extractDinos.IsChecked.HasValue ? cb_extractDinos.IsChecked.Value : false);
+                bool extractPlayerPawns = (cb_extractPlayerPawns.IsChecked != null && cb_extractPlayerPawns.IsChecked.HasValue ? cb_extractPlayerPawns.IsChecked.Value : false);
+                bool extractItems = (cb_extractItems.IsChecked != null && cb_extractItems.IsChecked.HasValue ? cb_extractItems.IsChecked.Value : false);
+                bool extractStructures = (cb_extractStructures.IsChecked != null && cb_extractStructures.IsChecked.HasValue ? cb_extractStructures.IsChecked.Value : false);
+                bool extractPlayers = (cb_extractPlayers.IsChecked != null && cb_extractPlayers.IsChecked.HasValue ? cb_extractPlayers.IsChecked.Value : false);
+                bool extractTribes = (cb_extractTribes.IsChecked != null && cb_extractTribes.IsChecked.HasValue ? cb_extractTribes.IsChecked.Value : false);
 
-            bool fastExtract = true;
+                bool fastExtract = true;
 
-            await DoExtract(true, _asaSaveFilePath, _mapName, tb_ExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+                await DoExtract(true, _asaSaveFilePath, _mapName, tb_ExtractionName.Text, extractDinos, extractPlayerPawns, extractItems, extractStructures, extractPlayers, extractTribes, fastExtract);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in SettingsPage.ExtractASASaveFileClicked. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
         }
 
         public void CloseArkParserPopupClicked(object sender, RoutedEventArgs e)
@@ -922,73 +1001,120 @@ namespace ASA_Save_Inspector.Pages
 #pragma warning restore CS8625
         }
 
-        private List<T>? DeserializeJsonObjects<T>(string filepath)
+        private static async Task<List<T>?> DeserializeJsonObjectsAsync<T>(string filepath)
         {
             if (!File.Exists(filepath))
-                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", $"\"{filepath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-            else
             {
-                try
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileNotFound").Replace("#FILEPATH#", filepath ?? string.Empty, StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                return null;
+            }
+
+            try
+            {
+                List<T> result = new List<T>();
+                using (FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16, FileOptions.Asynchronous | FileOptions.SequentialScan))
                 {
-                    List<T> result = new List<T>();
-                    string objBegin = "    {";
-                    string objEnd = "    }";
-                    string currentObj = string.Empty;
-                    using (FileStream fs = File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    await foreach (JsonElement element in JsonSerializer.DeserializeAsyncEnumerable<JsonElement>(fs))
                     {
-                        using (BufferedStream bs = new BufferedStream(fs))
+                        try
                         {
-                            using (StreamReader sr = new StreamReader(bs))
-                            {
-                                string? line;
-                                while ((line = sr.ReadLine()) != null)
-                                {
-                                    if (line == objBegin)
-                                        currentObj = "{" + Environment.NewLine;
-                                    else if (line.StartsWith(objEnd))
-                                    {
-                                        if (currentObj.Length > 0)
-                                            try
-                                            {
-                                                T? obj = JsonSerializer.Deserialize<T>(currentObj + Environment.NewLine + "}");
-                                                if (obj != null)
-                                                    result.Add(obj);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                Logger.Instance.Log($"Exception caught when deserializing JSON. Content=[{currentObj}] Exception=[{ex}]", Logger.LogLevel.ERROR);
-                                            }
-                                        currentObj = string.Empty;
-                                    }
-                                    else if (currentObj.Length > 0)
-                                        currentObj += line;
-                                }
-                            }
+                            T? obj = element.Deserialize<T>(_jsonReadOptions);
+                            if (obj != null)
+                                result.Add(obj);
+                        }
+                        catch (Exception ex)
+                        {
+                            string content = element.GetRawText();
+                            if (content.Length > 2000)
+                                content = content.Substring(0, 2000) + "...";
+                            Logger.Instance.Log($"{ASILang.Get("DeserializeJsonFailed")} Content=[{content}] Exception=[{ex}]", Logger.LogLevel.ERROR);
                         }
                     }
-                    return result;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
-                }
+                return result;
+            }
+            catch (JsonException ex)
+            {
+                Logger.Instance.Log($"{ASILang.Get("FileIsNotValidJson").Replace("#FILE_PATH#", filepath ?? string.Empty, StringComparison.InvariantCulture)} Exception=[{ex.Message}]", Logger.LogLevel.WARNING);
+                return filepath != null ? DeserializeJsonObjectsLegacy<T>(filepath) : null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
             return null;
         }
 
+        private static List<T>? DeserializeJsonObjectsLegacy<T>(string filepath)
+        {
+            try
+            {
+                List<T> result = new List<T>();
+                const string objBegin = "    {";
+                const string objEnd = "    }";
+                StringBuilder? currentObj = null;
+                using (StreamReader sr = new StreamReader(new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16, FileOptions.SequentialScan)))
+                {
+                    string? line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line == objBegin)
+                            currentObj = new StringBuilder("{");
+                        else if (line.StartsWith(objEnd, StringComparison.Ordinal))
+                        {
+                            if (currentObj != null)
+                            {
+                                string json = currentObj.Append('}').ToString();
+                                try
+                                {
+                                    T? obj = JsonSerializer.Deserialize<T>(json, _legacyJsonOptions);
+                                    if (obj != null)
+                                        result.Add(obj);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Instance.Log($"{ASILang.Get("DeserializeJsonFailed")} Content=[{(json.Length > 2000 ? json.Substring(0, 2000) + "..." : json)}] Exception=[{ex}]", Logger.LogLevel.ERROR);
+                                }
+                            }
+                            currentObj = null;
+                        }
+                        else
+                            currentObj?.Append(line);
+                    }
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            return null;
+        }
+
+        private static readonly JsonSerializerOptions _legacyJsonOptions = new JsonSerializerOptions() { NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals };
+
+        /// <summary>
+        /// Options of the main JSON loader. ASI's Python scripts write NaN and +/-Infinity as the strings "NaN", "Infinity" and "-Infinity"
+        /// (bare NaN / Infinity tokens are not valid JSON): this reads them back into float / double properties.
+        /// </summary>
+        private static readonly JsonSerializerOptions _jsonReadOptions = new JsonSerializerOptions() { NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals };
+
         private static void RemoveJsonExportProfile(JsonExportProfile jep)
         {
-            if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
+            lock (_jsonExportProfilesLock)
             {
-                int toDel = -1;
-                for (int i = 0; i < _jsonExportProfiles.Count; i++)
-                    if (_jsonExportProfiles[i] != null && _jsonExportProfiles[i].ID == jep.ID)
-                    {
-                        toDel = i;
-                        break;
-                    }
-                if (toDel >= 0)
-                    _jsonExportProfiles.RemoveAt(toDel);
+                if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
+                {
+                    int toDel = -1;
+                    for (int i = 0; i < _jsonExportProfiles.Count; i++)
+                        if (_jsonExportProfiles[i] != null && _jsonExportProfiles[i].ID == jep.ID)
+                        {
+                            toDel = i;
+                            break;
+                        }
+                    if (toDel >= 0)
+                        _jsonExportProfiles.RemoveAt(toDel);
+                }
             }
         }
 
@@ -998,32 +1124,29 @@ namespace ASA_Save_Inspector.Pages
                 return 0;
 
             bool deleteFolder = true;
-            string folderPath = jep.GetExportFolderName();
-            if (Directory.Exists(folderPath))
+            if (jep.IsDeprecatedFormat())
             {
                 deleteFolder = false;
-                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel() ?? string.Empty, StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
             }
-            folderPath = Path.Combine(Utils.JsonExportsFolder(), jep.GetExportFolderName());
+            string folderPath = jep.GetExportFolderPath();
             if (!Directory.Exists(folderPath))
-                Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed_AlreadyRemoved").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                Logger.Instance.Log($"{ASILang.Get("RemoveJsonDataFailed_AlreadyRemoved").Replace("#DIRECTORY_PATH#", folderPath ?? string.Empty, StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
 
             List<JsonExportProfile> toRemove = new List<JsonExportProfile>();
-            if (_jsonExportProfiles != null && _jsonExportProfiles.Count > 0)
-                foreach (var jsonExportProfile in _jsonExportProfiles)
-                {
-                    string currentFolderPath = jsonExportProfile.GetExportFolderName();
-                    if (!Directory.Exists(currentFolderPath))
-                        currentFolderPath = Path.Combine(Utils.JsonExportsFolder(), jsonExportProfile.GetExportFolderName());
-                    if (jsonExportProfile != null && string.Compare(folderPath, currentFolderPath, StringComparison.InvariantCulture) == 0)
-                        toRemove.Add(jsonExportProfile);
-                }
+            foreach (var jsonExportProfile in GetJsonExportProfilesSnapshot())
+            {
+                if (jsonExportProfile == null)
+                    continue;
+                if (string.Equals(folderPath, jsonExportProfile.GetExportFolderPath(), StringComparison.OrdinalIgnoreCase)) // Windows paths are case-insensitive.
+                    toRemove.Add(jsonExportProfile);
+            }
 
             if (deleteFolder && Directory.Exists(folderPath))
                 try
                 {
                     Directory.Delete(folderPath, true);
-                    Logger.Instance.Log($"Folder \"{folderPath}\" has been removed.");
+                    Logger.Instance.Log(ASILang.Get("FolderRemoved").Replace("#FOLDER_PATH#", folderPath ?? string.Empty, StringComparison.InvariantCulture));
                 }
                 catch (Exception ex)
                 {
@@ -1033,9 +1156,12 @@ namespace ASA_Save_Inspector.Pages
 
             if (toRemove.Count > 0)
             {
-                foreach (var jepToRemove in toRemove)
-                    RemoveJsonExportProfile(jepToRemove);
-                SaveJsonExportProfiles();
+                lock (_jsonExportProfilesLock)
+                {
+                    foreach (var jepToRemove in toRemove)
+                        RemoveJsonExportProfile(jepToRemove);
+                    SaveJsonExportProfiles();
+                }
                 return 1;
             }
             return 0;
@@ -1097,6 +1223,9 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ex)
             {
                 Logger.Instance.Log($"Exception caught in LoadJsonExportPresets. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                // Invalid JSON: keep the file aside, otherwise the next save would overwrite it (and its content would be lost).
+                if (ex is JsonException)
+                    Utils.RenameInvalidUserFile(jsonExportPresetsPath, ex);
             }
         }
 
@@ -1105,7 +1234,7 @@ namespace ASA_Save_Inspector.Pages
             try
             {
                 string jsonString = JsonSerializer.Serialize<List<JsonExportPreset>>(_jsonExportPresets, new JsonSerializerOptions() { WriteIndented = true });
-                File.WriteAllText(Utils.ExportPresetsFilePath(), jsonString, Encoding.UTF8);
+                Utils.WriteAllTextAtomic(Utils.ExportPresetsFilePath(), jsonString);
             }
             catch (Exception ex)
             {
@@ -1313,7 +1442,7 @@ namespace ASA_Save_Inspector.Pages
                 }
             }
 
-            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExistingExtractionPresets_Remove.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", tb_ExistingExtractionPresets_Remove.Text ?? string.Empty, StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void btn_ExistingExtractionPresets_AddTo_Click(object sender, RoutedEventArgs e)
@@ -1359,7 +1488,7 @@ namespace ASA_Save_Inspector.Pages
                         return;
                     }
 
-            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExistingExtractionPresets_AddTo.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", tb_ExistingExtractionPresets_AddTo.Text ?? string.Empty, StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void btn_CloseExtractProfilePresetsPopup_Click(object sender, RoutedEventArgs e)
@@ -1511,60 +1640,64 @@ namespace ASA_Save_Inspector.Pages
 
         private async void OnCurrentExtractionComplete(List<KeyValuePair<JsonExportProfile, bool>>? extractions)
         {
-            if (extractions == null || extractions.Count <= 0)
-                return;
-
-            // CLI timeout reached: do not start any new extraction.
-            if (MainWindow.PresetExtractionAborted)
-                return;
-
-            for (int i = 0; i < extractions.Count; i++)
-                if (!extractions[i].Value)
-                {
-                    extractions[i] = new KeyValuePair<JsonExportProfile, bool>(extractions[i].Key, true);
-                    await Task.Delay(1000);
-                    await DoExtract(false,
-                        extractions[i].Key.SaveFilePath,
-                        extractions[i].Key.MapName,
-                        extractions[i].Key.ExtractName,
-                        extractions[i].Key.ExtractedDinos,
-                        extractions[i].Key.ExtractedPlayerPawns,
-                        extractions[i].Key.ExtractedItems,
-                        extractions[i].Key.ExtractedStructures,
-                        extractions[i].Key.ExtractedPlayers,
-                        extractions[i].Key.ExtractedTribes,
-                        extractions[i].Key.FastExtract,
-                        extractions,
-                        OnCurrentExtractionComplete);
+            try
+            {
+                if (extractions == null || extractions.Count <= 0)
                     return;
-                }
 
-            // Notify that preset extraction is complete (CLI "-ExtractPreset" case).
-            MainWindow.PresetExtractionCompleted = true;
+                // CLI timeout reached: do not start any new extraction.
+                if (MainWindow.PresetExtractionAborted)
+                    return;
+
+                for (int i = 0; i < extractions.Count; i++)
+                    if (!extractions[i].Value)
+                    {
+                        extractions[i] = new KeyValuePair<JsonExportProfile, bool>(extractions[i].Key, true);
+                        await Task.Delay(1000);
+                        await DoExtract(false,
+                            extractions[i].Key.SaveFilePath,
+                            extractions[i].Key.MapName,
+                            extractions[i].Key.ExtractName,
+                            extractions[i].Key.ExtractedDinos,
+                            extractions[i].Key.ExtractedPlayerPawns,
+                            extractions[i].Key.ExtractedItems,
+                            extractions[i].Key.ExtractedStructures,
+                            extractions[i].Key.ExtractedPlayers,
+                            extractions[i].Key.ExtractedTribes,
+                            extractions[i].Key.FastExtract,
+                            extractions,
+                            OnCurrentExtractionComplete);
+                        return;
+                    }
+
+                // Notify that preset extraction is complete (CLI "-ExtractPreset" case).
+                MainWindow.PresetExtractionCompleted = true;
+            }
+            catch (Exception ex)
+            {
+                // async void: an exception would otherwise be lost (or crash the app). Log it instead.
+                Logger.Instance.Log($"Exception caught in SettingsPage.OnCurrentExtractionComplete. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
         }
 
-        public void DoExtractPreset(JsonExportPreset? preset, Dictionary<string, bool>? selected)
+        public void DoExtractPreset(JsonExportPreset? preset, List<bool>? selected)
         {
             if (preset == null)
                 return;
+            // Refuse the whole preset upfront (otherwise each of its extractions would be refused one by one, and counted as failed).
+            if (PythonManager.IsBusy)
+            {
+                PythonManager.NotifyBusy();
+                return;
+            }
 
             List<KeyValuePair<JsonExportProfile, bool>> toExtract = new List<KeyValuePair<JsonExportProfile, bool>>();
+            int profileIndex = 0;
             foreach (JsonExportProfile jep in preset.ExportProfiles)
                 if (jep != null)
                 {
-                    bool doAdd = false;
-                    if (selected == null)
-                        doAdd = true;
-                    else
-                    {
-                        string jepDescription = jep.ToString();
-                        foreach (var selection in selected)
-                            if (string.Compare(jepDescription, selection.Key, StringComparison.InvariantCulture) == 0)
-                            {
-                                doAdd = selection.Value;
-                                break;
-                            }
-                    }
+                    bool doAdd = (selected == null || (profileIndex < selected.Count && selected[profileIndex]));
+                    profileIndex++;
                     if (doAdd)
                     {
                         if (string.IsNullOrWhiteSpace(jep.ExtractName) && !string.IsNullOrWhiteSpace(preset.Name))
@@ -1604,7 +1737,7 @@ namespace ASA_Save_Inspector.Pages
                 {
                     if (preset.ExportProfiles != null && preset.ExportProfiles.Count > 0)
                     {
-                        Dictionary<string, bool> selected = new Dictionary<string, bool>();
+                        List<bool> selected = new List<bool>();
                         if (sp_ExportPresetExtract.Children != null && sp_ExportPresetExtract.Children.Count > 0)
                             foreach (var obj in sp_ExportPresetExtract.Children)
                             {
@@ -1614,7 +1747,7 @@ namespace ASA_Save_Inspector.Pages
                                     CheckBox? cb = grd.Children[1] as CheckBox;
                                     TextBox? tb = grd.Children[2] as TextBox;
                                     if (cb != null && tb != null)
-                                        selected.Add(tb.Text, (cb.IsChecked != null && cb.IsChecked.HasValue && cb.IsChecked.Value));
+                                        selected.Add((cb.IsChecked != null && cb.IsChecked.HasValue && cb.IsChecked.Value));
                                 }
                             }
                         if (selected.Count <= 0)
@@ -1630,7 +1763,7 @@ namespace ASA_Save_Inspector.Pages
                     return;
                 }
 
-            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", $"\"{tb_ExportPresetExtract.Text}\"", StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
+            MainWindow.ShowToast($"{ASILang.Get("PresetNotFound").Replace("#PRESET_NAME#", tb_ExportPresetExtract.Text ?? string.Empty, StringComparison.InvariantCulture)}", BackgroundColor.WARNING);
         }
 
         private void btn_ExtractWithPreset_Click(object sender, RoutedEventArgs e)
@@ -1736,14 +1869,15 @@ namespace ASA_Save_Inspector.Pages
         private void GroupAndSortItems(string currentColumn, bool updateSortDir)
         {
             bool sorted = false;
+            List<JsonExportProfile> profiles = GetJsonExportProfilesSnapshot(); // The list can be modified by a background thread meanwhile.
             if (currentColumn == "ID")
             {
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ID).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Name"))
@@ -1751,9 +1885,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Path"))
@@ -1761,9 +1895,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.SaveFilePath).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.SaveFilePath).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.SaveFilePath).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.SaveFilePath).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("MapName"))
@@ -1771,9 +1905,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.MapName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.MapName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.MapName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.MapName).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("CreationDate"))
@@ -1781,9 +1915,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.CreationDate).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.CreationDate).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.CreationDate).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.CreationDate).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Dinos"))
@@ -1791,9 +1925,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedDinos).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedDinos).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedDinos).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedDinos).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Pawns"))
@@ -1801,9 +1935,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedPlayerPawns).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedPlayerPawns).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedPlayerPawns).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedPlayerPawns).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Items"))
@@ -1811,9 +1945,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedItems).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedItems).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedItems).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedItems).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Structures"))
@@ -1821,9 +1955,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedStructures).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedStructures).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedStructures).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedStructures).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Players"))
@@ -1831,9 +1965,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedPlayers).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedPlayers).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedPlayers).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedPlayers).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
             else if (currentColumn == ASILang.Get("Tribes"))
@@ -1841,9 +1975,9 @@ namespace ASA_Save_Inspector.Pages
                 if (updateSortDir)
                     AdjustSortDirection(currentColumn);
                 if (_sortAscending)
-                    _lastDisplayedVM = _jsonExportProfiles.OrderBy(o => o.ExtractedTribes).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>((list.Count() > 0 ? list.First().SaveFilePath : key), list));
+                    _lastDisplayedVM = profiles.OrderBy(o => o.ExtractedTribes).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>((list.Count() > 0 ? list.First().SaveFilePath : key), list));
                 else
-                    _lastDisplayedVM = _jsonExportProfiles.OrderByDescending(o => o.ExtractedTribes).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
+                    _lastDisplayedVM = profiles.OrderByDescending(o => o.ExtractedTribes).ToList().GroupBy(o => o.SaveFilePath, (key, list) => new GroupInfoCollection<string, JsonExportProfile>(key, list));
                 sorted = true;
             }
 
@@ -1879,14 +2013,6 @@ namespace ASA_Save_Inspector.Pages
             return jep;
         }
 
-        private const int NB_PROCESSES = 8;
-        private static int _nbProcessedDinosSubsets = 0;
-        private static List<Dino> _processedDinosSubsets = new List<Dino>();
-        private static int _nbProcessedStructuresSubsets = 0;
-        private static List<Structure> _processedStructuresSubsets = new List<Structure>();
-        private static int _nbProcessedItemsSubsets = 0;
-        private static List<Item> _processedItemsSubsets = new List<Item>();
-
         private static string GetTribeNameOrId(Dino d)
         {
             if (SettingsPage._tribeNames != null && SettingsPage._tribeNames.ContainsKey(d.OwningTribeID))
@@ -1894,85 +2020,6 @@ namespace ASA_Save_Inspector.Pages
             if (!string.IsNullOrEmpty(d.TribeName))
                 return d.TribeName;
             return d.OwningTribeID.ToString(CultureInfo.InvariantCulture);
-        }
-
-        private static void GotAllTribeIdsForDinos(List<Dino> dinos)
-        {
-            if (dinos == null)
-                return;
-            _allTribesForDinos = dinos.DistinctBy(d => d.OwningTribeID).Select(d => new KeyValuePair<string, int>(GetTribeNameOrId(d), d.OwningTribeID)).DistinctBy(e => e.Key).ToDictionary();
-            if (_allTribesForDinos != null && _allTribesForDinos.Count > 0)
-            {
-                _allTribesForDinosSorted = _allTribesForDinos.Select(t => t.Key).ToList();
-                if (_allTribesForDinosSorted != null && _allTribesForDinosSorted.Count > 0)
-                    _allTribesForDinosSorted.Sort();
-            }
-            _allTribesForDinosInitialized = true;
-            if (DinosPage._page != null)
-                DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => DinosPage._page.InitTribesQuickFilter());
-        }
-
-        private static void DinosSubsetProcessed(List<Dino> dinos)
-        {
-            if (dinos != null && dinos.Count > 0)
-                foreach (var d in dinos)
-                    _processedDinosSubsets.Add(d);
-            ++_nbProcessedDinosSubsets;
-            if (_nbProcessedDinosSubsets == NB_PROCESSES)
-                GotAllTribeIdsForDinos(_processedDinosSubsets);
-        }
-
-        private static void ProcessDinosSubset(List<Dino> dinos)
-        {
-            Task.Run(() =>
-            {
-                return dinos.DistinctBy(d => d.OwningTribeID).ToList();
-            }).ContinueWith((result) =>
-            {
-                DinosSubsetProcessed(result.Result);
-            });
-        }
-
-        private static void ComputeAllTribesForDinos()
-        {
-            if (_dinosData != null && _dinosData.Count > 0)
-            {
-                _nbProcessedDinosSubsets = 0;
-                _processedDinosSubsets.Clear();
-                int nbElems = _dinosData.Count / NB_PROCESSES;
-                int remaining = _dinosData.Count % NB_PROCESSES;
-                for (int i = 0; i < NB_PROCESSES; i++)
-                {
-                    int toSkip = (i * nbElems);
-                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
-                    ProcessDinosSubset(_dinosData.Skip(toSkip).Take(toTake).ToList());
-                }
-            }
-        }
-
-        private static void ComputeAllCleanNamesForDinos()
-        {
-            if (_dinosData != null && _dinosData.Count > 0)
-            {
-                _allCleanNamesForDinosSorted = _dinosData.DistinctBy(d => d.CleanName).Where(d => d.CleanName != null).Select(d => d.CleanName).ToList();
-                _allCleanNamesForDinosSorted.Sort();
-            }
-        }
-
-        private static void InitializeDinosQuickFilters()
-        {
-            _allTribesForDinosInitialized = false;
-            _allTribesForDinos.Clear();
-            _allTribesForDinosSorted.Clear();
-            _allCleanNamesForDinosInitialized = false;
-            _allCleanNamesForDinosSorted.Clear();
-            Task.Run(() => ComputeAllTribesForDinos());
-            Task.Run(() => ComputeAllCleanNamesForDinos()).ContinueWith((result) =>
-            {
-                _allCleanNamesForDinosInitialized = true;
-                if (DinosPage._page != null)
-                    DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => DinosPage._page.InitDinosQuickFilter());
-            });
         }
 
         private static string GetTribeNameOrId_Fallback(Structure s) => !string.IsNullOrEmpty(s.OwnerName) ? s.OwnerName : (!string.IsNullOrEmpty(s.OwningPlayerName) ? s.OwningPlayerName : (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value.ToString(CultureInfo.InvariantCulture) : string.Empty));
@@ -1983,211 +2030,126 @@ namespace ASA_Save_Inspector.Pages
             return GetTribeNameOrId_Fallback(s);
         }
 
-        private static void GotAllTribeIdsForStructures(List<Structure> structures)
-        {
-            if (structures == null)
-                return;
-            _allTribesForStructures = structures.DistinctBy(d => d.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), (s.TargetingTeam != null && s.TargetingTeam.HasValue ? s.TargetingTeam.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
-            if (_allTribesForStructures != null && _allTribesForStructures.Count > 0)
-            {
-                _allTribesForStructuresSorted = _allTribesForStructures.Select(t => t.Key).ToList();
-                if (_allTribesForStructuresSorted != null && _allTribesForStructuresSorted.Count > 0)
-                    _allTribesForStructuresSorted.Sort();
-            }
-            _allTribesForStructuresInitialized = true;
-            if (StructuresPage._page != null)
-                StructuresPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => StructuresPage._page.InitTribesQuickFilter());
-        }
-
-        private static void StructuresSubsetProcessed(List<Structure> structures)
-        {
-            if (structures != null && structures.Count > 0)
-                foreach (var s in structures)
-                    _processedStructuresSubsets.Add(s);
-            ++_nbProcessedStructuresSubsets;
-            if (_nbProcessedStructuresSubsets == NB_PROCESSES)
-                GotAllTribeIdsForStructures(_processedStructuresSubsets);
-        }
-
-        private static void ProcessStructuresSubset(List<Structure> structures)
-        {
-            Task.Run(() =>
-            {
-                return structures.DistinctBy(s => s.TargetingTeam).Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).ToList();
-            }).ContinueWith((result) =>
-            {
-                StructuresSubsetProcessed(result.Result);
-            });
-        }
-
-        private static void ComputeAllTribesForStructures()
-        {
-            if (_structuresData != null && _structuresData.Count > 0)
-            {
-                _nbProcessedStructuresSubsets = 0;
-                _processedStructuresSubsets.Clear();
-                int nbElems = _structuresData.Count / NB_PROCESSES;
-                int remaining = _structuresData.Count % NB_PROCESSES;
-                for (int i = 0; i < NB_PROCESSES; i++)
-                {
-                    int toSkip = (i * nbElems);
-                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
-                    ProcessStructuresSubset(_structuresData.Skip(toSkip).Take(toTake).ToList());
-                }
-            }
-        }
-
-        private static void ComputeAllShortNamesForStructures()
-        {
-            if (_structuresData != null && _structuresData.Count > 0)
-            {
-                _allShortNamesForStructuresSorted = _structuresData.DistinctBy(s => s.ShortName).Where(s => s.ShortName != null).Select(s => s.ShortName).ToList();
-                _allShortNamesForStructuresSorted.Sort();
-            }
-        }
-
-        private static void InitializeStructuresQuickFilters()
-        {
-            _allTribesForStructuresInitialized = false;
-            _allTribesForStructures.Clear();
-            _allTribesForStructuresSorted.Clear();
-            _allShortNamesForStructuresInitialized = false;
-            _allShortNamesForStructuresSorted.Clear();
-            Task.Run(() => ComputeAllTribesForStructures());
-            Task.Run(() => ComputeAllShortNamesForStructures()).ContinueWith((result) =>
-            {
-                _allShortNamesForStructuresInitialized = true;
-                if (StructuresPage._page != null)
-                    StructuresPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => StructuresPage._page.InitStructuresQuickFilter());
-            });
-        }
-
         private static string GetTribeNameOrId(Item i) => i.ContainerTribeID != null && i.ContainerTribeID.HasValue && SettingsPage._tribeNames != null && SettingsPage._tribeNames.ContainsKey(i.ContainerTribeID.Value) ? SettingsPage._tribeNames[i.ContainerTribeID.Value] : (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value.ToString(CultureInfo.InvariantCulture) : "0");
 
-        private static void GotAllTribeIdsForItems(List<Item> items)
+        /// <summary>Quick filters values, computed on a background thread and then applied on the UI thread.</summary>
+        private sealed class QuickFiltersData
         {
-            if (items == null)
-                return;
-            _allTribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), (i.ContainerTribeID != null && i.ContainerTribeID.HasValue ? i.ContainerTribeID.Value : 0))).DistinctBy(e => e.Key).ToDictionary();
-            if (_allTribesForItems != null && _allTribesForItems.Count > 0)
-            {
-                _allTribesForItemsSorted = _allTribesForItems.Select(t => t.Key).ToList();
-                if (_allTribesForItemsSorted != null && _allTribesForItemsSorted.Count > 0)
-                    _allTribesForItemsSorted.Sort();
-            }
-            _allTribesForItemsInitialized = true;
-            if (ItemsPage._page != null)
-                ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => ItemsPage._page.InitTribesQuickFilter());
+            public Dictionary<string, int> TribesForDinos = new Dictionary<string, int>();
+            public List<string> TribesForDinosSorted = new List<string>();
+            public List<string?> CleanNamesForDinosSorted = new List<string?>();
+            public Dictionary<string, int> TribesForStructures = new Dictionary<string, int>();
+            public List<string> TribesForStructuresSorted = new List<string>();
+            public List<string?> ShortNamesForStructuresSorted = new List<string?>();
+            public Dictionary<string, int> TribesForItems = new Dictionary<string, int>();
+            public List<string> TribesForItemsSorted = new List<string>();
+            public List<string?> ShortNamesForItemsSorted = new List<string?>();
         }
 
-        private static void ItemsSubsetProcessed(List<Item> items)
+        private static List<string> SortedKeys(Dictionary<string, int> dict)
         {
+            List<string> result = dict.Keys.ToList();
+            result.Sort();
+            return result;
+        }
+
+        private static List<string?> SortedDistinct(IEnumerable<string?> values)
+        {
+            List<string?> result = values.Where(v => v != null).Distinct().ToList();
+            result.Sort();
+            return result;
+        }
+
+        private static QuickFiltersData ComputeQuickFilters(List<Dino>? dinos, List<Structure>? structures, List<Item>? items)
+        {
+            QuickFiltersData q = new QuickFiltersData();
+
+            if (dinos != null && dinos.Count > 0)
+            {
+                q.TribesForDinos = dinos.DistinctBy(d => d.OwningTribeID).Select(d => new KeyValuePair<string, int>(GetTribeNameOrId(d), d.OwningTribeID)).DistinctBy(e => e.Key).ToDictionary();
+                q.TribesForDinosSorted = SortedKeys(q.TribesForDinos);
+                q.CleanNamesForDinosSorted = SortedDistinct(dinos.Select(d => d.CleanName));
+            }
+
+            if (structures != null && structures.Count > 0)
+            {
+                q.TribesForStructures = structures.Where(s => s.TargetingTeam != null && s.TargetingTeam.HasValue).DistinctBy(s => s.TargetingTeam).Select(s => new KeyValuePair<string, int>(GetTribeNameOrId(s), s.TargetingTeam!.Value)).DistinctBy(e => e.Key).ToDictionary();
+                q.TribesForStructuresSorted = SortedKeys(q.TribesForStructures);
+                q.ShortNamesForStructuresSorted = SortedDistinct(structures.Select(s => s.ShortName));
+            }
+
             if (items != null && items.Count > 0)
-                foreach (var i in items)
-                    _processedItemsSubsets.Add(i);
-            ++_nbProcessedItemsSubsets;
-            if (_nbProcessedItemsSubsets == NB_PROCESSES)
-                GotAllTribeIdsForItems(_processedItemsSubsets);
+            {
+                q.TribesForItems = items.Where(i => i.ContainerTribeID != null && i.ContainerTribeID.HasValue).DistinctBy(i => i.ContainerTribeID).Select(i => new KeyValuePair<string, int>(GetTribeNameOrId(i), i.ContainerTribeID!.Value)).DistinctBy(e => e.Key).ToDictionary();
+                q.TribesForItemsSorted = SortedKeys(q.TribesForItems);
+                q.ShortNamesForItemsSorted = SortedDistinct(items.Select(i => i.ShortName));
+            }
+
+            return q;
         }
 
-        private static void ProcessItemsSubset(List<Item> items)
+        private static void ApplyQuickFilters(QuickFiltersData q)
         {
-            Task.Run(() =>
-            {
-                return items.DistinctBy(d => d.ContainerTribeID).ToList();
-            }).ContinueWith((result) =>
-            {
-                ItemsSubsetProcessed(result.Result);
-            });
-        }
+            _allTribesForDinos = q.TribesForDinos;
+            _allTribesForDinosSorted = q.TribesForDinosSorted;
+            _allCleanNamesForDinosSorted = q.CleanNamesForDinosSorted;
+            _allTribesForDinosInitialized = true;
+            _allCleanNamesForDinosInitialized = true;
 
-        private static void ComputeAllTribesForItems()
-        {
-            if (_itemsData != null && _itemsData.Count > 0)
-            {
-                _nbProcessedItemsSubsets = 0;
-                _processedItemsSubsets.Clear();
-                int nbElems = _itemsData.Count / NB_PROCESSES;
-                int remaining = _itemsData.Count % NB_PROCESSES;
-                for (int i = 0; i < NB_PROCESSES; i++)
+            _allTribesForStructures = q.TribesForStructures;
+            _allTribesForStructuresSorted = q.TribesForStructuresSorted;
+            _allShortNamesForStructuresSorted = q.ShortNamesForStructuresSorted;
+            _allTribesForStructuresInitialized = true;
+            _allShortNamesForStructuresInitialized = true;
+
+            _allTribesForItems = q.TribesForItems;
+            _allTribesForItemsSorted = q.TribesForItemsSorted;
+            _allShortNamesForItemsSorted = q.ShortNamesForItemsSorted;
+            _allTribesForItemsInitialized = true;
+            _allShortNamesForItemsInitialized = true;
+
+            if (DinosPage._page != null)
+                DinosPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
                 {
-                    int toSkip = (i * nbElems);
-                    int toTake = (i == (NB_PROCESSES - 1) ? nbElems + remaining : nbElems);
-                    ProcessItemsSubset(_itemsData.Skip(toSkip).Take(toTake).ToList());
-                }
-            }
+                    DinosPage._page.InitTribesQuickFilter();
+                    DinosPage._page.InitDinosQuickFilter();
+                });
+            if (StructuresPage._page != null)
+                StructuresPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                {
+                    StructuresPage._page.InitTribesQuickFilter();
+                    StructuresPage._page.InitStructuresQuickFilter();
+                });
+            if (ItemsPage._page != null)
+                ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                {
+                    ItemsPage._page.InitTribesQuickFilter();
+                    ItemsPage._page.InitItemsQuickFilter();
+                });
         }
 
-        private static void ComputeAllShortNamesForItems()
+        private static void ResetQuickFilters()
         {
-            if (_itemsData != null && _itemsData.Count > 0)
-            {
-                _allShortNamesForItemsSorted = _itemsData.DistinctBy(i => i.ShortName).Where(i => i.ShortName != null).Select(i => i.ShortName).ToList();
-                _allShortNamesForItemsSorted.Sort();
-            }
-        }
-
-        private static void InitializeItemsQuickFilters()
-        {
+            _allTribesForDinosInitialized = false;
+            _allCleanNamesForDinosInitialized = false;
+            _allTribesForStructuresInitialized = false;
+            _allShortNamesForStructuresInitialized = false;
             _allTribesForItemsInitialized = false;
-            _allTribesForItems.Clear();
-            _allTribesForItemsSorted.Clear();
             _allShortNamesForItemsInitialized = false;
-            _allShortNamesForItemsSorted.Clear();
-            Task.Run(() => ComputeAllTribesForItems());
-            Task.Run(() => ComputeAllShortNamesForItems()).ContinueWith((result) =>
-            {
-                _allShortNamesForItemsInitialized = true;
-                if (ItemsPage._page != null)
-                    ItemsPage._page.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => ItemsPage._page.InitItemsQuickFilter());
-            });
+            _allTribesForDinos = new Dictionary<string, int>();
+            _allTribesForDinosSorted = new List<string>();
+            _allCleanNamesForDinosSorted = new List<string?>();
+            _allTribesForStructures = new Dictionary<string, int>();
+            _allTribesForStructuresSorted = new List<string>();
+            _allShortNamesForStructuresSorted = new List<string?>();
+            _allTribesForItems = new Dictionary<string, int>();
+            _allTribesForItemsSorted = new List<string>();
+            _allShortNamesForItemsSorted = new List<string?>();
         }
 
-        private static Dictionary<string, bool> _deserializationTasks = new Dictionary<string, bool>()
+        private void AllTasksCompleted(bool hasErrors)
         {
-            { "dinos", false },
-            { "player_pawns", false },
-            { "items", false },
-            { "structures", false },
-            { "players", false },
-            { "tribes", false },
-        };
-
-        private static bool _deserializationHasErrors = false;
-
-        private static void ResetDeserializationTasks()
-        {
-            _deserializationTasks["dinos"] = false;
-            _deserializationTasks["player_pawns"] = false;
-            _deserializationTasks["items"] = false;
-            _deserializationTasks["structures"] = false;
-            _deserializationTasks["players"] = false;
-            _deserializationTasks["tribes"] = false;
-            _deserializationHasErrors = false;
-        }
-
-        private void CheckForTasksCompletion()
-        {
-            if (_deserializationTasks["dinos"] == false ||
-                _deserializationTasks["player_pawns"] == false ||
-                _deserializationTasks["items"] == false ||
-                _deserializationTasks["structures"] == false ||
-                _deserializationTasks["players"] == false ||
-                _deserializationTasks["tribes"] == false)
-                return;
-
-            // All tasks completed.
-
-            InitializeDinosQuickFilters();
-            InitializeStructuresQuickFilters();
-            InitializeItemsQuickFilters();
-
-            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () => AllTasksCompleted());
-        }
-
-        private void AllTasksCompleted()
-        {
-            if (_deserializationHasErrors)
+            if (hasErrors)
             {
                 tb_JsonDataLoaded.Text = $"{ASILang.Get("LoadJsonData_PartiallyLoaded")} {ASILang.Get("SeeLogsForDetails")}";
                 tb_JsonDataLoaded.Foreground = _warningColor;
@@ -2201,173 +2163,155 @@ namespace ASA_Save_Inspector.Pages
             Utils.LockAllPages(false);
         }
 
-        private void DeserializeAllData_WithBufferedStream(string folderPath)
+        // Incremented for each load. If a new load starts while a previous one is still running, the results of the previous ones are ignored.
+        private static int _loadGeneration = 0;
+
+        private static Task<List<T>?> LoadIfExtracted<T>(bool extracted, string filepath) => extracted ? Task.Run(() => DeserializeJsonObjectsAsync<T>(filepath)) : Task.FromResult<List<T>?>(null);
+
+        private async Task DeserializeAllDataAsync(string folderPath, JsonExportProfile profile, bool hasErrors)
         {
-            if (_selectedJsonExportProfile == null)
-                return;
+            int generation = ++_loadGeneration;
+            try
+            {
+                var dinosTask = LoadIfExtracted<Dino>(profile.ExtractedDinos, Path.Combine(folderPath, "dinos.json"));
+                var pawnsTask = LoadIfExtracted<PlayerPawn>(profile.ExtractedPlayerPawns, Path.Combine(folderPath, "player_pawns.json"));
+                var itemsTask = LoadIfExtracted<Item>(profile.ExtractedItems, Path.Combine(folderPath, "items.json"));
+                var structuresTask = LoadIfExtracted<Structure>(profile.ExtractedStructures, Path.Combine(folderPath, "structures.json"));
+                var playersTask = LoadIfExtracted<Player>(profile.ExtractedPlayers, Path.Combine(folderPath, "players.json"));
+                var tribesTask = LoadIfExtracted<Tribe>(profile.ExtractedTribes, Path.Combine(folderPath, "tribes.json"));
+                await Task.WhenAll(dinosTask, pawnsTask, itemsTask, structuresTask, playersTask, tribesTask);
 
-            if (_selectedJsonExportProfile.ExtractedDinos)
-                Task.Run(() => DeserializeJsonObjects<Dino>(Path.Combine(folderPath, "dinos.json"))).ContinueWith((result) =>
-                {
-                    _deserializationTasks["dinos"] = true;
-                    _dinosData = result.Result;
-                    if (_dinosData == null)
-                        _deserializationHasErrors = true;
-                    else if (_dinosData.Count > 0)
-                        foreach (var dinoData in _dinosData)
+                List<Dino>? loadedDinos = dinosTask.Result;
+                if (loadedDinos != null && loadedDinos.Count > 0)
+                    await Task.Run(() =>
+                    {
+                        foreach (var dinoData in loadedDinos)
                             dinoData.InitStats();
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["dinos"] = true;
+                    });
 
-            if (_selectedJsonExportProfile.ExtractedPlayerPawns)
-                Task.Run(() => DeserializeJsonObjects<PlayerPawn>(Path.Combine(folderPath, "player_pawns.json"))).ContinueWith((result) =>
-                {
-                    _deserializationTasks["player_pawns"] = true;
-                    _playerPawnsData = result.Result;
-                    if (_playerPawnsData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["player_pawns"] = true;
+                if (generation != _loadGeneration)
+                    return; // A more recent load has been started.
 
-            if (_selectedJsonExportProfile.ExtractedItems)
-                Task.Run(() => DeserializeJsonObjects<Item>(Path.Combine(folderPath, "items.json"))).ContinueWith((result) =>
+                if (profile.ExtractedDinos) { _dinosData = dinosTask.Result; hasErrors |= (_dinosData == null); }
+                if (profile.ExtractedPlayerPawns) { _playerPawnsData = pawnsTask.Result; hasErrors |= (_playerPawnsData == null); }
+                if (profile.ExtractedItems) { _itemsData = itemsTask.Result; hasErrors |= (_itemsData == null); }
+                if (profile.ExtractedStructures) { _structuresData = structuresTask.Result; hasErrors |= (_structuresData == null); }
+                if (profile.ExtractedPlayers) { _playersData = playersTask.Result; hasErrors |= (_playersData == null); }
+                if (profile.ExtractedTribes)
                 {
-                    _deserializationTasks["items"] = true;
-                    _itemsData = result.Result;
-                    if (_itemsData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["items"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedStructures)
-                Task.Run(() => DeserializeJsonObjects<Structure>(Path.Combine(folderPath, "structures.json"))).ContinueWith((result) =>
-                {
-                    _deserializationTasks["structures"] = true;
-                    _structuresData = result.Result;
-                    if (_structuresData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["structures"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedPlayers)
-                Task.Run(() => DeserializeJsonObjects<Player>(Path.Combine(folderPath, "players.json"))).ContinueWith((result) =>
-                {
-                    _deserializationTasks["players"] = true;
-                    _playersData = result.Result;
-                    if (_playersData == null)
-                        _deserializationHasErrors = true;
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["players"] = true;
-
-            if (_selectedJsonExportProfile.ExtractedTribes)
-                Task.Run(() => DeserializeJsonObjects<Tribe>(Path.Combine(folderPath, "tribes.json"))).ContinueWith((result) =>
-                {
-                    _deserializationTasks["tribes"] = true;
-                    _tribesData = result.Result;
-                    if (_tribesData == null)
-                        _deserializationHasErrors = true;
+                    _tribesData = tribesTask.Result;
+                    hasErrors |= (_tribesData == null);
                     if (_tribesData != null && _tribesData.Count > 0)
                         _tribeNames = _tribesData.DistinctBy(t => t.TribeID).Select(t => new KeyValuePair<int, string>(t.TribeID != null && t.TribeID.HasValue ? t.TribeID.Value : -1, t.TribeName ?? string.Empty)).Where(s => s.Key != -1 && !string.IsNullOrEmpty(s.Value)).ToDictionary();
-                    if (_tribeNames == null)
-                        _tribeNames = new Dictionary<int, string>();
-                    CheckForTasksCompletion();
-                });
-            else
-                _deserializationTasks["tribes"] = true;
+                }
+                if (_tribeNames == null)
+                    _tribeNames = new Dictionary<int, string>();
+
+                List<Dino>? dinos = _dinosData;
+                List<Structure>? structures = _structuresData;
+                List<Item>? items = _itemsData;
+                QuickFiltersData quickFilters = await Task.Run(() => ComputeQuickFilters(dinos, structures, items));
+
+                if (generation != _loadGeneration)
+                    return;
+
+                ApplyQuickFilters(quickFilters);
+                AllTasksCompleted(hasErrors);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_FileParsingError")} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                if (generation == _loadGeneration)
+                    AllTasksCompleted(true);
+            }
         }
 
-        private void LoadJsonExportProfile_Click(object sender, RoutedEventArgs e)
+        private async void LoadJsonExportProfile_Click(object sender, RoutedEventArgs e)
         {
-            JsonExportProfile? jep = GetJEPFromButton(e);
-            if (jep == null)
-                return;
-
-            JsonExportProfileSelected(jep);
-
-            if (_selectedJsonExportProfile == null)
+            try
             {
-                Logger.Instance.Log(ASILang.Get("LoadJsonFailed_NoExportProfileSelected"), Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_NoExportProfileSelected");
-                tb_JsonDataLoaded.Foreground = _errorColor;
-                tb_JsonDataLoaded.Visibility = Visibility.Visible;
-                return;
-            }
+                JsonExportProfile? jep = GetJEPFromButton(e);
+                if (jep == null)
+                    return;
 
-            string folderPath = _selectedJsonExportProfile.GetExportFolderName();
-            if (Directory.Exists(folderPath))
-                Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel(), StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-            folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
+                JsonExportProfileSelected(jep);
 
-            if (!Directory.Exists(folderPath))
-            {
-                Logger.Instance.Log(ASILang.Get("LoadJsonFailed_ExportFolderNotFound"), Logger.LogLevel.ERROR);
-                tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_ExportFolderNotFound");
-                tb_JsonDataLoaded.Foreground = _errorColor;
-                tb_JsonDataLoaded.Visibility = Visibility.Visible;
-                return;
-            }
-
-            Utils.ClearAllPagesFilters();
-            _allTribesForDinosSorted.Clear();
-            _allTribesForDinos.Clear();
-
-            bool refreshMinimap = (string.Compare(_currentlyLoadedMapName, _selectedJsonExportProfile.MapName, StringComparison.InvariantCulture) != 0);
-            _currentlyLoadedMapName = _selectedJsonExportProfile.MapName;
-            _currentlyLoadedSubMapName = null;
-            if (!string.IsNullOrWhiteSpace(_currentlyLoadedMapName))
-            {
-                var mapInfo = Utils.GetMapInfoFromName(_currentlyLoadedMapName);
-                if (mapInfo != null)
-                    _currentlyLoadedSubMapName = mapInfo.SubMapName;
-            }
-            if (refreshMinimap && MainWindow._minimap != null)
-                MainWindow.OpenMinimap();
-
-            string saveInfoFilePath = Path.Combine(folderPath, "save_info.json");
-            if (!File.Exists(saveInfoFilePath))
-            {
-                Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoNotFound").Replace("#FILEPATH#", $"\"{saveInfoFilePath}\"", StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
-                _deserializationHasErrors = true;
-            }
-            else
-            {
-                try
+                if (_selectedJsonExportProfile == null)
                 {
-                    string json = File.ReadAllText(saveInfoFilePath, Encoding.UTF8);
-                    _saveFileData = JsonSerializer.Deserialize<SaveFileInfo>(json);
-                    if (_saveFileData != null)
+                    Logger.Instance.Log(ASILang.Get("LoadJsonFailed_NoExportProfileSelected"), Logger.LogLevel.ERROR);
+                    tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_NoExportProfileSelected");
+                    tb_JsonDataLoaded.Foreground = _errorColor;
+                    tb_JsonDataLoaded.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                if (_selectedJsonExportProfile.IsDeprecatedFormat())
+                    Logger.Instance.Log($"{ASILang.Get("DeprecatedExportProfileFormat").Replace("#JSON_EXPORT_PROFILE_NAME#", jep.GetLabel() ?? string.Empty, StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                string folderPath = _selectedJsonExportProfile.GetExportFolderPath();
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Logger.Instance.Log(ASILang.Get("LoadJsonFailed_ExportFolderNotFound"), Logger.LogLevel.ERROR);
+                    tb_JsonDataLoaded.Text = ASILang.Get("LoadJsonFailed_ExportFolderNotFound");
+                    tb_JsonDataLoaded.Foreground = _errorColor;
+                    tb_JsonDataLoaded.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                Utils.ClearAllPagesFilters();
+                ResetQuickFilters();
+                bool hasErrors = false;
+
+                bool refreshMinimap = (string.Compare(_currentlyLoadedMapName, _selectedJsonExportProfile.MapName, StringComparison.InvariantCulture) != 0);
+                _currentlyLoadedMapName = _selectedJsonExportProfile.MapName;
+                _currentlyLoadedSubMapName = null;
+                if (!string.IsNullOrWhiteSpace(_currentlyLoadedMapName))
+                {
+                    var mapInfo = Utils.GetMapInfoFromName(_currentlyLoadedMapName);
+                    if (mapInfo != null)
+                        _currentlyLoadedSubMapName = mapInfo.SubMapName;
+                }
+                if (refreshMinimap && MainWindow._minimap != null)
+                    MainWindow.OpenMinimap();
+
+                string saveInfoFilePath = Path.Combine(folderPath, "save_info.json");
+                if (!File.Exists(saveInfoFilePath))
+                {
+                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoNotFound").Replace("#FILEPATH#", saveInfoFilePath ?? string.Empty, StringComparison.InvariantCulture)}", Logger.LogLevel.WARNING);
+                    hasErrors = true;
+                }
+                else
+                {
+                    try
                     {
-                        DateTime dt = DateTime.Now;
-                        if (File.Exists(_selectedJsonExportProfile.SaveFilePath))
-                            dt = new FileInfo(_selectedJsonExportProfile.SaveFilePath).LastWriteTime;
-                        _saveFileData.SaveDateTime = dt;
+                        string json = File.ReadAllText(saveInfoFilePath, Encoding.UTF8);
+                        _saveFileData = JsonSerializer.Deserialize<SaveFileInfo>(json, _jsonReadOptions);
+                        if (_saveFileData != null)
+                        {
+                            DateTime dt = DateTime.Now;
+                            if (File.Exists(_selectedJsonExportProfile.SaveFilePath))
+                                dt = new FileInfo(_selectedJsonExportProfile.SaveFilePath).LastWriteTime;
+                            _saveFileData.SaveDateTime = dt;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoParsingError")}. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                        hasErrors = true;
                     }
                 }
-                catch (Exception ex)
-                {
-                    Logger.Instance.Log($"{ASILang.Get("LoadJsonFailed_SaveFileInfoParsingError")}. Exception=[{ex}]", Logger.LogLevel.ERROR);
-                    _deserializationHasErrors = true;
-                }
+
+                Utils.LockAllPages(true);
+                tb_JsonDataLoaded.Text = $"{ASILang.Get("LoadingJsonData")} {ASILang.Get("PleaseWait")}";
+                tb_JsonDataLoaded.Foreground = _darkTheme != null && _darkTheme.HasValue && _darkTheme.Value == false ? _defaultColorLightTheme : _defaultColorDarkTheme;
+                tb_JsonDataLoaded.Visibility = Visibility.Visible;
+
+                await DeserializeAllDataAsync(folderPath, _selectedJsonExportProfile, hasErrors);
             }
-
-            Utils.LockAllPages(true);
-            ResetDeserializationTasks();
-            DeserializeAllData_WithBufferedStream(folderPath);
-            CheckForTasksCompletion();
-
-            tb_JsonDataLoaded.Text = $"{ASILang.Get("LoadingJsonData")} {ASILang.Get("PleaseWait")}";
-            tb_JsonDataLoaded.Foreground = _darkTheme != null && _darkTheme.HasValue && _darkTheme.Value == false ? _defaultColorLightTheme : _defaultColorDarkTheme;
-            tb_JsonDataLoaded.Visibility = Visibility.Visible;
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in SettingsPage.LoadJsonExportProfile_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
         }
 
         private void RemoveJsonExportProfile_Click(object sender, RoutedEventArgs e)
@@ -2380,11 +2324,9 @@ namespace ASA_Save_Inspector.Pages
 
             if (_selectedJsonExportProfile != null && !ConfirmJsonExportRemovalPopup.IsOpen)
             {
-                string folderPath = _selectedJsonExportProfile.GetExportFolderName();
-                if (!Directory.Exists(folderPath))
-                    folderPath = Path.Combine(Utils.JsonExportsFolder(), _selectedJsonExportProfile.GetExportFolderName());
+                string folderPath = _selectedJsonExportProfile.GetExportFolderPath();
 
-                tb_confirmJsonFolderRemoval.Text = $"{ASILang.Get("JsonDataRemovalConfirm_Description").Replace("#DIRECTORY_PATH#", $"\"{folderPath}\"", StringComparison.InvariantCulture)}";
+                tb_confirmJsonFolderRemoval.Text = $"{ASILang.Get("JsonDataRemovalConfirm_Description").Replace("#DIRECTORY_PATH#", folderPath ?? string.Empty, StringComparison.InvariantCulture)}";
                 ConfirmJsonExportRemovalPopup.IsOpen = true;
             }
         }

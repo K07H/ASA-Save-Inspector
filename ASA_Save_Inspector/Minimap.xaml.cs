@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using ASA_Save_Inspector.Pages;
 using Mapsui;
 using Mapsui.Extensions;
@@ -22,6 +14,14 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace ASA_Save_Inspector
 {
@@ -226,6 +226,7 @@ namespace ASA_Save_Inspector
 
         private void ClearPoints()
         {
+            HideCallouts();
             if (_pointsLayer != null)
                 MyMap.Map.Layers.Remove(_pointsLayer);
             if (_featuresProvider != null)
@@ -277,28 +278,38 @@ namespace ASA_Save_Inspector
             MyMap.Map.RefreshGraphics();
         }
 
+        // Feature whose callout is currently displayed (only one at a time), and its callout style.
+        private static IFeature? _calloutFeature = null;
+        private static CalloutStyle? _calloutStyle = null;
+
+        /// <summary>Hides the displayed callout (its style is removed from the feature). Returns true if a callout was displayed.</summary>
         private static bool HideCallouts()
         {
-            if (_pointsLayer == null)
+            if (_calloutFeature == null)
                 return false;
-
-            bool hasChanged = false;
-            var features = _pointsLayer.GetFeatures(_mapDimensions, 0.01d);
-            if (features != null)
+            try
             {
-                foreach (var feature in features)
-                    if (feature != null)
-                    {
-                        var calloutStyle = feature.Styles.OfType<CalloutStyle>().FirstOrDefault();
-                        if (calloutStyle is not null && calloutStyle.Enabled)
-                        {
-                            calloutStyle.Enabled = false;
-                            hasChanged = true;
-                        }
-                    }
+                if (_calloutStyle != null)
+                    _calloutFeature.Styles.Remove(_calloutStyle);
             }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("Minimap.HideCallouts", ignoredEx); }
+            _calloutFeature = null;
+            _calloutStyle = null;
+            return true;
+        }
 
-            return hasChanged;
+        /// <summary>Displays the callout of a point (created on demand, from its MapPoint data). Only one callout is displayed at a time.</summary>
+        private static bool ShowCalloutOnFeature(IFeature? feature)
+        {
+            MapPoint? point = feature?.Data as MapPoint;
+            if (feature == null || point == null)
+                return false;
+            HideCallouts();
+            _calloutStyle = CreateCalloutStyle($"{point.Name}\n{point.Description}");
+            _calloutStyle.Enabled = true;
+            feature.Styles.Add(_calloutStyle);
+            _calloutFeature = feature;
+            return true;
         }
 
         private static void MapTapped(object? s, MapEventArgs e)
@@ -312,19 +323,15 @@ namespace ASA_Save_Inspector
 
             var feature = mapInfo.Feature;
             bool hasChanged = HideCallouts();
-            if (feature is not null)
+            if (feature is not null && ShowCalloutOnFeature(feature))
             {
-                var calloutStyle = feature.Styles.OfType<CalloutStyle>().FirstOrDefault();
-                if (calloutStyle is not null)
-                {
-                    calloutStyle.Enabled = !calloutStyle.Enabled;
-                    hasChanged = true;
-                    e.Handled = true;
+                // (Same behavior as before: a click on a point always displays its callout, and hides the other one.)
+                hasChanged = true;
+                e.Handled = true;
 
-                    if (e.GestureType == GestureType.DoubleTap)
-                        if (_doubleTapCallback != null)
-                            _doubleTapCallback(feature.Data as MapPoint);
-                }
+                if (e.GestureType == GestureType.DoubleTap)
+                    if (_doubleTapCallback != null)
+                        _doubleTapCallback(feature.Data as MapPoint);
             }
 
             if (hasChanged)
@@ -423,15 +430,10 @@ namespace ASA_Save_Inspector
                 }
 
             HideCallouts();
-            var features = _featuresProvider.Features.Where(f => ((f.Data as MapPoint)?.X == x && (f.Data as MapPoint)?.Y == y));
-            if (features != null && features.Count() > 0)
-                foreach (var feature in features)
-                    if (feature != null && string.Compare((feature.Data as MapPoint)?.ID, ID, false, CultureInfo.InvariantCulture) == 0)
-                    {
-                        var calloutStyle = feature.Styles.OfType<CalloutStyle>().FirstOrDefault();
-                        if (calloutStyle is not null)
-                            calloutStyle.Enabled = !calloutStyle.Enabled;
-                    }
+            var feature = _featuresProvider.Features.FirstOrDefault(f => f != null && (f.Data as MapPoint)?.X == x && (f.Data as MapPoint)?.Y == y &&
+                string.Compare((f.Data as MapPoint)?.ID, ID, false, CultureInfo.InvariantCulture) == 0);
+            ShowCalloutOnFeature(feature);
+            _pointsLayer?.DataHasChanged();
             MyMap.RefreshGraphics();
         }
 
@@ -454,7 +456,7 @@ namespace ASA_Save_Inspector
                 try { imgBytes = File.ReadAllBytes(minimapFilename); }
                 catch (Exception ex)
                 {
-                    Logger.Instance.Log($"Failed to get image bytes from file at \"{minimapFilename}\". Exception=[{ex}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"Failed to get image bytes from file at '{minimapFilename}'. Exception=[{ex}]", Logger.LogLevel.ERROR);
                     imgBytes = null;
                 }
 
@@ -471,7 +473,7 @@ namespace ASA_Save_Inspector
                 }
                 catch (Exception exb)
                 {
-                    Logger.Instance.Log($"Failed to get image bytes from ASI's embedded resources with file name \"{minimapFilename}\". Exception=[{exb}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"Failed to get image bytes from ASI's embedded resources with file name '{minimapFilename}'. Exception=[{exb}]", Logger.LogLevel.ERROR);
                     imgBytes = null;
                 }
             }
@@ -482,7 +484,7 @@ namespace ASA_Save_Inspector
                 catch (Exception exc)
                 {
                     rasterFeature = null;
-                    Logger.Instance.Log($"Exception caught while creating raster feature for filename \"{minimapFilename}\". Exception=[{exc}]", Logger.LogLevel.ERROR);
+                    Logger.Instance.Log($"Exception caught while creating raster feature for filename '{minimapFilename}'. Exception=[{exc}]", Logger.LogLevel.ERROR);
                 }
             if (rasterFeature == null)
             {
@@ -496,14 +498,15 @@ namespace ASA_Save_Inspector
         private static ILayer? CreatePointLayer(IEnumerable<MapPoint?>? points)
         {
             List<PointFeature> pointsFeatures = new List<PointFeature>();
-            if (points != null && points.Count() > 0)
+            if (points != null)
                 foreach (var point in points)
                     if (point != null && point.Name != null && point.Description != null)
                     {
                         PointFeature pf = new PointFeature(point.X + MARGIN, point.Y + MARGIN);
                         pf["name"] = point.Name;
                         pf.Data = point;
-                        pf.Styles.Add(CreateCalloutStyle($"{point.Name}\n{point.Description}"));
+                        // No CalloutStyle here: it is created only when the point is clicked (see ShowCalloutOnFeature).
+                        // It used to be created for every point (thousands of objects), even if never displayed.
                         pointsFeatures.Add(pf);
                     }
 

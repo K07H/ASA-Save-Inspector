@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<local:ItemsPageBase
     x:Class="ASA_Save_Inspector.Pages.ItemsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -17,7 +17,7 @@
     SizeChanged="page_SizeChanged"
     x:Name="page_Items">
 
-    <Page.Resources>
+    <local:ItemsPageBase.Resources>
         <Style x:Key="ASICustomDataGridHeaderStyle" TargetType="primitives:DataGridColumnHeader">
             <Setter Property="Foreground" Value="{StaticResource SystemControlForegroundBaseMediumBrush}"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -103,7 +103,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </Page.Resources>
+    </local:ItemsPageBase.Resources>
     <Grid x:Name="gr_Main">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -161,22 +161,30 @@
             </StackPanel>
         </Grid>
         <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{ThemeResource ToolTipBorderThemeBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0">
-            <StackPanel Orientation="Vertical">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="5,5,0,0">
+            <Grid Margin="5,5,0,0" HorizontalAlignment="Stretch" MaxWidth="{Binding ElementName=page_Items, Path=WindowWidth, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
                     <TextBlock Text="{x:Bind asi:ASILang.Get('QuickFiltering'), Mode=OneWay}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Tribe'), Mode=OneWay}"/>:</TextBlock>
                     <ComboBox x:Name="cbb_QuickFilter_Tribe" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Tribe_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allTribes}" SelectionChanged="cbb_QuickFilter_Tribe_SelectionChanged"/>
                     <TextBlock FontSize="14" VerticalAlignment="Center" Margin="15,2,0,0"><Run Text="{x:Bind asi:ASILang.Get('Item'), Mode=OneWay}"/>:</TextBlock>
                     <ComboBox x:Name="cbb_QuickFilter_Item" Margin="5,2,0,0" FontSize="14" PlaceholderText="{x:Bind QuickFilter_Item_Label, Mode=OneWay}" ItemsSource="{x:Bind _quickFilter_allShortNames}" SelectionChanged="cbb_QuickFilter_Item_SelectionChanged"/>
                 </StackPanel>
-            </StackPanel>
+                <TextBox x:Name="tb_QuickSearch" Grid.Column="1" Width="260" Margin="15,2,20,0" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Right"
+                         PlaceholderText="{x:Bind asi:ASILang.Get('QuickSearchPlaceholder'), Mode=OneWay}"
+                         ToolTipService.ToolTip="{x:Bind asi:ASILang.Get('QuickSearch_Description'), Mode=OneWay}"
+                         TextChanged="tb_QuickSearch_TextChanged"/>
+            </Grid>
         </Border>
-        <controls:DataGrid x:Name="dg_Items"
+        <controls:DataGrid x:Name="dg_Data"
                            Grid.Row="3"
                            Grid.ColumnSpan="2"
                            FontSize="16"
                            AutoGenerateColumns="True"
-                           AutoGeneratingColumn="dg_Items_AutoGeneratingColumn"
+                           AutoGeneratingColumn="dg_Data_AutoGeneratingColumn"
                            CanUserSortColumns="True"
                            CanUserResizeColumns="True"
                            CanUserReorderColumns="True"
@@ -189,11 +197,11 @@
                            styling:CustomScrollBar.KeepVerticalExpanded="True"
                            styling:CustomScrollBar.LargeHorizontalScrollBar="True"
                            styling:CustomScrollBar.LargeVerticalScrollBar="True"
-                           ColumnReordered="dg_Items_ColumnReordered"
-                           Sorting="dg_Items_Sorting"
-                           PointerReleased="dg_Items_PointerReleased"
-                           SelectionChanged="dg_Items_SelectionChanged"
-                           DoubleTapped="dg_Items_DoubleTapped"
+                           ColumnReordered="dg_Data_ColumnReordered"
+                           Sorting="dg_Data_Sorting"
+                           PointerReleased="dg_Data_PointerReleased"
+                           SelectionChanged="dg_Data_SelectionChanged"
+                           DoubleTapped="dg_Data_DoubleTapped"
                            Margin="0,5,0,24"
                            Background="{StaticResource MyAcrylicBrush}"
                            ColumnHeaderStyle="{StaticResource ASICustomDataGridHeaderStyle}">
@@ -277,4 +285,4 @@
             </Border>
         </Popup>
     </Grid>
-</Page>
+</local:ItemsPageBase>

@@ -26,7 +26,6 @@
                     <TextBlock VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('ApplicationTheme'), Mode=OneWay}"/>:</TextBlock>
                     <CheckBox x:Name="cb_AppTheme" FontSize="16" IsChecked="True" Margin="15,2,0,0" Content="{x:Bind asi:ASILang.Get('ApplicationTheme_Dark'), Mode=OneTime}" VerticalAlignment="Center"/>
                 </StackPanel>
-                <TextBlock VerticalAlignment="Center" FontStyle="Italic" FontSize="14" TextWrapping="WrapWholeWords" Text="{x:Bind asi:ASILang.Get('LegacySearch_Description'), Mode=OneWay}"/>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock VerticalAlignment="Center" Text="{x:Bind asi:ASILang.Get('NoPythonVenv'), Mode=OneWay}"/>
                     <CheckBox x:Name="cb_NoPythonVenv" FontSize="16" IsChecked="False" Margin="15,2,0,0" Content="" VerticalAlignment="Center"/>
@@ -46,16 +45,6 @@
                         <TextBlock x:Name="tb_RemovingJsonData" FontSize="14" FontStyle="Italic" Visibility="Collapsed" Margin="5,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('RemovingJsonData'), Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('PleaseWait'), Mode=OneWay}"/></TextBlock>
                     </StackPanel>
                 </StackPanel>
-                <!--
-                <StackPanel x:Name="sp_RemovePreviousInstalls" Orientation="Vertical" Margin="0,20,0,0" Visibility="Collapsed">
-                    <TextBlock VerticalAlignment="Center" FontSize="18" Text="{x:Bind asi:ASILang.Get('PrivousInstallsFound_Title'), Mode=OneWay}"></TextBlock>
-                    <TextBlock x:Name="run_RemovePreviousInstalls" VerticalAlignment="Center" Margin="0,5,0,0" FontSize="14" Text="{x:Bind asi:ASILang.Get('PrivousInstallsFound_Description'), Mode=OneWay}"></TextBlock>
-                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                        <Button x:Name="btn_RemovePreviousInstalls" Content="{x:Bind asi:ASILang.Get('RemovePreviousInstalls'), Mode=OneWay}" FontSize="14" Click="btn_RemovePreviousInstalls_Click"/>
-                        <TextBlock x:Name="tb_RemovingPreviousInstalls" FontSize="14" FontStyle="Italic" Visibility="Collapsed" Margin="5,0,0,0"><Run Text="{x:Bind asi:ASILang.Get('RemovingPreviousInstalls'), Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('PleaseWait'), Mode=OneWay}"/></TextBlock>
-                    </StackPanel>
-                </StackPanel>
-                -->
             </StackPanel>
         </StackPanel>
 

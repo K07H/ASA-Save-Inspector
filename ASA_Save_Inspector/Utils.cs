@@ -1,5 +1,12 @@
-﻿using System;
+﻿using ASA_Save_Inspector.ObjectModel;
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -9,12 +16,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ASA_Save_Inspector.ObjectModel;
-using ASA_Save_Inspector.Pages;
-using Microsoft.UI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using WinUIEx;
 
@@ -48,6 +49,7 @@ namespace ASA_Save_Inspector
         public static string MapsInfoFilePath() => Path.Combine(GetDataDir(), "maps_info.json");
         public static string SettingsFilePath() => Path.Combine(GetDataDir(), "settings.json");
         public static string CustomBlueprintsFilePath() => Path.Combine(GetDataDir(), "custom_blueprints.json");
+        public static string CustomBlueprintsForExportFilePath() => Path.Combine(GetDataDir(), "custom_blueprints_for_export.json");
         public static string PlayerPawnSearchQueriesFilePath() => Path.Combine(GetDataDir(), "pawn_search_queries.json");
         public static string DinoSearchQueriesFilePath() => Path.Combine(GetDataDir(), "dino_search_queries.json");
         public static string StructureSearchQueriesFilePath() => Path.Combine(GetDataDir(), "structure_search_queries.json");
@@ -326,8 +328,63 @@ namespace ASA_Save_Inspector
             if (_version == null)
                 _version = typeof(MainWindow).Assembly.GetName().Version;
             if (_version != null)
-                return $"{_version.Major.ToString(CultureInfo.InvariantCulture)}.{_version.Build.ToString(CultureInfo.InvariantCulture)}";
+                return $"{_version.Major.ToString(CultureInfo.InvariantCulture)}.{_version.Minor.ToString(CultureInfo.InvariantCulture)}";
             return "1.0";
+        }
+
+        private static readonly object _atomicWriteLock = new object();
+
+        public static void WriteAllTextAtomic(string path, string content)
+        {
+            lock (_atomicWriteLock)
+            {
+                string tmpPath = path + ".tmp";
+                File.WriteAllText(tmpPath, content, System.Text.Encoding.UTF8);
+                File.Move(tmpPath, path, true);
+            }
+        }
+
+        // Warnings about user files renamed by RenameInvalidUserFile, waiting for the main window to be displayed: (file name, backup file name).
+        private static readonly ConcurrentQueue<KeyValuePair<string, string>> _pendingUserFileWarnings = new ConcurrentQueue<KeyValuePair<string, string>>();
+
+        /// <summary>
+        /// Renames a user file that cannot be read (ex: invalid JSON after a manual edit of maps_info.json) to "[file].invalid_[date]".
+        /// Without this, the next save overwrites it and its content (custom maps, export profiles, presets...) is lost.
+        /// Returns the path of the renamed file, or null if it could not be renamed.
+        /// </summary>
+        public static string? RenameInvalidUserFile(string filePath, Exception? reason)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                    return null;
+                string backupPath = $"{filePath}.invalid_{DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture)}";
+                int suffix = 1;
+                while (File.Exists(backupPath))
+                    backupPath = $"{filePath}.invalid_{DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture)}_{(suffix++).ToString(CultureInfo.InvariantCulture)}";
+                File.Move(filePath, backupPath);
+                Logger.Instance.Log($"File '{filePath}' could not be read{(reason != null ? $" ({reason.Message})" : string.Empty)}. It has been renamed to '{backupPath}' so that it is not overwritten. To restore its content: close ASI, fix the file, then rename it back to '{Path.GetFileName(filePath)}'.", Logger.LogLevel.ERROR);
+                _pendingUserFileWarnings.Enqueue(new KeyValuePair<string, string>(Path.GetFileName(filePath), Path.GetFileName(backupPath)));
+                ShowPendingUserFileWarnings();
+                return backupPath;
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Failed to rename invalid file '{filePath}'. Exception=[{ex}]", Logger.LogLevel.ERROR);
+                return null;
+            }
+        }
+
+        /// <summary>Shows the pending warnings about renamed user files (only once the main window exists, otherwise they stay pending).</summary>
+        public static void ShowPendingUserFileWarnings()
+        {
+            if (MainWindow._mainWindow == null)
+                return;
+            List<string> messages = new List<string>();
+            while (_pendingUserFileWarnings.TryDequeue(out KeyValuePair<string, string> warning))
+                messages.Add(ASILang.Get("UserFileInvalidRenamed").Replace("#FILENAME#", warning.Key, StringComparison.InvariantCulture).Replace("#BACKUP_FILENAME#", warning.Value, StringComparison.InvariantCulture));
+            if (messages.Count > 0)
+                MainWindow.ShowToast(string.Join(Environment.NewLine, messages), BackgroundColor.ERROR, 10000);
         }
 
         public static void EnsureDataFolderExist()
@@ -406,10 +463,10 @@ namespace ASA_Save_Inspector
             if (cleanNames == null || cleanNames.Count <= 0 || string.IsNullOrEmpty(cleanName))
                 return cleanName;
 
-            if (cleanNames.ContainsValue(cleanName))
-                foreach (var elem in cleanNames)
-                    if (string.Compare(elem.Value, cleanName, StringComparison.InvariantCulture) == 0)
-                        return elem.Key;
+            // Single pass (previously ContainsValue() + a second loop over the dictionary).
+            foreach (var elem in cleanNames)
+                if (string.Compare(elem.Value, cleanName, StringComparison.InvariantCulture) == 0)
+                    return elem.Key;
             return cleanName;
         }
 
@@ -439,16 +496,26 @@ namespace ASA_Save_Inspector
             return propValue;
         }
 
+        // Cache of the properties found by GetProperty (it is called for every sorted/filtered element, and GetProperties() allocates a new array at each call).
+        private static readonly ConcurrentDictionary<(Type, string), PropertyInfo?> _propertiesCache = new ConcurrentDictionary<(Type, string), PropertyInfo?>();
+
         public static PropertyInfo? GetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type objType, string? propertyName)
         {
             if (objType == null || string.IsNullOrEmpty(propertyName))
                 return null;
+            if (_propertiesCache.TryGetValue((objType, propertyName), out PropertyInfo? cached))
+                return cached;
+            PropertyInfo? found = null;
             var properties = objType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            if (properties != null && properties.Count() > 0)
+            if (properties != null && properties.Length > 0)
                 foreach (var property in properties)
                     if (string.Compare(propertyName, property.Name, StringComparison.InvariantCulture) == 0)
-                        return property;
-            return null;
+                    {
+                        found = property;
+                        break;
+                    }
+            _propertiesCache[(objType, propertyName)] = found;
+            return found;
         }
 
         public static List<string> GetPropertyValues(IEnumerable<object?>? objs, PropertyInfo? property, int maxValues = -1)
@@ -636,35 +703,68 @@ namespace ASA_Save_Inspector
                 MainWindow.ShowToast("Copied to clipboard", BackgroundColor.SUCCESS);
         }
 
+        private sealed class LookupIndex<T> where T : class
+        {
+            private readonly Func<T, string?> _keySelector;
+            private readonly object _lock = new object();
+            private List<T>? _source = null;
+            private Dictionary<string, T> _index = new Dictionary<string, T>(StringComparer.Ordinal);
+
+            public LookupIndex(Func<T, string?> keySelector) => _keySelector = keySelector;
+
+            public T? Find(List<T>? source, string key)
+            {
+                if (source == null || source.Count <= 0)
+                    return null;
+                Dictionary<string, T> index;
+                lock (_lock)
+                {
+                    if (!ReferenceEquals(_source, source))
+                    {
+                        Dictionary<string, T> newIndex = new Dictionary<string, T>(source.Count, StringComparer.Ordinal);
+                        foreach (T? obj in source)
+                        {
+                            if (obj == null)
+                                continue;
+                            string? objKey = _keySelector(obj);
+                            if (!string.IsNullOrEmpty(objKey))
+                                newIndex.TryAdd(objKey, obj);
+                        }
+                        _index = newIndex;
+                        _source = source;
+                    }
+                    index = _index;
+                }
+                return index.TryGetValue(key, out T? found) ? found : null;
+            }
+        }
+
+        private static readonly LookupIndex<Item> _itemsByUUID = new LookupIndex<Item>(i => i.UUID);
+        private static readonly LookupIndex<PlayerPawn> _playerPawnsByInventoryUUID = new LookupIndex<PlayerPawn>(p => p.InventoryUUID);
+        private static readonly LookupIndex<Structure> _structuresByInventoryUUID = new LookupIndex<Structure>(s => s.InventoryUUID);
+        private static readonly LookupIndex<Dino> _dinosByInventoryUUID = new LookupIndex<Dino>(d => d.InventoryUUID);
+
         public static Item? FindItemByUUID(string? uuid)
         {
-            if (!string.IsNullOrEmpty(uuid) && SettingsPage._itemsData != null && SettingsPage._itemsData.Count > 0)
-                return SettingsPage._itemsData.FirstOrDefault(i => uuid == i?.UUID, null);
-            return null;
+            if (string.IsNullOrEmpty(uuid))
+                return null;
+            return _itemsByUUID.Find(SettingsPage._itemsData, uuid);
         }
 
         public static KeyValuePair<ArkObjectType, object?> FindObjectByInventoryUUID(string? inventoryUUID)
         {
             if (!string.IsNullOrEmpty(inventoryUUID))
             {
-                if (SettingsPage._playerPawnsData != null && SettingsPage._playerPawnsData.Count > 0)
-                {
-                    PlayerPawn? container = SettingsPage._playerPawnsData.FirstOrDefault(p => inventoryUUID == p?.InventoryUUID, null);
-                    if (container != null)
-                        return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.PLAYER_PAWN, container);
-                }
-                if (SettingsPage._structuresData != null && SettingsPage._structuresData.Count > 0)
-                {
-                    Structure? container = SettingsPage._structuresData.FirstOrDefault(s => inventoryUUID == s?.InventoryUUID, null);
-                    if (container != null)
-                        return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.STRUCTURE, container);
-                }
-                if (SettingsPage._dinosData != null && SettingsPage._dinosData.Count > 0)
-                {
-                    Dino? container = SettingsPage._dinosData.FirstOrDefault(d => inventoryUUID == d?.InventoryUUID, null);
-                    if (container != null)
-                        return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.DINO, container);
-                }
+                // Same search order as before: player pawns, then structures, then dinos.
+                PlayerPawn? pawn = _playerPawnsByInventoryUUID.Find(SettingsPage._playerPawnsData, inventoryUUID);
+                if (pawn != null)
+                    return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.PLAYER_PAWN, pawn);
+                Structure? structure = _structuresByInventoryUUID.Find(SettingsPage._structuresData, inventoryUUID);
+                if (structure != null)
+                    return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.STRUCTURE, structure);
+                Dino? dino = _dinosByInventoryUUID.Find(SettingsPage._dinosData, inventoryUUID);
+                if (dino != null)
+                    return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.DINO, dino);
             }
             return new KeyValuePair<ArkObjectType, object?>(ArkObjectType.UNKNOWN, null);
         }
@@ -767,6 +867,13 @@ namespace ASA_Save_Inspector
             DinosPage.ClearPageFilters();
             StructuresPage.ClearPageFilters();
             ItemsPage.ClearPageFilters();
+            // Quick search fields (see DataPageBase).
+            PlayerPawnsPage.ClearQuickSearch();
+            DinosPage.ClearQuickSearch();
+            StructuresPage.ClearQuickSearch();
+            ItemsPage.ClearQuickSearch();
+            PlayersPage.ClearQuickSearch();
+            TribesPage.ClearQuickSearch();
         }
 
         public static string BytesSizeToReadableString(double size)
@@ -785,6 +892,7 @@ namespace ASA_Save_Inspector
         {
             string[] files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
             double totalSize = 0.0d;
+            int nbIgnored = 0;
             foreach (string name in files)
                 try
                 {
@@ -794,9 +902,24 @@ namespace ASA_Save_Inspector
                         totalSize += Convert.ToDouble(info.Length);
                     }
                 }
-                catch { }
+                catch { ++nbIgnored; } // Ex: file deleted or locked while computing the size.
+            if (nbIgnored > 0)
+                Logger.Instance.Log($"{nbIgnored.ToString(CultureInfo.InvariantCulture)} file(s) ignored while computing the size of folder '{path}'.", Logger.LogLevel.WARNING);
             return totalSize;
         }
+
+        public static void FireAndForget(this System.Threading.Tasks.Task? task, string context)
+        {
+            if (task == null)
+                return;
+            task.ContinueWith(t => Logger.Instance.Log($"Exception caught in {context}. Exception=[{t.Exception}]", Logger.LogLevel.ERROR),
+                System.Threading.CancellationToken.None,
+                System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted | System.Threading.Tasks.TaskContinuationOptions.ExecuteSynchronously,
+                System.Threading.Tasks.TaskScheduler.Default);
+        }
+
+        /// <summary>Logs (short warning) an exception that is caught and ignored on purpose, because the operation is optional (ex: deleting a temporary file).</summary>
+        public static void LogIgnoredException(string context, Exception ex) => Logger.Instance.Log($"Ignored exception in {context}: {ex.GetType().Name}: {ex.Message}", Logger.LogLevel.WARNING);
 
         public static bool IsDarkTheme() => (SettingsPage._darkTheme != null && SettingsPage._darkTheme.HasValue && !SettingsPage._darkTheme.Value ? false : true);
 
@@ -1390,14 +1513,25 @@ namespace ASA_Save_Inspector
                 Logger.Instance.Log($"{ASILang.Get("CannotFindASIDataFolder")} Path=[{dataDirPath ?? "NULL"}]", Logger.LogLevel.ERROR);
                 return;
             }
-            string[]? files = null;
-            try { files = Directory.GetFiles(dataDirPath, "*.*", SearchOption.AllDirectories); }
+            List<string>? files = null;
+            try
+            {
+                // The "json_exports" folder is excluded from the listing.
+                string jsonExportsPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(JsonExportsFolder()));
+                files = new List<string>(Directory.GetFiles(dataDirPath, "*.*", SearchOption.TopDirectoryOnly));
+                foreach (string subDirPath in Directory.GetDirectories(dataDirPath, "*", SearchOption.TopDirectoryOnly))
+                {
+                    if (string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(subDirPath)), jsonExportsPath, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    files.AddRange(Directory.GetFiles(subDirPath, "*.*", SearchOption.AllDirectories));
+                }
+            }
             catch (Exception ex)
             {
                 files = null;
                 Logger.Instance.Log($"{ASILang.Get("ListingASIDataFolderError")} Exception=[{ex}]");
             }
-            if (files == null || files.Length <= 0)
+            if (files == null || files.Count <= 0)
                 return;
             Logger.Instance.Log($"{ASILang.Get("ListingASIDataFolder")}{Environment.NewLine}{string.Join(Environment.NewLine, files)}", Logger.LogLevel.INFO);
         }

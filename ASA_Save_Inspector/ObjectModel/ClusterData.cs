@@ -136,11 +136,11 @@ namespace ASA_Save_Inspector.ObjectModel
         public long? AsLong() => Value.ValueKind == JsonValueKind.Number && Value.TryGetInt64(out var l) ? l : null;
         public double? AsDouble() => Value.ValueKind == JsonValueKind.Number ? Value.GetDouble() : null;
         public bool? AsBool() => Value.ValueKind is JsonValueKind.True or JsonValueKind.False ? Value.GetBoolean() : null;
-        public ClusterDataQuaternion? AsQuaternion() => HasProps("x", "y", "z", "w") ? Value.Deserialize<ClusterDataQuaternion>() : null;
-        public ClusterDataVector3? AsVector3() => HasProps("x", "y", "z") && !HasProps("w") ? Value.Deserialize<ClusterDataVector3>() : null;
-        public ClusterDataIdPair? AsIdPair() => HasProps("id1", "id2") ? Value.Deserialize<ClusterDataIdPair>() : null;
-        public ClusterDataObjectRef? AsObjectRef() => HasProps("type", "value") ? Value.Deserialize<ClusterDataObjectRef>() : null;
-        public ClusterDataArkTributeItem? AsStruct() => HasProps("properties") ? Value.Deserialize<ClusterDataArkTributeItem>() : null;
+        public ClusterDataQuaternion? AsQuaternion() => HasProps("x", "y", "z", "w") ? Value.Deserialize<ClusterDataQuaternion>(ClusterDataLoader.Options) : null;
+        public ClusterDataVector3? AsVector3() => HasProps("x", "y", "z") && !HasProps("w") ? Value.Deserialize<ClusterDataVector3>(ClusterDataLoader.Options) : null;
+        public ClusterDataIdPair? AsIdPair() => HasProps("id1", "id2") ? Value.Deserialize<ClusterDataIdPair>(ClusterDataLoader.Options) : null;
+        public ClusterDataObjectRef? AsObjectRef() => HasProps("type", "value") ? Value.Deserialize<ClusterDataObjectRef>(ClusterDataLoader.Options) : null;
+        public ClusterDataArkTributeItem? AsStruct() => HasProps("properties") ? Value.Deserialize<ClusterDataArkTributeItem>(ClusterDataLoader.Options) : null;
 
         private bool HasProps(params string[] names)
         {
@@ -277,9 +277,10 @@ namespace ASA_Save_Inspector.ObjectModel
 
     public static class ClusterDataLoader
     {
-        private static readonly JsonSerializerOptions Options = new()
+        internal static readonly JsonSerializerOptions Options = new()
         {
-            NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            // AllowNamedFloatingPointLiterals: NaN / +-Infinity are written as "NaN" / "Infinity" / "-Infinity" by asi_export_cluster_data.py.
+            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true
         };

@@ -1,0 +1,26 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+  <PropertyGroup>
+    <AcceptEula>wix7</AcceptEula>
+
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">4.0.0</ProductVersion>
+    <InstallerArch>$(Platform.ToLowerInvariant())</InstallerArch>
+    <InstallerPlatform>$(InstallerArch)</InstallerPlatform>
+
+    <AppPublishDir Condition="'$(AppPublishDir)' == ''">$(MSBuildThisFileDirectory)..\ASA_Save_Inspector\bin\win-$(InstallerArch)\publish\</AppPublishDir>
+
+    <AppDirNormalized>$([MSBuild]::EnsureTrailingSlash('$(AppPublishDir)'))</AppDirNormalized>
+
+    <OutputName>ASA_Save_Inspector_Setup_$(InstallerArch)</OutputName>
+    <Cultures>en-US</Cultures>
+
+    <SuppressIces>ICE03;ICE38;ICE40;ICE61;ICE64;ICE91</SuppressIces>
+
+    <DefineConstants>Arch=$(InstallerArch);ProductVersion=$(ProductVersion);AppDir=$(AppDirNormalized);InstallerDir=$(MSBuildThisFileDirectory);RepoDir=$(MSBuildThisFileDirectory)..\</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="7.0.0" />
+  </ItemGroup>
+</Project>

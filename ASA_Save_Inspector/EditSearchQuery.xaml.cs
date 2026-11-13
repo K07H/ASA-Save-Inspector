@@ -1,18 +1,12 @@
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace ASA_Save_Inspector;
 
-/// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
-/// </summary>
 public sealed partial class EditSearchQuery : Window
 {
     public static EditSearchQuery? _editSearchQuery = null;
@@ -116,7 +110,7 @@ public sealed partial class EditSearchQuery : Window
             {
                 await Task.Delay(duration - 600);
                 try { FadeOutStoryboard.Begin(); }
-                catch { }
+                catch (Exception ignoredEx) { Utils.LogIgnoredException("EditSearchQuery.ShowNotificationMsg", ignoredEx); }
                 await Task.Delay(600);
                 bool isOpen = false;
                 try { isOpen = PopupNotification.IsOpen; }
@@ -124,9 +118,9 @@ public sealed partial class EditSearchQuery : Window
                 if (isOpen)
                 {
                     try { b_popupNotification.Opacity = 0; }
-                    catch { }
+                    catch (Exception ignoredEx) { Utils.LogIgnoredException("EditSearchQuery.ShowNotificationMsg", ignoredEx); }
                     try { PopupNotification.IsOpen = false; }
-                    catch { }
+                    catch (Exception ignoredEx) { Utils.LogIgnoredException("EditSearchQuery.ShowNotificationMsg", ignoredEx); }
                 }
             });
         }

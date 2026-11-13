@@ -1,3 +1,9 @@
+using ASA_Save_Inspector.ObjectModel;
+using ASA_Save_Inspector.ObjectModelUtils;
+using ASA_Save_Inspector.Pages;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,12 +18,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using ASA_Save_Inspector.ObjectModel;
-using ASA_Save_Inspector.ObjectModelUtils;
-using ASA_Save_Inspector.Pages;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace ASA_Save_Inspector
 {
@@ -63,6 +63,20 @@ namespace ASA_Save_Inspector
         public static string GetObjAsString(Int64? obj) => (obj != null && obj.HasValue ? obj.Value.ToString(CultureInfo.InvariantCulture) : string.Empty);
         public static string GetObjAsString(Single? obj) => (obj != null && obj.HasValue ? obj.Value.ToString(CultureInfo.InvariantCulture) : string.Empty);
         public static string GetObjAsString(Double? obj) => (obj != null && obj.HasValue ? obj.Value.ToString(CultureInfo.InvariantCulture) : string.Empty);
+
+        private const CompareOptions TEXT_COMPARE_OPTIONS = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
+        private static CompareInfo TextCompareInfo => CultureInfo.CurrentCulture.CompareInfo;
+
+        public static bool TextContains(string? value, string? search) => value != null && search != null && TextCompareInfo.IndexOf(value, search, TEXT_COMPARE_OPTIONS) >= 0;
+        public static bool TextStartsWith(string? value, string? search) => value != null && search != null && TextCompareInfo.IsPrefix(value, search, TEXT_COMPARE_OPTIONS);
+        public static bool TextEndsWith(string? value, string? search) => value != null && search != null && TextCompareInfo.IsSuffix(value, search, TEXT_COMPARE_OPTIONS);
+        public static bool TextEquals(string? value, string? search) => TextCompareInfo.Compare(value ?? string.Empty, search ?? string.Empty, TEXT_COMPARE_OPTIONS) == 0;
+    }
+
+    public class SearchQueryValueException : FormatException
+    {
+        public string? UserMessage { get; }
+        public SearchQueryValueException(string message, string? userMessage) : base(message) { UserMessage = userMessage; }
     }
 
     public class SearchQueryPart
@@ -187,6 +201,123 @@ namespace ASA_Save_Inspector
             private set { }
         }
 
+        [JsonIgnore]
+        public Type? NumberType
+        {
+            get
+            {
+                if (!IsNumber || Property == null)
+                    return null;
+                return Nullable.GetUnderlyingType(Property.PropertyType) ?? Property.PropertyType;
+            }
+            private set { }
+        }
+
+        [JsonIgnore]
+        public bool UsesNumberValue => IsNumber && !IsBool && Operator != SearchOperator.STARTING_WITH && Operator != SearchOperator.ENDING_WITH && Operator != SearchOperator.CONTAINING && Operator != SearchOperator.NOT_CONTAINING;
+
+        public static bool TryParseNumber(string? text, Type? numberType, out object? value)
+        {
+            value = null;
+            if (string.IsNullOrWhiteSpace(text) || numberType == null)
+                return false;
+            string s = text.Trim().Replace(" ", string.Empty).Replace("\u00A0", string.Empty).Replace("\u202F", string.Empty);
+            if (s.Contains(',') && !s.Contains('.'))
+                s = s.Replace(',', '.');
+            CultureInfo inv = CultureInfo.InvariantCulture;
+            if (numberType == typeof(int) || numberType == typeof(long))
+            {
+                // Integers: "12", but also "12.0" or "12,0".
+                if (long.TryParse(s, NumberStyles.Integer, inv, out long l) ||
+                    (double.TryParse(s, NumberStyles.Float, inv, out double asDouble) && double.IsFinite(asDouble) && Math.Floor(asDouble) == asDouble && asDouble >= long.MinValue && asDouble <= long.MaxValue && (l = (long)asDouble) == asDouble))
+                {
+                    if (numberType == typeof(long))
+                    {
+                        value = l;
+                        return true;
+                    }
+                    if (l >= int.MinValue && l <= int.MaxValue)
+                    {
+                        value = (int)l;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            if (numberType == typeof(float) && float.TryParse(s, NumberStyles.Float, inv, out float f) && float.IsFinite(f))
+            {
+                value = f;
+                return true;
+            }
+            if (numberType == typeof(double) && double.TryParse(s, NumberStyles.Float, inv, out double d) && double.IsFinite(d))
+            {
+                value = d;
+                return true;
+            }
+            return false;
+        }
+
+        public string GetInvalidNumberMessage() => ASILang.Get("InvalidNumberValue").Replace("#VALUE#", Value ?? string.Empty, StringComparison.InvariantCulture).Replace("#PROPERTY#", PropertyCleanName ?? PropertyName ?? string.Empty, StringComparison.InvariantCulture);
+
+        private static bool IsValidIdentifier(string? name)
+        {
+            if (string.IsNullOrEmpty(name) || !(char.IsLetter(name[0]) || name[0] == '_'))
+                return false;
+            foreach (char c in name)
+                if (!(char.IsLetterOrDigit(c) || c == '_'))
+                    return false;
+            return true;
+        }
+
+        private static string AddParameter(List<object?> parameters, object? value)
+        {
+            parameters.Add(value);
+            return "@" + (parameters.Count - 1).ToString(CultureInfo.InvariantCulture);
+        }
+
+        public string ToExpression(List<object?> parameters)
+        {
+            if (!IsValidIdentifier(PropertyName) || Property == null)
+                throw new SearchQueryValueException($"Invalid property name '{PropertyName}' for type '{Type}'.", null);
+
+            string prop = $"x.{PropertyName}";
+            string strParam() => AddParameter(parameters, Value ?? string.Empty);
+            string numParam()
+            {
+                if (!TryParseNumber(Value, NumberType, out object? number))
+                    throw new SearchQueryValueException($"Invalid number '{Value}' for property '{PropertyName}'.", GetInvalidNumberMessage());
+                return AddParameter(parameters, number);
+            }
+
+            switch (Operator)
+            {
+                case SearchOperator.NOT_MATCHING:
+                    // Value picked in the list of existing values: exact comparison.
+                    return (IsBool ? $"{prop} {(Value == "True" ? "!= true" : "== true")}" : (IsNumber ? $"{prop} != {numParam()}" : $"LinqUtils.GetObjAsString({prop}) != {strParam()}"));
+                case SearchOperator.NOT_EQUALS:
+                    // Value typed by the user: case and accent insensitive comparison for texts.
+                    return (IsBool ? $"{prop} {(Value == "True" ? "!= true" : "== true")}" : (IsNumber ? $"{prop} != {numParam()}" : $"!LinqUtils.TextEquals(LinqUtils.GetObjAsString({prop}), {strParam()})"));
+                case SearchOperator.STARTING_WITH:
+                    return $"LinqUtils.TextStartsWith(LinqUtils.GetObjAsString({prop}), {strParam()})";
+                case SearchOperator.ENDING_WITH:
+                    return $"LinqUtils.TextEndsWith(LinqUtils.GetObjAsString({prop}), {strParam()})";
+                case SearchOperator.CONTAINING:
+                    return $"LinqUtils.TextContains(LinqUtils.GetObjAsString({prop}), {strParam()})";
+                case SearchOperator.NOT_CONTAINING:
+                    return $"!LinqUtils.TextContains(LinqUtils.GetObjAsString({prop}), {strParam()})";
+                case SearchOperator.LOWER_THAN:
+                    return $"{prop} < {(IsNumber ? numParam() : strParam())}";
+                case SearchOperator.GREATER_THAN:
+                    return $"{prop} > {(IsNumber ? numParam() : strParam())}";
+                case SearchOperator.MATCHING:
+                    // SearchOperator.MATCHING (value picked in the list of existing values: exact comparison).
+                    return (IsBool ? $"{prop} {(Value == "True" ? "== true" : "!= true")}" : (IsNumber ? $"{prop} == {numParam()}" : $"LinqUtils.GetObjAsString({prop}) == {strParam()}"));
+                default:
+                    // SearchOperator.EQUALS : Value typed by the user: case and accent insensitive comparison for texts.
+                    return (IsBool ? $"{prop} {(Value == "True" ? "== true" : "!= true")}" : (IsNumber ? $"{prop} == {numParam()}" : $"LinqUtils.TextEquals(LinqUtils.GetObjAsString({prop}), {strParam()})"));
+            }
+        }
+
         public static string? ToJson(SearchQueryPart? part)
         {
             if (part == null)
@@ -235,7 +366,7 @@ namespace ASA_Save_Inspector
             return copy;
         }
 
-        public string ToExpression()
+        public string ToExpression(List<object?> parameters)
         {
             if (Parts.Count <= 0)
                 return string.Empty;
@@ -259,26 +390,7 @@ namespace ASA_Save_Inspector
                     ++currentGroup;
                 }
 
-                if (Parts[i].Operator == SearchOperator.NOT_MATCHING)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "!= true" : "== true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
-                else if (Parts[i].Operator == SearchOperator.EQUALS)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "== true" : "!= true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
-                else if (Parts[i].Operator == SearchOperator.NOT_EQUALS)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "!= true" : "== true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} != {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) != \"{Parts[i].Value}\""));
-                else if (Parts[i].Operator == SearchOperator.STARTING_WITH)
-                    ret += $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}).StartsWith(\"{Parts[i].Value}\") == true";
-                else if (Parts[i].Operator == SearchOperator.ENDING_WITH)
-                    ret += $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}).EndsWith(\"{Parts[i].Value}\") == true";
-                else if (Parts[i].Operator == SearchOperator.CONTAINING)
-                    ret += $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}).Contains(\"{Parts[i].Value}\") == true";
-                else if (Parts[i].Operator == SearchOperator.NOT_CONTAINING)
-                    ret += $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}).Contains(\"{Parts[i].Value}\") == false";
-                else if (Parts[i].Operator == SearchOperator.LOWER_THAN)
-                    ret += $"x.{Parts[i].PropertyName} < {Parts[i].Value}";
-                else if (Parts[i].Operator == SearchOperator.GREATER_THAN)
-                    ret += $"x.{Parts[i].PropertyName} > {Parts[i].Value}";
-                else // (Parts[i].Operator == SearchOperator.MATCHING)
-                    ret += (Parts[i].IsBool ? $"x.{Parts[i].PropertyName} {(Parts[i].Value == "True" ? "== true" : "!= true")}" : (Parts[i].IsNumber ? $"x.{Parts[i].PropertyName} == {Parts[i].Value}" : $"LinqUtils.GetObjAsString(x.{Parts[i].PropertyName}) == \"{Parts[i].Value}\""));
+                ret += Parts[i].ToExpression(parameters);
             }
 
             while (currentGroup > 0)
@@ -664,7 +776,7 @@ namespace ASA_Save_Inspector
         {
             bool hasQueryParts = (_query != null && _query.Parts != null && _query.Parts.Count > 0);
             if (cbb_LogicalOperator.Visibility == Visibility.Collapsed && hasQueryParts)
-                cbb_LogicalOperator.SelectedIndex = 0; // Default to AND operator.
+                cbb_LogicalOperator.SelectedIndex = 0; // Defaults to AND operator.
             cbb_LogicalOperator.Visibility = hasQueryParts ? Visibility.Visible : Visibility.Collapsed;
             btn_RemovePreviouslyAdded.IsEnabled = hasQueryParts;
         }
@@ -685,7 +797,7 @@ namespace ASA_Save_Inspector
             string? logicalOperator = Utils.GetComboBoxSelection(cbb_LogicalOperator, true);
             LogicalOperator lo = (!string.IsNullOrEmpty(logicalOperator) && string.Compare(logicalOperator, ASILang.Get("OperatorOR"), StringComparison.InvariantCulture) == 0) ? LogicalOperator.OR : LogicalOperator.AND;
 
-            _query.Parts.Add(new SearchQueryPart()
+            SearchQueryPart newPart = new SearchQueryPart()
             {
                 Type = _searchType,
                 LogicalOperator = lo,
@@ -694,7 +806,14 @@ namespace ASA_Save_Inspector
                 Operator = _operator,
                 Value = value,
                 Group = _currentGroup
-            });
+            };
+            // Refuse invalid numbers right away.
+            if (newPart.UsesNumberValue && !SearchQueryPart.TryParseNumber(value, newPart.NumberType, out _))
+            {
+                SearchBuilder.ShowToast(newPart.GetInvalidNumberMessage(), BackgroundColor.ERROR);
+                return;
+            }
+            _query.Parts.Add(newPart);
 
             UpdateBtnsStates();
             ShowQuery();
@@ -711,44 +830,57 @@ namespace ASA_Save_Inspector
                 return null;
             }
 
-            string expression = $"x => {_query.ToExpression()}";
+            string expression = string.Empty;
+            List<object?> parameters = new List<object?>();
             IEnumerable<object>? results = null;
             try
             {
+                expression = $"x => {_query.ToExpression(parameters)}";
+                object?[] args = parameters.ToArray();
                 if (type == SearchType.DINOS)
                 {
                     if (SettingsPage._dinosData != null)
-                        results = SettingsPage._dinosData.AsQueryable().Where(expression);
+                        results = SettingsPage._dinosData.AsQueryable().Where(expression, args);
                 }
                 else if (type == SearchType.STRUCTURES)
                 {
                     if (SettingsPage._structuresData != null)
-                        results = SettingsPage._structuresData.AsQueryable().Where(expression);
+                        results = SettingsPage._structuresData.AsQueryable().Where(expression, args);
                 }
                 else if (type == SearchType.ITEMS)
                 {
                     if (SettingsPage._itemsData != null)
-                        results = SettingsPage._itemsData.AsQueryable().Where(expression);
+                        results = SettingsPage._itemsData.AsQueryable().Where(expression, args);
                 }
                 else if (type == SearchType.PLAYERS)
                 {
                     if (SettingsPage._playersData != null)
-                        results = SettingsPage._playersData.AsQueryable().Where(expression);
+                        results = SettingsPage._playersData.AsQueryable().Where(expression, args);
                 }
                 else if (type == SearchType.TRIBES)
                 {
                     if (SettingsPage._tribesData != null)
-                        results = SettingsPage._tribesData.AsQueryable().Where(expression);
+                        results = SettingsPage._tribesData.AsQueryable().Where(expression, args);
                 }
                 else
                 {
                     if (SettingsPage._playerPawnsData != null)
-                        results = SettingsPage._playerPawnsData.AsQueryable().Where(expression);
+                        results = SettingsPage._playerPawnsData.AsQueryable().Where(expression, args);
                 }
+            }
+            catch (SearchQueryValueException ex) when (!string.IsNullOrEmpty(ex.UserMessage))
+            {
+                Logger.Instance.Log($"{ASILang.Get("FilteringError")} {ex.Message}", Logger.LogLevel.WARNING);
+                if (showToastsInMainWindow)
+                    MainWindow.ShowToast(ex.UserMessage, BackgroundColor.ERROR);
+                else
+                    SearchBuilder.ShowToast(ex.UserMessage, BackgroundColor.ERROR);
+                results = null;
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"{ASILang.Get("FilteringError")} Expression=[{expression}] Exception=[{ex}]", Logger.LogLevel.ERROR);
+                string parametersStr = string.Join(", ", parameters.Select((v, idx) => $"@{idx.ToString(CultureInfo.InvariantCulture)}=[{Convert.ToString(v, CultureInfo.InvariantCulture)}]"));
+                Logger.Instance.Log($"{ASILang.Get("FilteringError")} Expression=[{expression}] Parameters=[{parametersStr}] Exception=[{ex}]", Logger.LogLevel.ERROR);
                 if (showToastsInMainWindow)
                     MainWindow.ShowToast($"{ASILang.Get("FilteringError")} {ASILang.Get("SeeLogsForDetails")}", BackgroundColor.ERROR);
                 else
@@ -794,7 +926,7 @@ namespace ASA_Save_Inspector
                 {
                     await Task.Delay(duration - 600);
                     try { FadeOutStoryboard.Begin(); }
-                    catch { }
+                    catch (Exception ignoredEx) { Utils.LogIgnoredException("SearchBuilder.ShowNotificationMsg", ignoredEx); }
                     await Task.Delay(600);
                     bool isOpen = false;
                     try { isOpen = PopupNotification.IsOpen; }
@@ -802,9 +934,9 @@ namespace ASA_Save_Inspector
                     if (isOpen)
                     {
                         try { b_popupNotification.Opacity = 0; }
-                        catch { }
+                        catch (Exception ignoredEx) { Utils.LogIgnoredException("SearchBuilder.ShowNotificationMsg", ignoredEx); }
                         try { PopupNotification.IsOpen = false; }
-                        catch { }
+                        catch (Exception ignoredEx) { Utils.LogIgnoredException("SearchBuilder.ShowNotificationMsg", ignoredEx); }
                     }
                 });
             }
@@ -933,7 +1065,7 @@ namespace ASA_Save_Inspector
             {
                 string? savedQueriesTxt = null;
                 try { savedQueriesTxt = File.ReadAllText(_savedQueriesFilePath, Encoding.UTF8); }
-                catch (Exception ex) { savedQueriesTxt = null; Logger.Instance.Log($"Failed to read file content at \"{_savedQueriesFilePath}\". Exception=[{ex}]", Logger.LogLevel.ERROR); }
+                catch (Exception ex) { savedQueriesTxt = null; Logger.Instance.Log($"Failed to read file content at '{_savedQueriesFilePath}'. Exception=[{ex}]", Logger.LogLevel.ERROR); }
                 if (!string.IsNullOrWhiteSpace(savedQueriesTxt))
                     _queries = SearchQueries.FromJson(savedQueriesTxt);
             }
@@ -944,8 +1076,11 @@ namespace ASA_Save_Inspector
             if (!string.IsNullOrWhiteSpace(_savedQueriesFilePath))
             {
                 string? queriesJson = SearchQueries.ToJson(_queries);
-                try { File.WriteAllText(_savedQueriesFilePath, queriesJson, Encoding.UTF8); return true; }
-                catch (Exception ex) { Logger.Instance.Log($"Failed to save search queries to \"{_savedQueriesFilePath}\". Exception=[{ex}]", Logger.LogLevel.ERROR); }
+                if (queriesJson != null)
+                {
+                    try { Utils.WriteAllTextAtomic(_savedQueriesFilePath, queriesJson); return true; }
+                    catch (Exception ex) { Logger.Instance.Log($"Failed to save search queries to '{_savedQueriesFilePath}'. Exception=[{ex}]", Logger.LogLevel.ERROR); }
+                }
             }
             return false;
         }
