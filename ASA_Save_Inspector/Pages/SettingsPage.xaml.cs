@@ -306,6 +306,7 @@ namespace ASA_Save_Inspector.Pages
 
             tb_ExtractJsonResult.Visibility = Visibility.Collapsed;
             RefreshExtractProfilePresetsPopup();
+            InitOldExtractionsAgeComboBox();
 
             List<string>? pythonPaths = PythonManager.GetPythonExePaths();
             if (pythonPaths != null && pythonPaths.Count > 0)
@@ -1783,6 +1784,134 @@ namespace ASA_Save_Inspector.Pages
 
         #endregion
 
+        #region Remove extractions older than N days
+
+        // Ages proposed in the drop-down menu: a number of days, or -1 for one month.
+        private static readonly int[] _oldExtractionsAges = new int[] { 1, 2, 3, 4, 5, 6, 7, -1 };
+        private const int DEFAULT_OLD_EXTRACTIONS_AGE_INDEX = 6; // 7 days.
+
+        private static string GetOldExtractionsAgeLabel(int age)
+        {
+            if (age < 0)
+                return ASILang.Get("Duration_OneMonth");
+            if (age == 1)
+                return ASILang.Get("Duration_OneDay");
+            return ASILang.Get("Duration_NbDays").Replace("#NB_DAYS#", age.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture);
+        }
+
+        private static DateTime GetOldExtractionsLimitDate(int age) => (age < 0 ? DateTime.Now.AddMonths(-1) : DateTime.Now.AddDays(-age));
+
+        /// <summary>The "remove extractions older than" block is only shown if at least one extraction is more than 1 day old.</summary>
+        private void UpdateRemoveOldExtractionsVisibility()
+        {
+            DateTime limitDate = GetOldExtractionsLimitDate(1);
+            bool hasOldExtractions = GetJsonExportProfilesSnapshot().Any(o => o != null && o.CreationDate < limitDate);
+            sp_RemoveOldExtractions.Visibility = (hasOldExtractions ? Visibility.Visible : Visibility.Collapsed);
+        }
+
+        private void InitOldExtractionsAgeComboBox()
+        {
+            cbb_OldExtractionsAge.Items.Clear();
+            foreach (int age in _oldExtractionsAges)
+                cbb_OldExtractionsAge.Items.Add(new ComboBoxItem() { Content = GetOldExtractionsAgeLabel(age), Tag = age });
+            cbb_OldExtractionsAge.SelectedIndex = DEFAULT_OLD_EXTRACTIONS_AGE_INDEX;
+        }
+
+        private static List<JsonExportProfile> GetExtractionsOlderThan(DateTime limitDate)
+        {
+            List<JsonExportProfile> profiles = GetJsonExportProfilesSnapshot();
+            if (profiles.Count <= 0)
+            {
+                LoadJsonExportProfiles();
+                profiles = GetJsonExportProfilesSnapshot();
+            }
+            return profiles.Where(o => o != null && o.CreationDate < limitDate).ToList();
+        }
+
+        private static int DoRemoveExtractions(List<JsonExportProfile> toDelete)
+        {
+            int removed = 0;
+            foreach (JsonExportProfile jep in toDelete)
+            {
+                string label = jep.GetLabel() ?? string.Empty;
+                try
+                {
+                    Logger.Instance.Log(ASILang.Get("RemovingOldExtraction").Replace("#EXTRACTION_NAME#", label, StringComparison.InvariantCulture), Logger.LogLevel.INFO);
+                    if (DeleteJsonExportProfile(jep) < 0)
+                        Logger.Instance.Log(ASILang.Get("RemovingOldExtractionFailed").Replace("#EXTRACTION_NAME#", label, StringComparison.InvariantCulture), Logger.LogLevel.WARNING);
+                    else
+                        ++removed;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"{ASILang.Get("RemovingOldExtractionFailed").Replace("#EXTRACTION_NAME#", label, StringComparison.InvariantCulture)} Exception=[{ex}]", Logger.LogLevel.ERROR);
+                }
+            }
+            return removed;
+        }
+
+        private async void btn_RemoveOldExtractions_Click(object sender, RoutedEventArgs e)
+        {
+            if (cbb_OldExtractionsAge.SelectedItem is not ComboBoxItem selectedItem || selectedItem.Tag is not int age)
+                return;
+
+            btn_RemoveOldExtractions.IsEnabled = false;
+            cbb_OldExtractionsAge.IsEnabled = false;
+            try
+            {
+                string ageLabel = GetOldExtractionsAgeLabel(age);
+                DateTime limitDate = GetOldExtractionsLimitDate(age);
+
+                List<JsonExportProfile> toDelete = await Task.Run(() => GetExtractionsOlderThan(limitDate));
+                if (toDelete.Count <= 0)
+                {
+                    MainWindow.ShowToast(ASILang.Get("NoExtractionOlderThan").Replace("#DURATION#", ageLabel, StringComparison.InvariantCulture), BackgroundColor.DEFAULT);
+                    return;
+                }
+
+                // Removal cannot be undone: ask for confirmation first.
+                ContentDialog dialog = new ContentDialog()
+                {
+                    XamlRoot = this.XamlRoot,
+                    Title = ASILang.Get("RemoveOldExtractions"),
+                    Content = ASILang.Get("RemoveOldExtractionsConfirm")
+                        .Replace("#COUNT#", toDelete.Count.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture)
+                        .Replace("#DURATION#", ageLabel, StringComparison.InvariantCulture),
+                    PrimaryButtonText = ASILang.Get("Remove"),
+                    CloseButtonText = ASILang.Get("Cancel"),
+                    DefaultButton = ContentDialogButton.Close
+                };
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                    return;
+
+                tb_RemovingOldExtractions.Visibility = Visibility.Visible;
+                int removed = await Task.Run(() => DoRemoveExtractions(toDelete));
+
+                // Refresh the export profiles list (this page) and the folders sizes (Other page).
+                InitDatagrid(false, false);
+                OtherPage.RefreshFoldersSizes();
+
+                if (removed >= toDelete.Count)
+                    MainWindow.ShowToast(ASILang.Get("OldExtractionsRemoved").Replace("#COUNT#", removed.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture), BackgroundColor.SUCCESS);
+                else
+                    MainWindow.ShowToast(ASILang.Get("OldExtractionsPartiallyRemoved")
+                        .Replace("#COUNT#", removed.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture)
+                        .Replace("#TOTAL#", toDelete.Count.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture), BackgroundColor.WARNING, 6000);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught in SettingsPage.btn_RemoveOldExtractions_Click. Exception=[{ex}]", Logger.LogLevel.ERROR);
+            }
+            finally
+            {
+                tb_RemovingOldExtractions.Visibility = Visibility.Collapsed;
+                cbb_OldExtractionsAge.IsEnabled = true;
+                btn_RemoveOldExtractions.IsEnabled = true;
+            }
+        }
+
+        #endregion
+
         #region JEP datagrid
 
         private string _prevSort = "ID";
@@ -1794,6 +1923,7 @@ namespace ASA_Save_Inspector.Pages
             dg_JEP.MaxWidth = Math.Max(1.0d, gr_SettingsPage.ActualWidth - (_scrollBarWidth + _marginLeft + 4.0d));
             if (!onlyRefresh)
                 GroupAndSortItems("ID", updateSortDir);
+            UpdateRemoveOldExtractionsVisibility();
         }
 
         private void dg_JEP_AutoGeneratingColumn(object sender, CommunityToolkit.WinUI.UI.Controls.DataGridAutoGeneratingColumnEventArgs e)

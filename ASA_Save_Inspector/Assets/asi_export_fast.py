@@ -2,12 +2,13 @@
 import json
 import math
 import os
+import pickle
 import sqlite3
 import sys
 import time
 import uuid
-from multiprocessing import Queue, Process
-from queue import Empty as QueueEmpty
+from multiprocessing import Pipe, Process
+from multiprocessing.connection import Connection, wait as wait_for_connections
 from pathlib import Path
 from typing import Optional, OrderedDict
 
@@ -316,18 +317,23 @@ MSG_CHUNK: str = "chunk"  # payload: list of parsed objects
 MSG_DONE: str = "done"    # payload: number of objects sent by this worker
 MSG_ERROR: str = "error"  # payload: error message
 
+# def send_chunk(result_conn: Connection, worker_index: int, chunk: list) -> None:
+#     if os.environ.get("ASI_DEBUG_PICKLE") == "1":
+#         size = len(pickle.dumps(chunk, protocol=pickle.HIGHEST_PROTOCOL))
+#         print(f"Worker {worker_index}: chunk of {len(chunk)} objects = {size / 1e6:.1f} MB pickled.", flush=True)
+#     result_conn.send((MSG_CHUNK, worker_index, chunk))
+
 def asi_export_process(arg_obj):
     # arg_obj["save_path"]: Path of the .ark save file
     # arg_obj["offset"] / arg_obj["limit"]: Rows range handled by this worker
     # arg_obj["save_context"]: SaveContext
-    # arg_obj["queue"]: Queue (shared by all workers) used to return the results
+    # arg_obj["conn"]: Sending end of the pipe of THIS worker (one pipe per worker: never two writers on the same channel)
     # arg_obj["worker_index"]: Index of this worker
-    result_queue = arg_obj["queue"]
+    result_conn: Connection = arg_obj["conn"]
     worker_index: int = arg_obj["worker_index"]
     try:
         chunk: list = []
         sent: int = 0
-        # Each worker reads its own rows: the main process does not have to load the whole save and send it to every worker.
         conn = open_save_read_only(arg_obj["save_path"])
         try:
             cursor = conn.execute("SELECT key, value FROM game ORDER BY key LIMIT ? OFFSET ?", (arg_obj["limit"], arg_obj["offset"]))
@@ -360,7 +366,8 @@ def asi_export_process(arg_obj):
 
                     # Send the objects by chunks, as soon as they are parsed (the main process receives them while the workers keep parsing).
                     if len(chunk) >= WORKER_CHUNK_SIZE:
-                        result_queue.put((MSG_CHUNK, worker_index, chunk))
+                        # send_chunk(result_conn, worker_index, chunk)
+                        result_conn.send((MSG_CHUNK, worker_index, chunk))
                         sent += len(chunk)
                         chunk = []
             cursor.close()
@@ -368,47 +375,54 @@ def asi_export_process(arg_obj):
             conn.close()
 
         if len(chunk) > 0:
-            result_queue.put((MSG_CHUNK, worker_index, chunk))
+            # send_chunk(result_conn, worker_index, chunk)
+            result_conn.send((MSG_CHUNK, worker_index, chunk))
             sent += len(chunk)
             chunk = []
-        result_queue.put((MSG_DONE, worker_index, sent))
+        result_conn.send((MSG_DONE, worker_index, sent))
     except Exception as ex:
         # Always send something to the main process, otherwise it would wait for a result that will never come.
         print(f"Worker process {worker_index} failed: {ex}", flush=True)
-        result_queue.put((MSG_ERROR, worker_index, str(ex)))
+        try:
+            result_conn.send((MSG_ERROR, worker_index, str(ex)))
+        except Exception:
+            pass  # Pipe already broken: the main process will see EOF.
+    finally:
+        result_conn.close()
 
-def get_workers_results(result_queue: Queue, processes: list, max_wait_without_news_sec: int = 3600) -> list:
-    """Receives the chunks sent by all worker processes (in any order), and returns the objects of each worker, in worker order
-    (so that the objects order, and thus the JSON files content, stays the same as before).
+def get_workers_results(readers: list, processes: list, max_wait_without_news_sec: int = 3600) -> list:
+    """Receives the chunks sent by all worker processes (each worker has its own pipe), and returns the objects of each worker,
+    in worker order (so that the objects order, and thus the JSON files content, stays the same as before).
     Fails explicitly if a worker reports an error, dies without finishing, or if no worker sends anything for too long."""
     nb_workers: int = len(processes)
     results: list = [[] for _ in range(nb_workers)]
-    done: set = set()
+    pending: dict = { readers[i]: i for i in range(nb_workers) }  # Pipes of the workers that have not finished yet.
     waited: int = 0
-    while len(done) < nb_workers:
-        try:
-            msg_type, worker_index, payload = result_queue.get(timeout=5)
-        except QueueEmpty:
+    while len(pending) > 0:
+        ready = wait_for_connections(list(pending.keys()), timeout=5)
+        if not ready:
             waited += 5
-            dead_workers = [i for i in range(nb_workers) if i not in done and not processes[i].is_alive()]
-            if len(dead_workers) > 0:
-                # A worker has exited without saying it was done: give it a last chance to deliver its last messages.
-                try:
-                    msg_type, worker_index, payload = result_queue.get(timeout=2)
-                except QueueEmpty:
-                    i = dead_workers[0]
-                    raise RuntimeError(f"Worker process {i} exited (exit code {processes[i].exitcode}) without returning all its results.")
-            elif waited >= max_wait_without_news_sec:
+            if waited >= max_wait_without_news_sec:
                 raise RuntimeError(f"Worker processes did not return any result for {max_wait_without_news_sec} seconds.")
-            else:
-                continue
+            continue
         waited = 0
-        if msg_type == MSG_CHUNK:
-            results[worker_index].extend(payload)
-        elif msg_type == MSG_DONE:
-            done.add(worker_index)
-        elif msg_type == MSG_ERROR:
-            raise RuntimeError(f"Worker process {worker_index} failed: {payload}")
+        for reader in ready:
+            i: int = pending[reader]
+            try:
+                msg_type, worker_index, payload = reader.recv()
+            except EOFError:
+                # The pipe was closed before "done": the worker died (crash, killed...).
+                processes[i].join(timeout=5)
+                raise RuntimeError(f"Worker process {i} exited (exit code {processes[i].exitcode}) without returning all its results.")
+            if worker_index != i:
+                raise RuntimeError(f"Unexpected message from worker {worker_index} on the pipe of worker {i}.")
+            if msg_type == MSG_CHUNK:
+                results[i].extend(payload)
+            elif msg_type == MSG_DONE:
+                del pending[reader]
+                reader.close()
+            elif msg_type == MSG_ERROR:
+                raise RuntimeError(f"Worker process {i} failed: {payload}")
     return results
 
 class AsiJsonEncoder(DefaultJsonEncoder):
@@ -708,6 +722,11 @@ if __name__ == '__main__':
     # Configure number of process to use (no more than the number of CPUs, 8 at most).
     nb_processes: int = max(1, min(os.cpu_count() or 1, 8))
 
+    # DEBUG: Allows to enforce amount of processes (ex : set ASI_NB_PROCESSES=1).
+    if os.environ.get("ASI_NB_PROCESSES", "").isdigit():
+        nb_processes = max(1, int(os.environ["ASI_NB_PROCESSES"]))
+        print(f"Number of processes forced to {nb_processes}.", flush=True)
+
     print('Loading ASA save...', flush=True)
     start = time.time()
 
@@ -733,21 +752,30 @@ if __name__ == '__main__':
     rows_per_process: int = math.floor(row_count / nb_processes)
     remaining_rows: int = row_count % nb_processes
 
-    # A single queue shared by all workers: the main process receives the chunks of every worker as soon as they are sent.
-    result_queue = Queue()  # Must not be named "queue" (it would shadow the "queue" module).
+    # One pipe per worker (instead of a single queue shared by every worker): there is never more than one writer per channel.
+    readers: list = []
+    writers: list = []
     processes: list[Process] = []
     for i in range(nb_processes):
         offset: int = rows_per_process * i
         limit: int = rows_per_process + (remaining_rows if i == nb_processes - 1 else 0)
-        processes.append(Process(target=asi_export_process, args=({ "save_path": save_path, "offset": offset, "limit": limit, "save_context": arkparse_save.save_context, "queue": result_queue, "worker_index": i },), daemon=True))
+        reader, writer = Pipe(duplex=False)
+        readers.append(reader)
+        writers.append(writer)
+        processes.append(Process(target=asi_export_process, args=({ "save_path": save_path, "offset": offset, "limit": limit, "save_context": arkparse_save.save_context, "conn": writer, "worker_index": i },), daemon=True))
 
     for i in range(nb_processes):
         processes[i].start()
 
+    # The main process closes its own copy of the sending ends: if a worker dies, its pipe then reports EOF (instead of waiting forever).
+    for writer in writers:
+        writer.close()
+
     try:
-        processes_results: list = get_workers_results(result_queue, processes)
+        processes_results: list = get_workers_results(readers, processes)
     except Exception as ex:
         print(f"Failed to parse game objects: {ex}", flush=True)
+        # traceback.print_exc()
         for process in processes:
             if process.is_alive():
                 process.terminate()

@@ -141,6 +141,81 @@ namespace ASA_Save_Inspector
 
         #endregion
 
+        #region Free-threaded Python detection (no GIL, ex: "3.15t")
+
+        // ArkParse and the export script are not compatible with free-threaded Python builds: the data sent between processes
+        // gets randomly corrupted (ex: "unexpected MARK found" pickle errors). Detection runs a Python process, so its result
+        // is cached for each python.exe path.
+        private static readonly Dictionary<string, bool> _freeThreadedPythonCache = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> _freeThreadedPythonWarned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly object _freeThreadedPythonLock = new object();
+
+        /// <summary>Returns true if the given python.exe is a free-threaded build (no GIL). Returns false for a standard build, or if detection failed.</summary>
+        public static bool IsFreeThreadedPython(string? pythonExePath)
+        {
+            if (string.IsNullOrWhiteSpace(pythonExePath) || !File.Exists(pythonExePath))
+                return false;
+            lock (_freeThreadedPythonLock)
+                if (_freeThreadedPythonCache.TryGetValue(pythonExePath, out bool cached))
+                    return cached;
+
+            bool isFreeThreaded;
+            try
+            {
+                using (Process process = new Process())
+                {
+                    process.StartInfo.FileName = pythonExePath;
+                    process.StartInfo.Arguments = "-c \"import sysconfig; print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)\"";
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.Environment.Remove("PYTHONPATH");
+                    process.Start();
+                    Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+                    Task<string> stderrTask = process.StandardError.ReadToEndAsync(); // Read to avoid blocking the process if it writes errors.
+                    if (!process.WaitForExit(15000))
+                    {
+                        try { process.Kill(true); }
+                        catch (Exception ignoredEx) { Utils.LogIgnoredException("PythonManager.IsFreeThreadedPython", ignoredEx); }
+                        Logger.Instance.Log($"Free-threaded Python detection timed out. Python=[{pythonExePath}]", Logger.LogLevel.WARNING);
+                        return false; // Not cached: detection will be tried again next time.
+                    }
+                    process.WaitForExit(); // Ensures that the redirected outputs have been fully read.
+                    string output = stdoutTask.GetAwaiter().GetResult().Trim();
+                    if (process.ExitCode != 0 || (output != "0" && output != "1"))
+                    {
+                        Logger.Instance.Log($"Free-threaded Python detection failed. Python=[{pythonExePath}] ExitCode=[{process.ExitCode}] Output=[{output}] Errors=[{stderrTask.GetAwaiter().GetResult().Trim()}]", Logger.LogLevel.WARNING);
+                        return false; // Not cached: detection will be tried again next time.
+                    }
+                    isFreeThreaded = (output == "1");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Exception caught while detecting free-threaded Python. Python=[{pythonExePath}] Exception=[{ex}]", Logger.LogLevel.WARNING);
+                return false; // Not cached: detection will be tried again next time.
+            }
+
+            lock (_freeThreadedPythonLock)
+                _freeThreadedPythonCache[pythonExePath] = isFreeThreaded;
+            return isFreeThreaded;
+        }
+
+        /// <summary>Logs a warning (each time), and shows it as a toast (once per session for each python.exe).</summary>
+        private static void WarnFreeThreadedPython(string pythonExePath)
+        {
+            string msg = ASILang.Get("PythonFreeThreadedWarning");
+            Logger.Instance.Log($"{msg} Python=[{pythonExePath}]", Logger.LogLevel.WARNING);
+            bool firstTime;
+            lock (_freeThreadedPythonLock)
+                firstTime = _freeThreadedPythonWarned.Add(pythonExePath);
+            if (firstTime)
+                MainWindow.ShowToast(msg, BackgroundColor.WARNING, 4000);
+        }
+
+        #endregion
+
         private static bool DeletePreviousBatchFile(string path)
         {
             try
@@ -870,6 +945,16 @@ BatchPythonPathLine());
             {
                 Logger.Instance.Log($"{ASILang.Get("ArkParseAddRunnerError")} (C)", Logger.LogLevel.ERROR);
                 return false;
+            }
+
+            // Free-threaded Python (no GIL, ex: "3.15t"): the GIL is forced back on for this extraction, and the user is warned.
+            string? pythonExePath = (SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath);
+            if (!string.IsNullOrWhiteSpace(pythonExePath) && IsFreeThreadedPython(pythonExePath))
+            {
+                WarnFreeThreadedPython(pythonExePath);
+                arkParseRunnerContent += @"
+set ""PYTHON_GIL=1""
+";
             }
 
             arkParseRunnerContent += string.Format(

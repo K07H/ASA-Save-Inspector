@@ -202,6 +202,12 @@
                         </controls:DataGrid>
                     </Border>
                     <TextBlock x:Name="tb_JsonDataLoaded" Text="{x:Bind asi:ASILang.Get('JsonData_SuccessfullyLoaded'), Mode=OneWay}" Foreground="Green" Margin="0,5,0,0" TextWrapping="WrapWholeWords" Visibility="Collapsed"/>
+                    <StackPanel x:Name="sp_RemoveOldExtractions" Orientation="Horizontal" Margin="0,20,0,0" Visibility="Collapsed">
+                        <TextBlock VerticalAlignment="Center" FontSize="16" Text="{x:Bind asi:ASILang.Get('RemoveExtractionsOlderThan'), Mode=OneWay}"/>
+                        <ComboBox x:Name="cbb_OldExtractionsAge" FontSize="16" MinWidth="120" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <Button x:Name="btn_RemoveOldExtractions" Content="{x:Bind asi:ASILang.Get('Remove'), Mode=OneWay}" FontSize="16" Margin="10,0,0,0" VerticalAlignment="Center" Click="btn_RemoveOldExtractions_Click"/>
+                        <TextBlock x:Name="tb_RemovingOldExtractions" FontSize="16" FontStyle="Italic" Visibility="Collapsed" Margin="10,0,0,0" VerticalAlignment="Center"><Run Text="{x:Bind asi:ASILang.Get('RemovingJsonData'), Mode=OneWay}"/> <Run Text="{x:Bind asi:ASILang.Get('PleaseWait'), Mode=OneWay}"/></TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Border>

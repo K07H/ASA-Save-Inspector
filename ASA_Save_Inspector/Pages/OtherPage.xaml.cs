@@ -118,6 +118,16 @@ namespace ASA_Save_Inspector.Pages
             catch (Exception ignoredEx) { Utils.LogIgnoredException("OtherPage.ComputeJsonExportsFolderSize", ignoredEx); }
         }
 
+        /// <summary>Recomputes the folders sizes shown on this page (if it exists). Can be called from any page.</summary>
+        public static void RefreshFoldersSizes()
+        {
+            OtherPage? page = _page;
+            if (page == null)
+                return;
+            Task.Run(() => page.ComputeJsonExportsFolderSize()).FireAndForget(nameof(ComputeJsonExportsFolderSize));
+            Task.Run(() => page.ComputeASIDataFolderTotalSize()).FireAndForget(nameof(ComputeASIDataFolderTotalSize));
+        }
+
         private static void LogFoldersSizes()
         {
             string jsonExportsFolderPath = Utils.JsonExportsFolder();
