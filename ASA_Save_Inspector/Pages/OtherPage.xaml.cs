@@ -618,8 +618,8 @@ namespace ASA_Save_Inspector.Pages
             }
             if (profiles.Count > 0)
             {
-                // For each save file, keep the most recent COMPLETE extraction, and remove the extractions older than it.
-                //  - A failed extraction is never used as "the one to keep" (before, a failed extraction could cause the last good one to be removed).
+                // For each save file, keep the most recent complete extraction, and remove the extractions older than it.
+                //  - A failed extraction is never used as the one to keep.
                 //  - Extractions more recent than the last complete one are kept (one may still be running).
                 //  - If a save file has no complete extraction, nothing is removed for it.
                 // Profiles without a save file path, or using the deprecated format (where the "save file path" is a directory), are ignored.

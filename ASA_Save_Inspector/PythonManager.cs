@@ -76,8 +76,7 @@ namespace ASA_Save_Inspector
 
         #region Busy state (only one extraction at a time, never during an ArkParse install/update)
 
-        // ID of the running extraction (0 = none). An ID (instead of a simple flag) ensures that an extraction can only release its own lock,
-        // never the lock of the next extraction of a preset.
+        // ID of the running extraction (0 = none). An ID (instead of a simple flag) ensures that an extraction can only release its own lock, never the lock of the next extraction of a preset.
         private static long _extractionCounter = 0;
         private static long _runningExtractionId = 0;
 
@@ -91,30 +90,45 @@ namespace ASA_Save_Inspector
         /// <summary>True while an extraction or an ArkParse install/update is running.</summary>
         public static bool IsBusy => IsExtractionRunning || IsArkParseInstallRunning;
 
+        private static readonly object _busyLock = new object();
+
         /// <summary>Returns the ID of the new extraction, or 0 if another extraction (or an ArkParse install) is running.</summary>
         private static long TryBeginExtraction()
         {
-            if (IsArkParseInstallRunning)
-                return 0;
-            long id = Interlocked.Increment(ref _extractionCounter);
-            return (Interlocked.CompareExchange(ref _runningExtractionId, id, 0) == 0 ? id : 0);
+            lock (_busyLock)
+            {
+                if (IsArkParseInstallRunning || IsExtractionRunning)
+                    return 0;
+                long id = Interlocked.Increment(ref _extractionCounter);
+                Interlocked.Exchange(ref _runningExtractionId, id);
+                return id;
+            }
         }
 
         private static void EndExtraction(long extractionId)
         {
-            if (extractionId != 0)
+            if (extractionId == 0)
+                return;
+            lock (_busyLock)
                 Interlocked.CompareExchange(ref _runningExtractionId, 0, extractionId);
         }
 
         private static bool TryBeginArkParseInstall()
         {
-            if (IsExtractionRunning)
-                return false;
-            Interlocked.Exchange(ref _arkParseInstallRunning, 1);
-            return true;
+            lock (_busyLock)
+            {
+                if (IsExtractionRunning)
+                    return false;
+                Interlocked.Exchange(ref _arkParseInstallRunning, 1);
+                return true;
+            }
         }
 
-        private static void EndArkParseInstall() => Interlocked.Exchange(ref _arkParseInstallRunning, 0);
+        private static void EndArkParseInstall()
+        {
+            lock (_busyLock)
+                Interlocked.Exchange(ref _arkParseInstallRunning, 0);
+        }
 
         /// <summary>Logs and shows (toast) why an extraction or an install cannot be started now. Returns false (for convenience).</summary>
         public static bool NotifyBusy()
@@ -254,33 +268,46 @@ namespace ASA_Save_Inspector
         {
             string dataDir = Utils.GetDataDir();
             string expectedFolder = Utils.ArkParseFolder();
-            string expectedFolderName = Path.GetFileName(expectedFolder);
+            string tempFolder = Path.Combine(dataDir, "ark-save-parser-new");
+            string backupFolder = Path.Combine(dataDir, "ark-save-parser-old");
 
-            string? topFolderName = null;
-            using (ZipArchive zip = ZipFile.OpenRead(archiveFilePath))
-                foreach (ZipArchiveEntry entry in zip.Entries)
-                {
-                    string name = entry.FullName.Replace('\\', '/');
-                    int idx = name.IndexOf('/');
-                    if (idx > 0)
-                    {
-                        topFolderName = name.Substring(0, idx);
-                        break;
-                    }
-                }
+            if (Directory.Exists(tempFolder))
+                Directory.Delete(tempFolder, true);
+            if (Directory.Exists(backupFolder))
+                Directory.Delete(backupFolder, true);
 
-            ZipFile.ExtractToDirectory(archiveFilePath, dataDir, true);
+            ZipFile.ExtractToDirectory(archiveFilePath, tempFolder);
 
-            if (!string.IsNullOrEmpty(topFolderName) && string.Compare(topFolderName, expectedFolderName, StringComparison.OrdinalIgnoreCase) != 0)
+            string newRoot = tempFolder;
+            string[] topDirs = Directory.GetDirectories(tempFolder);
+            if (topDirs.Length == 1 && Directory.GetFiles(tempFolder).Length == 0)
+                newRoot = topDirs[0];
+
+            string jsonApiRelativePath = Path.GetRelativePath(expectedFolder, Utils.ArkParseJsonApiFilePath());
+            if (!File.Exists(Path.Combine(newRoot, jsonApiRelativePath)))
             {
-                string extractedFolder = Path.Combine(dataDir, topFolderName);
-                if (Directory.Exists(extractedFolder))
-                {
-                    if (Directory.Exists(expectedFolder))
-                        Directory.Delete(expectedFolder, true);
-                    Directory.Move(extractedFolder, expectedFolder);
-                }
+                try { Directory.Delete(tempFolder, true); }
+                catch (Exception ignoredEx) { Utils.LogIgnoredException("PythonManager.ExtractArkParseArchive", ignoredEx); }
+                throw new InvalidDataException($"The ArkParse archive does not contain '{jsonApiRelativePath}'.");
             }
+
+            if (Directory.Exists(expectedFolder))
+                Directory.Move(expectedFolder, backupFolder);
+            try
+            {
+                Directory.Move(newRoot, expectedFolder);
+            }
+            catch
+            {
+                if (Directory.Exists(backupFolder) && !Directory.Exists(expectedFolder))
+                    Directory.Move(backupFolder, expectedFolder);
+                throw;
+            }
+
+            try { if (Directory.Exists(tempFolder)) Directory.Delete(tempFolder, true); }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("PythonManager.ExtractArkParseArchive", ignoredEx); }
+            try { if (Directory.Exists(backupFolder)) Directory.Delete(backupFolder, true); }
+            catch (Exception ignoredEx) { Utils.LogIgnoredException("PythonManager.ExtractArkParseArchive", ignoredEx); }
         }
 
         public static async Task<bool> DownloadAndExtractArkParse()
@@ -291,7 +318,7 @@ namespace ASA_Save_Inspector
                 string? repoVersion = await GetRepoArkParseVersion();
                 if (string.IsNullOrWhiteSpace(repoVersion))
                 {
-                    // Unable to get the latest version (offline?): keep the currently installed version.
+                    // Unable to get the latest version, keep the currently installed version.
                     AddDetailsToInstallingPopup(ASILang.Get("GetArkParseVersionFailed"), true);
                     return false;
                 }

@@ -90,6 +90,11 @@ def is_in_str(search_for: list[str], search_in: str) -> bool:
     return False
 
 def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
+    if additional_blueprints is not None and len(additional_blueprints) > 0:
+        for additional_blueprint in additional_blueprints:
+            if additional_blueprint:
+                if additional_blueprint in game_obj.blueprint:
+                    return True
     if game_obj.get_property_value("DinoID1") is None \
             or game_obj.get_property_value("DinoID2") is None:
         return False
@@ -117,14 +122,14 @@ def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str])
             or "Umbra_Character_BP.Umbra_Character_BP_C" in game_obj.blueprint \
             or "Polar_Bear.Polar_Bear_C" in game_obj.blueprint:
         return True
+    return False
+
+def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
     if additional_blueprints is not None and len(additional_blueprints) > 0:
         for additional_blueprint in additional_blueprints:
             if additional_blueprint:
                 if additional_blueprint in game_obj.blueprint:
                     return True
-    return False
-
-def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
     if "TekBunker/Structures/BP_Bunker_Base.BP_Bunker_Base_C" in game_obj.blueprint:
         return True
     if game_obj.get_property_value("StructureID") is None:
@@ -151,14 +156,14 @@ def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[
             or "BP_HeroPoisonPlant.BP_HeroPoisonPlant_C" in game_obj.blueprint \
             or "BP_HelperBot_DockingBay" in game_obj.blueprint:
         return True
+    return False
+
+def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
     if additional_blueprints is not None and len(additional_blueprints) > 0:
         for additional_blueprint in additional_blueprints:
             if additional_blueprint:
                 if additional_blueprint in game_obj.blueprint:
                     return True
-    return False
-
-def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
     if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
         return False
     if "/DroppedItemGeneric" in game_obj.blueprint or \
@@ -189,11 +194,6 @@ def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str])
             "/PrimalItemTrophy" in game_obj.blueprint or \
             "/PrimalItemWeaponAttachment_" in game_obj.blueprint:
         return True
-    if additional_blueprints is not None and len(additional_blueprints) > 0:
-        for additional_blueprint in additional_blueprints:
-            if additional_blueprint:
-                if additional_blueprint in game_obj.blueprint:
-                    return True
     return False
 
 def human_readable_time(time_in_sec : float):

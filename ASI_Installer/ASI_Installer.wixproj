@@ -3,7 +3,7 @@
     <AcceptEula>wix7</AcceptEula>
 
     <Platform Condition="'$(Platform)' == ''">x64</Platform>
-    <ProductVersion Condition="'$(ProductVersion)' == ''">4.0.0</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">$(AsiVersion)</ProductVersion>
     <InstallerArch>$(Platform.ToLowerInvariant())</InstallerArch>
     <InstallerPlatform>$(InstallerArch)</InstallerPlatform>
 

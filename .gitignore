@@ -8,12 +8,7 @@
 /ASA_Save_Inspector_Setup_x64/Release
 ASI_cert_step1_create_cert.ps1
 ASI_cert_step2_convert_to_pfx.ps1
-ASI_cert_step3_sign_app_arm64.ps1
-ASI_cert_step3_sign_app_x64.ps1
-ASI_cert_step3_sign_app_x86.ps1
-ASI_cert_step3_sign_msi_wix_arm64.ps1
-ASI_cert_step3_sign_msi_wix_x64.ps1
-ASI_cert_step3_sign_msi_wix_x86.ps1
+ASI_cert_step3_sign.ps1
 ASI_cert_step3_sign_msi_x64.ps1
 ASI_cert_step3_sign_msi_x86.ps1
 ASI_certificate.pfx
