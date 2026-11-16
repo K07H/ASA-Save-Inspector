@@ -10,13 +10,12 @@ Note: This application is still under development, more features will be added i
 2. [Demonstration video](#2-demonstration-video)
 3. [Installation](#3-installation)
 4. [Quick start](#4-quick-start)
-5. [Filters and groups](#5-filters-and-groups)
-6. [Custom maps](#6-custom-maps)
-7. [Command Line Interface](#7-command-line-interface)
-8. [Feature requests and bug reports](#8-feature-requests-and-bug-reports)
-9. [Contributing](#9-contributing)
-10. [Donations](#10-donations)
-11. [Discord](#11-discord)
+5. [Custom maps](#5-custom-maps)
+6. [Command Line Interface](#6-command-line-interface)
+7. [Feature requests and bug reports](#7-feature-requests-and-bug-reports)
+8. [Contributing](#8-contributing)
+9. [Donations](#9-donations)
+10. [Discord](#10-discord)
 
 ## 1) Features
 - View, search, filter and sort the various game objects (dinos, items, structures and so on).
@@ -40,16 +39,13 @@ https://www.youtube.com/watch?v=LOZbUW5rd0A
 3. Extract, then load the "JSON Data".
 4. You can now navigate in the app using left menu buttons!
 
-## 5) Filters and groups
-The filtering feature has been fully reworked in v3.0. However, if you are still using an older version of ASI, you can find the old filtering documentation here: [https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md](https://github.com/K07H/ASA-Save-Inspector/blob/main/OLD_FILTERING.md)
-
-## 6) Custom maps
+## 5) Custom maps
 You can add your own maps in file "maps_info.json" inside ASI's data folder (*to access ASI's data folder, click on "Other" tab then click on "Open ASI data folder" button).*<br>
 Here's an example of a custom map added in "maps_info.json": [Custom map example](AddingCustomMap.jpg)<br>
 Your map image must be 5096 by 5096 pixels for the minimap to work properly, and it must have a 500 pixels margin, like so: [Map image format](MapImageFormat.jpg)<br>
 *If you want me to add some modded maps just let me know on the [Discord](https://discord.gg/dPgTprNyn9) inside #asa-save-inspector channel.*
 
-## 7) Command Line Interface
+## 6) Command Line Interface
 Available commands:
 * `-ExtractPreset`
   * This command takes the preset name as argument (in double quotes).
@@ -64,14 +60,14 @@ Here's a powershell script example that copy save files into a specific folder, 
 
 Note: Only one instance of ASI can run at a time (the window and the commands above share the same data). When a command is launched while ASI is already running, it waits up to 30 seconds for the other instance to close, then exits with code `6`. Close the ASI window before running scheduled commands.
 
-## 8) Feature requests and bug reports
+## 7) Feature requests and bug reports
 You can report bugs or ask for new features in the issues tab here: https://github.com/K07H/ASA-Save-Inspector/issues
 
-## 9) Contributing
+## 8) Contributing
 Contributions are welcome, simply make a pull request on the repository.
 
-## 10) Donations
+## 9) Donations
 Donations are not required, but highly appreciated: https://paypal.me/osubmarin
 
-## 11) Discord
+## 10) Discord
 Don't hesitate to join us on Discord here: https://discord.gg/dPgTprNyn9
