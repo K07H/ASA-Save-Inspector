@@ -176,6 +176,11 @@
             </NavigationView.MenuItems>
             <NavigationView.FooterMenuItems>
                 <NavigationViewItemSeparator/>
+                <NavigationViewItem x:Name="nvi_Minimap" Tag="OPEN_MINIMAP" SelectsOnInvoked="False" Content="{x:Bind local:ASILang.Get('Minimap'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
+                    <NavigationViewItem.Icon>
+                        <BitmapIcon UriSource="ms-appx:///Assets/MinimapIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem x:Name="nvi_Other" Tag="ASA_Save_Inspector.Pages.OtherPage" Content="{x:Bind local:ASILang.Get('Other'), Mode=OneWay}" FontSize="18" Margin="0" MinHeight="50">
                     <NavigationViewItem.Icon>
                         <BitmapIcon UriSource="ms-appx:///Assets/OtherIcon96.png" Scale="1.4,1.4,1.4" Margin="-30,-35,0,0"/>

@@ -509,14 +509,17 @@ namespace ASA_Save_Inspector
                     await Task.Delay(250);
                     MainWindow.UpdateMinimap(_emptyPoints, LastDoubleTap);
                     MainWindow.ShowMinimap();
+                    bool dataPageDisplayed = Minimap.RefreshPointsFromDisplayedPage();
+#if DEBUG
+                    if (!dataPageDisplayed)
+                        MainWindow.TestAddPointsMinimap();
+#endif
                 });
             }
         }
 
         public static void UpdateMinimap(IEnumerable<MapPoint?> points, Func<MapPoint?, bool>? onDoubleTap)
         {
-            // The pages give a lazy query (Select over the displayed objects, with coordinates and cryopod lookups): compute it ONCE here,
-            // it used to be enumerated several times (Count() then foreach). While the minimap refresh is paused, it stays lazy (computed on resume).
             if (!(_minimap != null && Minimap.PauseMinimapRefresh) && points is not ICollection<MapPoint?>)
                 points = points.ToList();
 
@@ -589,6 +592,11 @@ namespace ASA_Save_Inspector
 
         private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
+            if (args.InvokedItemContainer == nvi_Minimap)
+            {
+                OpenMinimap();
+                return;
+            }
             if (args.InvokedItemContainer != null)
             {
                 string? btnTag = args.InvokedItemContainer.Tag.ToString();

@@ -338,6 +338,27 @@ namespace ASA_Save_Inspector
                 mapInfo.Layer?.DataHasChanged();
         }
 
+        /// <summary>Must be called from the UI thread.</summary>
+        public static bool RefreshPointsFromDisplayedPage()
+        {
+            Type? currentPageType = Utils.GetCurrentlyDisplayedPageType();
+            if (currentPageType == typeof(DinosPage))
+                DinosPage._page?.RefreshMinimapPoints();
+            else if (currentPageType == typeof(ItemsPage))
+                ItemsPage._page?.RefreshMinimapPoints();
+            else if (currentPageType == typeof(PlayerPawnsPage))
+                PlayerPawnsPage._page?.RefreshMinimapPoints();
+            else if (currentPageType == typeof(PlayersPage))
+                PlayersPage._page?.RefreshMinimapPoints();
+            else if (currentPageType == typeof(StructuresPage))
+                StructuresPage._page?.RefreshMinimapPoints();
+            else if (currentPageType == typeof(TribesPage))
+                TribesPage._page?.RefreshMinimapPoints();
+            else
+                return false;
+            return true;
+        }
+
         private void RefreshPointsForCurrentSubMap()
         {
             HideCallouts();

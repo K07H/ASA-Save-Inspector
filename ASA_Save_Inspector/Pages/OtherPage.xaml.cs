@@ -200,14 +200,6 @@ namespace ASA_Save_Inspector.Pages
                 MainWindow.ShowToast(ASILang.Get("CannotFindASIDataFolder"), BackgroundColor.ERROR);
         }
 
-        private void btn_OpenMinimap_Click(object sender, RoutedEventArgs e)
-        {
-            MainWindow.OpenMinimap();
-#if DEBUG
-            MainWindow.TestAddPointsMinimap();
-#endif
-        }
-
 #pragma warning disable CS1998
         private void btn_ForceReinstallArkParse_Click(object sender, RoutedEventArgs e)
         {

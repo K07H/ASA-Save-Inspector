@@ -1583,10 +1583,10 @@ namespace ASA_Save_Inspector
 
         public static Type? GetCurrentlyDisplayedPageType()
         {
-            if (MainWindow._mainWindow?._navView?.Content != null && MainWindow._mainWindow._navView.Content is Frame)
-                if (((Frame)MainWindow._mainWindow._navView.Content).Content != null)
-                    return ((Frame)MainWindow._mainWindow._navView.Content).Content.GetType();
-            return null;
+            NavigationView? navView = MainWindow._mainWindow?._navView;
+            if (navView == null || navView.DispatcherQueue == null || !navView.DispatcherQueue.HasThreadAccess)
+                return null;
+            return (navView.Content as Frame)?.Content?.GetType();
         }
     }
 

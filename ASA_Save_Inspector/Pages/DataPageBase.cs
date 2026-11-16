@@ -110,6 +110,13 @@ namespace ASA_Save_Inspector.Pages
         /// <summary>Updates the minimap with the displayed objects (no point by default).</summary>
         protected virtual void RefreshMinimap(IEnumerable<T> displayed) => MainWindow.UpdateMinimap(new List<MapPoint>(), OnMinimapDoubleTap);
 
+        /// <summary>Sends the objects currently displayed in the datagrid to the minimap again (without filtering and sorting them again).</summary>
+        public void RefreshMinimapPoints()
+        {
+            if (_lastDisplayed != null && MainWindow._minimap != null)
+                RefreshMinimap(_lastDisplayed);
+        }
+
         /// <summary>Called when a point is double tapped on the minimap.</summary>
         protected virtual bool OnMinimapDoubleTap(MapPoint? point) => false;
 

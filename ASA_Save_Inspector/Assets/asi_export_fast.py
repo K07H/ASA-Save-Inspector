@@ -1,21 +1,24 @@
 ﻿import base64
+import faulthandler
 import json
 import math
 import os
-import pickle
 import sqlite3
 import sys
+import threading
 import time
 import uuid
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 from multiprocessing import Pipe, Process
 from multiprocessing.connection import Connection, wait as wait_for_connections
 from pathlib import Path
-from typing import Optional, OrderedDict
+from typing import Optional
 
 from arkparse import AsaSave
 from arkparse.api import PlayerApi
 from arkparse.api.json_api import JsonApi
-from arkparse.ark_tribe import ArkTribe
 from arkparse.logging import ArkSaveLogger
 from arkparse.object_model.ark_game_object import ArkGameObject
 from arkparse.object_model.cryopods.cryopod import Cryopod
@@ -23,7 +26,6 @@ from arkparse.object_model.dinos import Dino, TamedDino, Baby, TamedBaby
 from arkparse.object_model.structures import Structure, StructureWithInventory
 from arkparse.parsing import ArkBinaryParser
 from arkparse.parsing.struct import ActorTransform, ObjectReference
-from arkparse.player.ark_player import ArkPlayer
 from arkparse.player.hexagon_state import HexagonState
 from arkparse.saves.save_connection import SaveConnection
 from arkparse.utils.json_utils import DefaultJsonEncoder
@@ -82,6 +84,45 @@ BLUEPRINTS_NO_EXPORT: list[str] = [ "/AI/",
                                     "PrimalBuffPersistentData",
                                     "DayCycle" ]
 
+UNSUPPORTED_EMBEDDED_DATA_VERSION: str = "Unsupported embedded data version (only Unreal 5.5 is supported)"
+
+class ErrorReport:
+    def __init__(self):
+        self.verbose: bool = False
+        self._lock = threading.Lock()
+        self._counts: Counter = Counter()
+        self._first_details: dict = {}
+
+    def add(self, category: str, detail: str) -> None:
+        with self._lock:
+            self._counts[category] += 1
+            if category not in self._first_details:
+                self._first_details[category] = detail
+        if self.verbose:
+            print(detail, flush=True)
+
+    def snapshot(self) -> tuple:
+        with self._lock:
+            return (dict(self._counts), dict(self._first_details))
+
+    def merge(self, snapshot: tuple) -> None:
+        counts, first_details = snapshot
+        with self._lock:
+            self._counts.update(counts)
+            for category, detail in first_details.items():
+                self._first_details.setdefault(category, detail)
+
+    def print_summary(self) -> None:
+        with self._lock:
+            if len(self._counts) <= 0:
+                return
+            print(f"Parsing errors summary ({sum(self._counts.values())} error(s){'' if self.verbose else ', enable debug logging for details'}):", flush=True)
+            for category, count in sorted(self._counts.items(), key=lambda kv: (-kv[1], kv[0])):
+                print(f"  - {count} x {category}. First one: {self._first_details.get(category, '')}", flush=True)
+
+# Errors of the current process (each worker process has its own instance, merged into the main one at the end).
+ERRORS: ErrorReport = ErrorReport()
+
 def is_in_str(search_for: list[str], search_in: str) -> bool:
     if search_in is None or len(search_in) <= 0 or search_for is None or len(search_for) <= 0:
         return False
@@ -90,112 +131,128 @@ def is_in_str(search_for: list[str], search_in: str) -> bool:
             return True
     return False
 
-def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
-    if additional_blueprints is not None and len(additional_blueprints) > 0:
-        for additional_blueprint in additional_blueprints:
-            if additional_blueprint:
-                if additional_blueprint in game_obj.blueprint:
-                    return True
+@lru_cache(maxsize=None)
+def is_skipped_class(blueprint: str) -> bool:
+    return is_in_str(BLUEPRINTS_TO_SKIP, blueprint)
+
+@lru_cache(maxsize=None)
+def is_no_export_class(blueprint: str) -> bool:
+    return is_in_str(BLUEPRINTS_NO_EXPORT, blueprint)
+
+@lru_cache(maxsize=None)
+def is_day_cycle_class(blueprint: str) -> bool:
+    return "daycycle" in blueprint.lower()
+
+@lru_cache(maxsize=None)
+def matches_additional_blueprints(blueprint: str, additional_blueprints: tuple) -> bool:
+    for additional_blueprint in additional_blueprints:
+        if additional_blueprint and additional_blueprint in blueprint:
+            return True
+    return False
+
+@lru_cache(maxsize=None)
+def is_dino_class(blueprint: str) -> bool:
+    if is_no_export_class(blueprint):
+        return False
+    if ("_Character_" in blueprint or "_Char_" in blueprint) and ("Dino" in blueprint or "Creature" in blueprint):
+        return True
+    return "/Raft_BP.Raft_BP" in blueprint \
+            or "/Raft/MotorRaft_BP.MotorRaft_BP" in blueprint \
+            or "/Raft/Tireme_BP_" in blueprint \
+            or "Car_Vehicle_BP.Car_Vehicle_BP_C" in blueprint \
+            or "InsectSwarmChar_BP.InsectSwarmChar_BP_C" in blueprint \
+            or "MicrobeSwarmChar_BP.MicrobeSwarmChar_BP_C" in blueprint \
+            or "BrigShipBP.BrigShipBP_C" in blueprint \
+            or "SloopShipBP.SloopShipBP_C" in blueprint \
+            or "GalleonShipBP.GalleonShipBP_C" in blueprint \
+            or "TriremeShipBP.TriremeShipBP_C" in blueprint \
+            or "TriremeShipPlayerFollowingBP.TriremeShipPlayerFollowingBP_C" in blueprint \
+            or "BrigShipPlayerFollowingBP.BrigShipPlayerFollowingBP_C" in blueprint \
+            or "SloopShipPlayerFollowingBP.SloopShipPlayerFollowingBP_C" in blueprint \
+            or "TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet.TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet_C" in blueprint \
+            or "TriremeShipPlayerFollowingBP_FleetEscort.TriremeShipPlayerFollowingBP_FleetEscort_C" in blueprint \
+            or "Gargantar_Character_BP.Gargantar_Character_BP_C" in blueprint \
+            or "Lumina_Character_BP.Lumina_Character_BP_C" in blueprint \
+            or "Umbra_Character_BP.Umbra_Character_BP_C" in blueprint \
+            or "Polar_Bear.Polar_Bear_C" in blueprint
+
+@lru_cache(maxsize=None)
+def is_structure_class(blueprint: str) -> bool:
+    return "/Structures" in blueprint \
+            or "/GigantoraptorNest" in blueprint \
+            or "Rug_Shag" in blueprint \
+            or "TributeTerminal" in blueprint \
+            or "StructureStandingTurret_Flightseeker" in blueprint \
+            or "ArtifactCrate_" in blueprint \
+            or "/WyvernNest" in blueprint \
+            or "/Structure_PlantSpecies" in blueprint \
+            or "/HordeCrates/ElementWall_Horde" in blueprint \
+            or "/Flag_SM_" in blueprint \
+            or "/SupplyCrateBaseBP_" in blueprint \
+            or "/StructureBP_WoodBench" in blueprint \
+            or "MB_Button.MB_Button_C" in blueprint \
+            or "/PortableRope_Ladder_" in blueprint \
+            or "BP_HeroPoisonPlant.BP_HeroPoisonPlant_C" in blueprint \
+            or "BP_HelperBot_DockingBay" in blueprint
+
+@lru_cache(maxsize=None)
+def is_item_class(blueprint: str) -> bool:
+    if is_no_export_class(blueprint):
+        return False
+    return "/DroppedItemGeneric" in blueprint or \
+            "Egg_Wyvern_Fertilized" in blueprint or \
+            "/PrimalItem_" in blueprint or \
+            "/PrimalItemAmmo_" in blueprint or \
+            "/PrimalItemArmor_" in blueprint or \
+            "/PrimalItemArtifact" in blueprint or \
+            "/PrimalItemC4Ammo" in blueprint or \
+            "/PrimalItemConsumable_" in blueprint or \
+            "/PrimalItemConsumableBuff_Parachute" in blueprint or \
+            "/PrimalItemConsumableEatable_" in blueprint or \
+            "/PrimalItemConsumableMiracleGro" in blueprint or \
+            "/PrimalItemConsumableRespecSoup" in blueprint or \
+            "/PrimalItemConsumableSoap" in blueprint or \
+            "/PrimalItemCostume_" in blueprint or \
+            "/PrimalItemCustomDrinkRecipe_" in blueprint or \
+            "/PrimalItemCustomFoodRecipe_" in blueprint or \
+            "/PrimalItemDinoCostume_" in blueprint or \
+            "/PrimalItemDye_" in blueprint or \
+            "/PrimalItemMotorboat" in blueprint or \
+            "/PrimalItemRadio" in blueprint or \
+            "/PrimalItemRaft" in blueprint or \
+            "/PrimalItemResource_" in blueprint or \
+            "/PrimalItemSkin_" in blueprint or \
+            "/PrimalItemStructure_" in blueprint or \
+            "/PrimalItemStructureSkin_" in blueprint or \
+            "/PrimalItemTrophy" in blueprint or \
+            "/PrimalItemWeaponAttachment_" in blueprint
+
+def is_dino_blueprint(game_obj: ArkGameObject, additional_blueprints: tuple) -> bool:
+    if matches_additional_blueprints(game_obj.blueprint, additional_blueprints):
+        return True
     if game_obj.get_property_value("DinoID1") is None \
             or game_obj.get_property_value("DinoID2") is None:
         return False
-    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
-        return False
-    if ("_Character_" in game_obj.blueprint or "_Char_" in game_obj.blueprint) and ("Dino" in game_obj.blueprint or "Creature" in game_obj.blueprint):
-        return True
-    if "/Raft_BP.Raft_BP" in game_obj.blueprint \
-            or "/Raft/MotorRaft_BP.MotorRaft_BP" in game_obj.blueprint \
-            or "/Raft/Tireme_BP_" in game_obj.blueprint \
-            or "Car_Vehicle_BP.Car_Vehicle_BP_C" in game_obj.blueprint \
-            or "InsectSwarmChar_BP.InsectSwarmChar_BP_C" in game_obj.blueprint \
-            or "MicrobeSwarmChar_BP.MicrobeSwarmChar_BP_C" in game_obj.blueprint \
-            or "BrigShipBP.BrigShipBP_C" in game_obj.blueprint \
-            or "SloopShipBP.SloopShipBP_C" in game_obj.blueprint \
-            or "GalleonShipBP.GalleonShipBP_C" in game_obj.blueprint \
-            or "TriremeShipBP.TriremeShipBP_C" in game_obj.blueprint \
-            or "TriremeShipPlayerFollowingBP.TriremeShipPlayerFollowingBP_C" in game_obj.blueprint \
-            or "BrigShipPlayerFollowingBP.BrigShipPlayerFollowingBP_C" in game_obj.blueprint \
-            or "SloopShipPlayerFollowingBP.SloopShipPlayerFollowingBP_C" in game_obj.blueprint \
-            or "TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet.TriremeShipPlayerFollowingBP_FleetCaptain_SmallFleet_C" in game_obj.blueprint \
-            or "TriremeShipPlayerFollowingBP_FleetEscort.TriremeShipPlayerFollowingBP_FleetEscort_C" in game_obj.blueprint \
-            or "Gargantar_Character_BP.Gargantar_Character_BP_C" in game_obj.blueprint \
-            or "Lumina_Character_BP.Lumina_Character_BP_C" in game_obj.blueprint \
-            or "Umbra_Character_BP.Umbra_Character_BP_C" in game_obj.blueprint \
-            or "Polar_Bear.Polar_Bear_C" in game_obj.blueprint:
-        return True
-    return False
+    return is_dino_class(game_obj.blueprint)
 
-def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
-    if additional_blueprints is not None and len(additional_blueprints) > 0:
-        for additional_blueprint in additional_blueprints:
-            if additional_blueprint:
-                if additional_blueprint in game_obj.blueprint:
-                    return True
+def is_structure_blueprint(game_obj: ArkGameObject, additional_blueprints: tuple) -> bool:
+    if matches_additional_blueprints(game_obj.blueprint, additional_blueprints):
+        return True
     if "TekBunker/Structures/BP_Bunker_Base.BP_Bunker_Base_C" in game_obj.blueprint:
         return True
     if game_obj.get_property_value("StructureID") is None:
         return False
-    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
+    if is_no_export_class(game_obj.blueprint):
         return False
     if game_obj.get_property_value("DinoID1") is None \
             and game_obj.get_property_value("ItemID") is None:
         return True
-    if "/Structures" in game_obj.blueprint \
-            or "/GigantoraptorNest" in game_obj.blueprint \
-            or "Rug_Shag" in game_obj.blueprint \
-            or "TributeTerminal" in game_obj.blueprint \
-            or "StructureStandingTurret_Flightseeker" in game_obj.blueprint \
-            or "ArtifactCrate_" in game_obj.blueprint \
-            or "/WyvernNest" in game_obj.blueprint \
-            or "/Structure_PlantSpecies" in game_obj.blueprint \
-            or "/HordeCrates/ElementWall_Horde" in game_obj.blueprint \
-            or "/Flag_SM_" in game_obj.blueprint \
-            or "/SupplyCrateBaseBP_" in game_obj.blueprint \
-            or "/StructureBP_WoodBench" in game_obj.blueprint \
-            or "MB_Button.MB_Button_C" in game_obj.blueprint \
-            or "/PortableRope_Ladder_" in game_obj.blueprint \
-            or "BP_HeroPoisonPlant.BP_HeroPoisonPlant_C" in game_obj.blueprint \
-            or "BP_HelperBot_DockingBay" in game_obj.blueprint:
-        return True
-    return False
+    return is_structure_class(game_obj.blueprint)
 
-def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: list[str]) -> bool:
-    if additional_blueprints is not None and len(additional_blueprints) > 0:
-        for additional_blueprint in additional_blueprints:
-            if additional_blueprint:
-                if additional_blueprint in game_obj.blueprint:
-                    return True
-    if is_in_str(BLUEPRINTS_NO_EXPORT, game_obj.blueprint):
-        return False
-    if "/DroppedItemGeneric" in game_obj.blueprint or \
-            "Egg_Wyvern_Fertilized" in game_obj.blueprint or \
-            "/PrimalItem_" in game_obj.blueprint or \
-            "/PrimalItemAmmo_" in game_obj.blueprint or \
-            "/PrimalItemArmor_" in game_obj.blueprint or \
-            "/PrimalItemArtifact" in game_obj.blueprint or \
-            "/PrimalItemC4Ammo" in game_obj.blueprint or \
-            "/PrimalItemConsumable_" in game_obj.blueprint or \
-            "/PrimalItemConsumableBuff_Parachute" in game_obj.blueprint or \
-            "/PrimalItemConsumableEatable_" in game_obj.blueprint or \
-            "/PrimalItemConsumableMiracleGro" in game_obj.blueprint or \
-            "/PrimalItemConsumableRespecSoup" in game_obj.blueprint or \
-            "/PrimalItemConsumableSoap" in game_obj.blueprint or \
-            "/PrimalItemCostume_" in game_obj.blueprint or \
-            "/PrimalItemCustomDrinkRecipe_" in game_obj.blueprint or \
-            "/PrimalItemCustomFoodRecipe_" in game_obj.blueprint or \
-            "/PrimalItemDinoCostume_" in game_obj.blueprint or \
-            "/PrimalItemDye_" in game_obj.blueprint or \
-            "/PrimalItemMotorboat" in game_obj.blueprint or \
-            "/PrimalItemRadio" in game_obj.blueprint or \
-            "/PrimalItemRaft" in game_obj.blueprint or \
-            "/PrimalItemResource_" in game_obj.blueprint or \
-            "/PrimalItemSkin_" in game_obj.blueprint or \
-            "/PrimalItemStructure_" in game_obj.blueprint or \
-            "/PrimalItemStructureSkin_" in game_obj.blueprint or \
-            "/PrimalItemTrophy" in game_obj.blueprint or \
-            "/PrimalItemWeaponAttachment_" in game_obj.blueprint:
+def is_item_blueprint(game_obj: ArkGameObject, additional_blueprints: tuple) -> bool:
+    if matches_additional_blueprints(game_obj.blueprint, additional_blueprints):
         return True
-    return False
+    return is_item_class(game_obj.blueprint)
 
 def human_readable_time(time_in_sec : float):
     # Round the total first (rounding only the seconds could give "1m60s"), and show at least 1s.
@@ -210,15 +267,13 @@ def human_readable_time(time_in_sec : float):
     else:
         return str(seconds) + 's'
 
-def get_obj_for_uuid(obj_uuid: uuid.UUID, save: AsaSave):
-    if obj_uuid in save.parsed_objects:
-        return save.parsed_objects[obj_uuid]
-    elif obj_uuid in save.game_obj_binaries:
-        reader = ArkBinaryParser(save.game_obj_binaries[obj_uuid], save.save_context)
-        try:
-            return ArkGameObject(obj_uuid, reader.read_name(), reader)
-        except Exception:
-            pass
+def read_game_time(day_cycle_objects: list) -> Optional[tuple]:
+    """Returns (current_day, current_time) read from the DayCycle object of the save (same logic as ArkParse),
+    or None if none of the given objects contains the current day."""
+    for obj in day_cycle_objects:
+        day_id = obj.get_property_value("theDayNumberToMakeSerilizationWork", None)
+        if day_id is not None:
+            return (day_id, obj.get_property_value("CurrentTime", 0))
     return None
 
 def parse_single_structure(obj: ArkGameObject, save: AsaSave, bypass_inventory: bool = True) -> Optional[Structure | StructureWithInventory]:
@@ -231,15 +286,17 @@ def parse_single_structure(obj: ArkGameObject, save: AsaSave, bypass_inventory: 
             structure.set_actor_transform(save.save_context.actor_transforms[obj.uuid])
         return structure
     except Exception as e:
-        print(f"Exception caught when parsing structure {obj.uuid}: {e}", flush=True)
+        ERRORS.add("structure failed to parse", f"Exception caught when parsing structure {obj.uuid} of class {obj.blueprint}: {e}")
         return None
 
 def parse_single_cryopod(obj: ArkGameObject, save: AsaSave) -> Optional[Cryopod]:
     try:
         return Cryopod(obj.uuid, save)
     except Exception as e:
-        if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
-            print(f"Exception caught when parsing cryopod {obj.uuid}: {e}", flush=True)
+        if UNSUPPORTED_EMBEDDED_DATA_VERSION in str(e):
+            ERRORS.add("cryopod with unsupported embedded data version (its dino is not exported)", f"Cryopod {obj.uuid}: {e}")
+        else:
+            ERRORS.add("cryopod failed to parse", f"Exception caught when parsing cryopod {obj.uuid}: {e}")
         return None
 
 def parse_single_dino(obj: ArkGameObject, save: AsaSave):
@@ -258,7 +315,7 @@ def parse_single_dino(obj: ArkGameObject, save: AsaSave):
             else:
                 return Dino(obj.uuid, save)
     except Exception as e:
-        print(f"Exception caught when parsing dino {obj.uuid}: {e}", flush=True)
+        ERRORS.add("dino failed to parse", f"Exception caught when parsing dino {obj.uuid} of class {obj.blueprint}: {e}")
         return None
 
 def pawn_to_json(pawn_obj: ArkGameObject) -> dict:
@@ -268,8 +325,10 @@ def pawn_to_json(pawn_obj: ArkGameObject) -> dict:
 
     # Grab pawn location if it exists
     if pawn_obj.has_property("SavedBaseWorldLocation"):
-        pawn_location = ActorTransform(vector=pawn_obj.get_property_value("SavedBaseWorldLocation"))
-        if pawn_location is not None:
+        # ActorTransform(vector=None) does not fail, it keeps x = y = z = 0: the pawn would be exported at (0, 0, 0).
+        location_vector = pawn_obj.get_property_value("SavedBaseWorldLocation")
+        if location_vector is not None:
+            pawn_location = ActorTransform(vector=location_vector)
             pawn_data["ActorTransformX"] = pawn_location.x
             pawn_data["ActorTransformY"] = pawn_location.y
             pawn_data["ActorTransformZ"] = pawn_location.z
@@ -308,20 +367,53 @@ def open_save_read_only(save_file_path: Path) -> sqlite3.Connection:
         return sqlite3.connect(str(save_file_path))
 
 # Number of objects sent at once by a worker process to the main process.
-# Before, each worker sent ALL its objects in a single message: the worker had to keep its whole list AND its whole pickled copy
-# in memory, and the main process had to receive the whole pickled copy before unpickling it (memory peaks on big saves).
 WORKER_CHUNK_SIZE: int = 5000
 
-# Messages sent by worker processes on the shared result queue: (message type, worker index, payload).
+# Messages sent by worker processes on their pipe (processes mode only): (message type, worker index, payload).
 MSG_CHUNK: str = "chunk"  # payload: list of parsed objects
-MSG_DONE: str = "done"    # payload: number of objects sent by this worker
+MSG_DONE: str = "done"    # payload: (number of objects sent by this worker, snapshot of its ErrorReport)
 MSG_ERROR: str = "error"  # payload: error message
 
-# def send_chunk(result_conn: Connection, worker_index: int, chunk: list) -> None:
-#     if os.environ.get("ASI_DEBUG_PICKLE") == "1":
-#         size = len(pickle.dumps(chunk, protocol=pickle.HIGHEST_PROTOCOL))
-#         print(f"Worker {worker_index}: chunk of {len(chunk)} objects = {size / 1e6:.1f} MB pickled.", flush=True)
-#     result_conn.send((MSG_CHUNK, worker_index, chunk))
+def iter_parsed_chunks(save_path: Path, offset: int, limit: int, save_context):
+    chunk: list = []
+    conn = open_save_read_only(save_path)
+    try:
+        cursor = conn.execute("SELECT key, value FROM game ORDER BY key LIMIT ? OFFSET ?", (limit, offset))
+        for key, value in cursor:
+            try:
+                byte_buffer = ArkBinaryParser(value, save_context)
+                obj_uuid = uuid.UUID(bytes=key)
+            except Exception as ex:
+                ERRORS.add("object failed to read", f"Exception caught when reading object with key {key!r}: {ex}")
+                continue
+            try:
+                class_name = byte_buffer.read_name()
+            except Exception as ex:
+                class_name = None
+                ERRORS.add("object class name failed to read", f"Exception caught when reading the class name of object {obj_uuid}: {ex}")
+
+            if class_name is not None:
+                # Skipped objects are not parsed (they are never exported), but their raw bytes are still sent back
+                # so that ArkParse can still find them if another object references them (inventories...).
+                if is_skipped_class(class_name):
+                    chunk.append({ "UUID": obj_uuid, "class": class_name, "game_obj": None, "bytes": value })
+                else:
+                    try:
+                        game_obj = ArkGameObject(obj_uuid, class_name, byte_buffer)
+                    except Exception as e:
+                        game_obj = None
+                        ERRORS.add("object failed to parse", f"Exception caught when parsing object {obj_uuid} of class {class_name}: {e}")
+                    if game_obj is not None:
+                        chunk.append({ "UUID": obj_uuid, "class": class_name, "game_obj": game_obj, "bytes": value })
+
+                if len(chunk) >= WORKER_CHUNK_SIZE:
+                    yield chunk
+                    chunk = []
+        cursor.close()
+    finally:
+        conn.close()
+    if len(chunk) > 0:
+        yield chunk
 
 def asi_export_process(arg_obj):
     # arg_obj["save_path"]: Path of the .ark save file
@@ -329,71 +421,40 @@ def asi_export_process(arg_obj):
     # arg_obj["save_context"]: SaveContext
     # arg_obj["conn"]: Sending end of the pipe of THIS worker (one pipe per worker: never two writers on the same channel)
     # arg_obj["worker_index"]: Index of this worker
+    # arg_obj["debug"]: Debug logging enabled?
     result_conn: Connection = arg_obj["conn"]
     worker_index: int = arg_obj["worker_index"]
+    ERRORS.verbose = arg_obj["debug"]
     try:
-        chunk: list = []
         sent: int = 0
-        conn = open_save_read_only(arg_obj["save_path"])
-        try:
-            cursor = conn.execute("SELECT key, value FROM game ORDER BY key LIMIT ? OFFSET ?", (arg_obj["limit"], arg_obj["offset"]))
-            for key, value in cursor:
-                try:
-                    byte_buffer = ArkBinaryParser(value, arg_obj["save_context"])
-                    obj_uuid = uuid.UUID(bytes=key)
-                except Exception as ex:
-                    print(f"Exception caught when reading object with key {key!r}: {ex}", flush=True)
-                    continue
-                try:
-                    class_name = byte_buffer.read_name()
-                except Exception as ex:
-                    class_name = None
-                    print(f"Exception caught when parsing object with UUID {obj_uuid}: {ex}", flush=True)
-
-                if class_name is not None:
-                    # Skipped objects are not parsed (they are never exported), but their raw bytes are still sent back
-                    # so that ArkParse can still find them if another object references them (inventories...).
-                    if is_in_str(BLUEPRINTS_TO_SKIP, class_name):
-                        chunk.append({ "UUID": obj_uuid, "class": class_name, "game_obj": None, "bytes": value })
-                    else:
-                        try:
-                            game_obj = ArkGameObject(obj_uuid, class_name, byte_buffer)
-                        except Exception as e:
-                            game_obj = None
-                            print(f"Exception caught when parsing object of class {class_name}: {e}", flush=True)
-                        if game_obj is not None:
-                            chunk.append({ "UUID": obj_uuid, "class": class_name, "game_obj": game_obj, "bytes": value })
-
-                    # Send the objects by chunks, as soon as they are parsed (the main process receives them while the workers keep parsing).
-                    if len(chunk) >= WORKER_CHUNK_SIZE:
-                        # send_chunk(result_conn, worker_index, chunk)
-                        result_conn.send((MSG_CHUNK, worker_index, chunk))
-                        sent += len(chunk)
-                        chunk = []
-            cursor.close()
-        finally:
-            conn.close()
-
-        if len(chunk) > 0:
-            # send_chunk(result_conn, worker_index, chunk)
+        # The main process receives the chunks while this worker keeps parsing (send() waits until the main process reads).
+        for chunk in iter_parsed_chunks(arg_obj["save_path"], arg_obj["offset"], arg_obj["limit"], arg_obj["save_context"]):
             result_conn.send((MSG_CHUNK, worker_index, chunk))
             sent += len(chunk)
-            chunk = []
-        result_conn.send((MSG_DONE, worker_index, sent))
+        result_conn.send((MSG_DONE, worker_index, (sent, ERRORS.snapshot())))
     except Exception as ex:
         # Always send something to the main process, otherwise it would wait for a result that will never come.
         print(f"Worker process {worker_index} failed: {ex}", flush=True)
         try:
             result_conn.send((MSG_ERROR, worker_index, str(ex)))
         except Exception:
-            pass  # Pipe already broken: the main process will see EOF.
+            pass # Pipe already broken: the main process will see EOF.
     finally:
         result_conn.close()
 
+def asi_export_thread(save_path: Path, offset: int, limit: int, save_context, worker_index: int) -> list:
+    results: list = []
+    try:
+        for chunk in iter_parsed_chunks(save_path, offset, limit, save_context):
+            results.extend(chunk)
+    except Exception as ex:
+        raise RuntimeError(f"Worker thread {worker_index} failed: {ex}") from ex
+    return results
+
+def gil_enabled() -> bool:
+    return getattr(sys, "_is_gil_enabled", lambda: True)()
+
 def get_workers_results(readers: list, processes: list, max_wait_without_news_sec: int = 3600) -> list:
-    """Receives the chunks sent by all worker processes (each worker has its own pipe), and returns the objects of each worker,
-    in worker order (so that the objects order, and thus the JSON files content, stays the same as before).
-    Fails explicitly if a worker reports an error, dies without finishing, or if no worker sends anything for too long."""
     nb_workers: int = len(processes)
     results: list = [[] for _ in range(nb_workers)]
     pending: dict = { readers[i]: i for i in range(nb_workers) }  # Pipes of the workers that have not finished yet.
@@ -419,6 +480,7 @@ def get_workers_results(readers: list, processes: list, max_wait_without_news_se
             if msg_type == MSG_CHUNK:
                 results[i].extend(payload)
             elif msg_type == MSG_DONE:
+                ERRORS.merge(payload[1])
                 del pending[reader]
                 reader.close()
             elif msg_type == MSG_ERROR:
@@ -426,8 +488,6 @@ def get_workers_results(readers: list, processes: list, max_wait_without_news_se
     return results
 
 class AsiJsonEncoder(DefaultJsonEncoder):
-    """Uses to_json_obj() when available, and falls back to ArkParse's DefaultJsonEncoder for everything else (UUID, dates...).
-    Previously, passing default=... together with cls=DefaultJsonEncoder replaced DefaultJsonEncoder.default, so these values were written as null."""
     _warned_types: set = set()
 
     def default(self, o):
@@ -436,7 +496,6 @@ class AsiJsonEncoder(DefaultJsonEncoder):
         try:
             return super().default(o)
         except TypeError:
-            # Same tolerance as before for types that nobody knows how to serialize, but it is now reported (once per type).
             type_name = type(o).__name__
             if type_name not in AsiJsonEncoder._warned_types:
                 AsiJsonEncoder._warned_types.add(type_name)
@@ -444,9 +503,6 @@ class AsiJsonEncoder(DefaultJsonEncoder):
             return None
 
 def non_finite_float_to_str(value: float):
-    """NaN and +/-Infinity are not valid JSON: Python writes them as bare NaN / Infinity tokens, which System.Text.Json rejects
-    (the whole file then went through ASI's slow fallback loader, and the objects containing them were lost).
-    They are written as the strings "NaN", "Infinity" and "-Infinity" instead, which ASI reads back as float values."""
     if math.isnan(value):
         return "NaN"
     if math.isinf(value):
@@ -454,16 +510,14 @@ def non_finite_float_to_str(value: float):
     return value
 
 def to_json_compatible(obj, encoder: json.JSONEncoder, depth: int = 0):
-    """Converts obj into plain JSON types (dict, list, str, int, float, bool, None), replacing non-finite floats by strings.
-    Objects that are not plain JSON types are converted with encoder.default() (to_json_obj(), UUIDs, dates...)."""
     if depth > 200:
-        return None  # Protection against reference cycles.
+        return None # Protection against reference cycles.
     if obj is None or isinstance(obj, (str, bool, int)):
         return obj
     if isinstance(obj, float):
         return non_finite_float_to_str(obj)
     if isinstance(obj, dict):
-        return { k: to_json_compatible(v, encoder, depth + 1) for k, v in obj.items() }
+        return { (k if k is None or isinstance(k, (str, int, float, bool)) else str(k)): to_json_compatible(v, encoder, depth + 1) for k, v in obj.items() }
     if isinstance(obj, (list, tuple, set)):
         return [ to_json_compatible(v, encoder, depth + 1) for v in obj ]
     converted = encoder.default(obj)
@@ -472,16 +526,26 @@ def to_json_compatible(obj, encoder: json.JSONEncoder, depth: int = 0):
     return to_json_compatible(converted, encoder, depth + 1)
 
 def write_json_file(file_path: Path, data, use_to_json_obj: bool = True) -> None:
-    """Writes a JSON file atomically: a crash can no longer leave a truncated JSON file that ASI would try to load."""
     encoder = AsiJsonEncoder() if use_to_json_obj else DefaultJsonEncoder()
     # Note: indent=4 is kept on purpose, ASI's fallback JSON loader relies on it.
-    json_str = json.dumps(to_json_compatible(data, encoder), indent=4, cls=(AsiJsonEncoder if use_to_json_obj else DefaultJsonEncoder))
     tmp_path = file_path.with_name(file_path.name + ".tmp")
-    with open(tmp_path, "w", encoding="utf-8") as text_file:
-        text_file.write(json_str)
+    with open(tmp_path, "w", encoding="utf-8", errors="replace") as text_file:
+        if isinstance(data, list) and len(data) > 0:
+            text_file.write("[\n")
+            for i, item in enumerate(data):
+                if i > 0:
+                    text_file.write(",\n")
+                item_json: str = json.dumps(to_json_compatible(item, encoder), indent=4, ensure_ascii=False)
+                text_file.write("    " + item_json.replace("\n", "\n    "))
+            text_file.write("\n]")
+        else:
+            text_file.write(json.dumps(to_json_compatible(data, encoder), indent=4, ensure_ascii=False))
     os.replace(tmp_path, file_path)
 
-def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], structure_bps: list[str]):
+def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], structure_bps: list[str], debug: bool):
+    dino_bps_tuple: tuple = tuple(dino_bps or [])
+    item_bps_tuple: tuple = tuple(item_bps or [])
+    structure_bps_tuple: tuple = tuple(structure_bps or [])
     all_dinos = []
     all_pawns_objects = []
     all_items = []
@@ -489,68 +553,72 @@ def asi_parse_classic(save: AsaSave, dino_bps: list[str], item_bps: list[str], s
     skipped_bps: list[str] = []
     unknown_bps: list[str] = []
     failed_parsing: list[str] = []
-    # Iterate over a copy: ArkParse may lazily add objects to parsed_objects while we parse (ex: skipped objects referenced by others).
     for obj in list(save.parsed_objects.values()):
         if obj is not None:
             try:
-                if is_in_str(BLUEPRINTS_TO_SKIP, obj.blueprint):
-                    if debug_logging and obj.blueprint not in skipped_bps:
+                if is_skipped_class(obj.blueprint):
+                    if debug and obj.blueprint not in skipped_bps:
                         skipped_bps.append(obj.blueprint)
                     continue
 
-                if is_dino_blueprint(obj, dino_bps):
+                if is_dino_blueprint(obj, dino_bps_tuple):
                     dino = parse_single_dino(obj, save)
                     if dino is not None:
                         all_dinos.append(dino)
-                    elif debug_logging:
+                    elif debug:
                         failed_parsing.append(f"Dino {obj.uuid} with class {obj.blueprint}.")
                 elif "PrimalItem_WeaponEmptyCryopod" in obj.blueprint or "PrimalItem_SCSCryopod" in obj.blueprint:
+                    all_items.append(JsonApi.primal_item_to_json_obj(obj))
                     cryopod = parse_single_cryopod(obj, save)
                     if cryopod is not None:
                         if cryopod.dino is not None:
                             cryopod.dino.is_cryopodded = True
                             all_dinos.append(cryopod.dino)
                         if cryopod.saddle is not None:
-                            saddle_from_cryopod = JsonApi.primal_item_to_json_obj(cryopod.saddle.object)
-                            # Get blueprint.
-                            saddle_blueprint: str = cryopod.saddle.blueprint.__str__()
-                            delimiter_pos: int = saddle_blueprint.find(" ")
-                            if delimiter_pos > 0 and len(saddle_blueprint) > delimiter_pos:
-                                saddle_blueprint = saddle_blueprint[delimiter_pos + 1:]
-                            saddle_from_cryopod["ItemArchetype"] = saddle_blueprint
-                            # Get owner cryopod UUID.
-                            saddle_owner_cryopod_uuid: str = "00000000000000000000000000000000"
-                            if cryopod.uuid is not None:
-                                saddle_owner_cryopod_uuid = cryopod.uuid.__str__()
-                            saddle_from_cryopod["OwnerCryopodUUID"] = saddle_owner_cryopod_uuid
-                            # Adjust quantity.
-                            saddle_from_cryopod["ItemQuantity"] = 1
-                            # Append saddle to items.
-                            all_items.append(saddle_from_cryopod)
-                    elif debug_logging:
+                            try:
+                                saddle_from_cryopod = JsonApi.primal_item_to_json_obj(cryopod.saddle.object)
+                                # Get blueprint.
+                                saddle_blueprint: str = cryopod.saddle.blueprint.__str__()
+                                delimiter_pos: int = saddle_blueprint.find(" ")
+                                if delimiter_pos > 0 and len(saddle_blueprint) > delimiter_pos:
+                                    saddle_blueprint = saddle_blueprint[delimiter_pos + 1:]
+                                saddle_from_cryopod["ItemArchetype"] = saddle_blueprint
+                                # Get owner cryopod UUID.
+                                saddle_owner_cryopod_uuid: str = "00000000000000000000000000000000"
+                                if cryopod.uuid is not None:
+                                    saddle_owner_cryopod_uuid = cryopod.uuid.__str__()
+                                saddle_from_cryopod["OwnerCryopodUUID"] = saddle_owner_cryopod_uuid
+                                # Adjust quantity.
+                                saddle_from_cryopod["ItemQuantity"] = 1
+                                # Append saddle to items.
+                                all_items.append(saddle_from_cryopod)
+                            except Exception as e:
+                                ERRORS.add("cryopod saddle failed to export", f"Exception caught when exporting the saddle of cryopod {obj.uuid}: {e}")
+                    elif debug:
                         failed_parsing.append(f"Cryopod {obj.uuid} content.")
-                    all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 elif "/PlayerPawnTest_Female.PlayerPawnTest_Female_C" in obj.blueprint or "/PlayerPawnTest_Male.PlayerPawnTest_Male_C" in obj.blueprint:
                     all_pawns_objects.append(obj)
-                elif is_item_blueprint(obj, item_bps):
+                elif is_item_blueprint(obj, item_bps_tuple):
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
-                elif is_structure_blueprint(obj, structure_bps):
+                elif is_structure_blueprint(obj, structure_bps_tuple):
                     structure = parse_single_structure(obj, save, True)
                     if structure is not None:
                         all_structures.append(structure)
-                    elif debug_logging:
+                    elif debug:
                         failed_parsing.append(f"Structure {obj.uuid} with class {obj.blueprint}.")
                 # Fallback cases
                 elif obj.get_property_value("ItemID") is not None:
                     all_items.append(JsonApi.primal_item_to_json_obj(obj))
                 # Absolutely unknown
-                elif not is_in_str(BLUEPRINTS_NO_EXPORT, obj.blueprint):
-                    if debug_logging and obj.blueprint not in unknown_bps:
+                elif not is_no_export_class(obj.blueprint):
+                    if debug and obj.blueprint not in unknown_bps:
                         unknown_bps.append(obj.blueprint)
                         print(f"Unknown object {obj.uuid} with class {obj.blueprint}.", flush=True)
             except Exception as e:
-                if not "Unsupported embedded data version (only Unreal 5.5 is supported)" in str(e):
-                    print(f"Exception caught during parsing: {e}", flush=True)
+                if UNSUPPORTED_EMBEDDED_DATA_VERSION in str(e):
+                    ERRORS.add("object with unsupported embedded data version (not exported)", f"Object {obj.uuid} of class {obj.blueprint}: {e}")
+                else:
+                    ERRORS.add("object failed to export", f"Exception caught when exporting object {obj.uuid} of class {obj.blueprint}: {e}")
 
     return { "dinos": all_dinos, "pawns": all_pawns_objects, "items": all_items, "structures": all_structures, "skipped_blueprints": skipped_bps, "unknown_blueprints": unknown_bps, "failed_parsing": failed_parsing }
 
@@ -560,43 +628,43 @@ def players_and_tribes_to_json(player_api: PlayerApi, pawn_objects: list):
 
     pawn_by_id = {p.get_property_value("LinkedPlayerDataID"): p for p in player_api.pawns.values()}
 
-    # Unique IDs of the players that have a pawn on the map, computed once (it used to loop over every pawn for every player).
     unique_ids_on_map: set = set()
     for p in pawn_objects:
         platform_profile_id = p.get_property_value("PlatformProfileID")
         if not platform_profile_id is None and platform_profile_id.value is not None:
             unique_ids_on_map.add(platform_profile_id.value)
 
-    # Format players into JSON.
     for player in player_api.players:
-        player_json_obj = player.to_json_obj()
+        try:
+            player_json_obj = player.to_json_obj()
 
-        player_json_obj["FoundOnMap"] = player.unique_id in unique_ids_on_map
-        
-        hexagons = HexagonState.from_player(player, pawn_by_id.get(player.id_))
-        if hexagons.has_hexagons:
-            player_json_obj["Hexagons"] = hexagons.count
+            player_json_obj["FoundOnMap"] = player.unique_id in unique_ids_on_map
 
-        players.append(player_json_obj)
+            hexagons = HexagonState.from_player(player, pawn_by_id.get(player.id_))
+            if hexagons.has_hexagons:
+                player_json_obj["Hexagons"] = hexagons.count
 
-    # Format tribes into JSON.
+            players.append(player_json_obj)
+        except Exception as e:
+            ERRORS.add("player failed to export", f"Exception caught when exporting player {getattr(player, 'id_', '?')}: {e}")
+
     for tribe in player_api.tribes:
-        # Grab the tribe json object
-        tribe_json_obj = tribe.to_json_obj()
-        # Grab tribe members as json objects if they exists
-        tribe_members = []
-        tribe_players = player_api.tribe_to_player_map.get(tribe.tribe_id, [])  # A tribe can have no known player.
-        active_ids: set = set()
-        for p in tribe_players:
-            tribe_members.append({"PlayerCharacterName": p.char_name, "PlayerDataID": p.id_, "IsActive": True})
-            active_ids.add(p.id_)
-        for idx, p_id in enumerate(tribe.member_ids):
-            if p_id not in active_ids:
-                member_name = tribe.members[idx] if idx < len(tribe.members) else ""
-                tribe_members.append({"PlayerCharacterName": member_name, "PlayerDataID": p_id, "IsActive": False})
-        tribe_json_obj["TribeMembers"] = tribe_members
-        # Add to the tribes array
-        tribes.append(tribe_json_obj)
+        try:
+            tribe_json_obj = tribe.to_json_obj()
+            tribe_members = []
+            tribe_players = player_api.tribe_to_player_map.get(tribe.tribe_id, [])
+            active_ids: set = set()
+            for p in tribe_players:
+                tribe_members.append({"PlayerCharacterName": p.char_name, "PlayerDataID": p.id_, "IsActive": True})
+                active_ids.add(p.id_)
+            for idx, p_id in enumerate(tribe.member_ids):
+                if p_id not in active_ids:
+                    member_name = tribe.members[idx] if idx < len(tribe.members) else ""
+                    tribe_members.append({"PlayerCharacterName": member_name, "PlayerDataID": p_id, "IsActive": False})
+            tribe_json_obj["TribeMembers"] = tribe_members
+            tribes.append(tribe_json_obj)
+        except Exception as e:
+            ERRORS.add("tribe failed to export", f"Exception caught when exporting tribe {getattr(tribe, 'tribe_id', '?')}: {e}")
 
     return players, tribes
 
@@ -644,6 +712,10 @@ def load_custom_blueprints_file(file_path: Path):
     return [ get_list("Dinos"), get_list("Items"), get_list("Structures") ]
 
 if __name__ == '__main__':
+    # On a native crash (ex: access violation 0xC0000005 in the interpreter or in a C extension), print the Python stack
+    # of every thread on stderr (ASI logs it), instead of dying silently.
+    faulthandler.enable(all_threads=True)
+
     # argv[0]: This script name
     # argv[1]: ASA save file path
     # argv[2]: JSON export folder path
@@ -670,6 +742,7 @@ if __name__ == '__main__':
     export_players: bool = sys.argv[7] == '1'
     export_tribes: bool = sys.argv[8] == '1'
     debug_logging: bool = sys.argv[9] == '1'
+    ERRORS.verbose = debug_logging
 
     custom_bps_dinos: list[str] = []
     custom_bps_items: list[str] = []
@@ -690,20 +763,6 @@ if __name__ == '__main__':
         except Exception as ex:
             print(f"Failed to load custom blueprints from '{sys.argv[10]}': {ex}", flush=True)
 
-    '''
-    save_path: Path = Path("D:/BACKUPS/TheIsland/TheIsland_WP.ark")
-    export_path: Path = Path.cwd() / "json_exports" / "Test"
-    export_dinos: bool = True
-    export_pawns: bool = True
-    export_items: bool = True
-    export_structures: bool = True
-    export_players: bool = True
-    export_tribes: bool = True
-    debug_logging: bool = True
-    custom_bps_dinos: list[str] = []
-    custom_bps_items: list[str] = []
-    custom_bps_structures: list[str] = []
-    '''
 
     if not export_dinos and not export_pawns and not export_items and not export_structures and not export_players and not export_tribes:
         print('Nothing selected for extraction.', flush=True)
@@ -719,13 +778,14 @@ if __name__ == '__main__':
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.WARNING, True)
     ArkSaveLogger.set_log_level(ArkSaveLogger.LogTypes.ERROR, True)
 
-    # Configure number of process to use (no more than the number of CPUs, 8 at most).
-    nb_processes: int = max(1, min(os.cpu_count() or 1, 8))
+    # Configure number of workers (processes or threads) to use (no more than the number of CPUs usable by this process, 8 at most).
+    nb_workers: int = max(1, min(getattr(os, "process_cpu_count", os.cpu_count)() or 1, 8))
 
-    # DEBUG: Allows to enforce amount of processes (ex : set ASI_NB_PROCESSES=1).
-    if os.environ.get("ASI_NB_PROCESSES", "").isdigit():
-        nb_processes = max(1, int(os.environ["ASI_NB_PROCESSES"]))
-        print(f"Number of processes forced to {nb_processes}.", flush=True)
+    # DEBUG: Allows to enforce the number of workers (ex: set ASI_NB_WORKERS=1).
+    forced_nb_workers: str = os.environ.get("ASI_NB_WORKERS", "")
+    if forced_nb_workers.isdigit():
+        nb_workers = max(1, int(forced_nb_workers))
+        print(f"Number of workers forced to {nb_workers}.", flush=True)
 
     print('Loading ASA save...', flush=True)
     start = time.time()
@@ -749,59 +809,80 @@ if __name__ == '__main__':
     finally:
         count_conn.close()
 
-    rows_per_process: int = math.floor(row_count / nb_processes)
-    remaining_rows: int = row_count % nb_processes
+    rows_per_worker: int = math.floor(row_count / nb_workers)
+    remaining_rows: int = row_count % nb_workers
 
-    # One pipe per worker (instead of a single queue shared by every worker): there is never more than one writer per channel.
-    readers: list = []
-    writers: list = []
+    offsets: list[int] = [rows_per_worker * i for i in range(nb_workers)]
+    limits: list[int] = [rows_per_worker + (remaining_rows if i == nb_workers - 1 else 0) for i in range(nb_workers)]
+
+    # Execution mode:
+    #  - GIL active (standard Python): threads cannot parse in parallel, so worker PROCESSES are used (the objects are pickled between processes).
+    #  - GIL disabled (free-threaded Python, ex: 3.14t): worker THREADS are used (truly parallel, shared memory, nothing to pickle).
+    use_threads: bool = not gil_enabled()
     processes: list[Process] = []
-    for i in range(nb_processes):
-        offset: int = rows_per_process * i
-        limit: int = rows_per_process + (remaining_rows if i == nb_processes - 1 else 0)
-        reader, writer = Pipe(duplex=False)
-        readers.append(reader)
-        writers.append(writer)
-        processes.append(Process(target=asi_export_process, args=({ "save_path": save_path, "offset": offset, "limit": limit, "save_context": arkparse_save.save_context, "conn": writer, "worker_index": i },), daemon=True))
+    if use_threads:
+        print(f"Free-threaded Python (GIL disabled): parsing with {nb_workers} threads.", flush=True)
+        try:
+            with ThreadPoolExecutor(max_workers=nb_workers) as executor:
+                futures = [executor.submit(asi_export_thread, save_path, offsets[i], limits[i], arkparse_save.save_context, i) for i in range(nb_workers)]
+                processes_results: list = [future.result() for future in futures]  # In worker order.
+        except Exception as ex:
+            print(f"Failed to parse game objects: {ex}", flush=True)
+            sys.exit(1)
+    else:
+        print(f"Standard Python (GIL enabled): parsing with {nb_workers} processes.", flush=True)
+        readers: list = []
+        writers: list = []
+        for i in range(nb_workers):
+            reader, writer = Pipe(duplex=False)
+            readers.append(reader)
+            writers.append(writer)
+            processes.append(Process(target=asi_export_process, args=({ "save_path": save_path, "offset": offsets[i], "limit": limits[i], "save_context": arkparse_save.save_context, "conn": writer, "worker_index": i, "debug": debug_logging },), daemon=True))
 
-    for i in range(nb_processes):
-        processes[i].start()
-
-    # The main process closes its own copy of the sending ends: if a worker dies, its pipe then reports EOF (instead of waiting forever).
-    for writer in writers:
-        writer.close()
-
-    try:
-        processes_results: list = get_workers_results(readers, processes)
-    except Exception as ex:
-        print(f"Failed to parse game objects: {ex}", flush=True)
-        # traceback.print_exc()
         for process in processes:
-            if process.is_alive():
-                process.terminate()
-        sys.exit(1)
+            process.start()
+
+        for writer in writers:
+            writer.close()
+
+        try:
+            processes_results: list = get_workers_results(readers, processes)
+        except Exception as ex:
+            print(f"Failed to parse game objects: {ex}", flush=True)
+            for process in processes:
+                if process.is_alive():
+                    process.terminate()
+            sys.exit(1)
 
     if arkparse_save.game_obj_binaries is None:
         arkparse_save.game_obj_binaries = {}
     if arkparse_save.all_classes is None:
         arkparse_save.all_classes = []
-    # Merged in worker order (same order as before). Each worker list is released once merged (no merged copy of everything anymore).
-    for i in range(nb_processes):
+
+    day_cycle_objects: list = []  # Found during the merge: the game time is read from them (no second pass on every object).
+    for i in range(nb_workers):
         for parsed in processes_results[i]:
             if parsed["game_obj"] is not None:
                 arkparse_save.parsed_objects[parsed["UUID"]] = parsed["game_obj"]
+                if is_day_cycle_class(parsed["class"]):
+                    day_cycle_objects.append(parsed["game_obj"])
             arkparse_save.game_obj_binaries[parsed["UUID"]] = parsed["bytes"]
             arkparse_save.all_classes.append(parsed["class"])
         processes_results[i] = []
     del processes_results
 
-    arkparse_save._get_game_time_params()
+    game_time = read_game_time(day_cycle_objects)
+    if game_time is not None:
+        arkparse_save.save_context.current_day, arkparse_save.save_context.current_time = game_time
+    else:
+        # No DayCycle object found by its class name: same full search as before (ArkParse checks every object).
+        arkparse_save._get_game_time_params()
     save_info = { "MapName": arkparse_save.save_context.map_name,
                   "GameTime": arkparse_save.save_context.game_time,
                   "CurrentDay": arkparse_save.save_context.current_day,
                   "CurrentTime": arkparse_save.save_context.current_time }
 
-    parsed_result = asi_parse_classic(arkparse_save, custom_bps_dinos, custom_bps_items, custom_bps_structures)
+    parsed_result = asi_parse_classic(arkparse_save, custom_bps_dinos, custom_bps_items, custom_bps_structures, debug_logging)
 
     pawn_objects: list = parsed_result["pawns"]
     dinos: list = parsed_result["dinos"]
@@ -819,7 +900,10 @@ if __name__ == '__main__':
     pawns: list = []
     for pawn_object in pawn_objects:
         if not pawn_object is None:
-            pawns.append(pawn_to_json(pawn_object))
+            try:
+                pawns.append(pawn_to_json(pawn_object))
+            except Exception as e:
+                ERRORS.add("pawn failed to export", f"Exception caught when exporting pawn {getattr(pawn_object, 'uuid', '?')}: {e}")
 
     if debug_logging:
         skipped_blueprints = list(dict.fromkeys(skipped_blueprints))
@@ -842,6 +926,9 @@ if __name__ == '__main__':
 
         players_and_tribes_end = time.time()
         print('Parsed players and tribes (time spent: ' + human_readable_time(players_and_tribes_end - players_and_tribes_start) + ').', flush=True)
+
+    # Printed after the players & tribes step, so that its errors are included.
+    ERRORS.print_summary()
 
     print('Creating JSON files...', flush=True)
     start = time.time()
@@ -873,7 +960,8 @@ if __name__ == '__main__':
     end = time.time()
     print('JSON files created (time spent: ' + human_readable_time(end - start) + ').', flush=True)
 
-    for i in range(nb_processes):
-        processes[i].join(timeout=5)
-        if processes[i].is_alive():
-            processes[i].terminate()
+    # Worker processes (processes mode only) have already finished: they are joined (and killed if they are stuck).
+    for process in processes:
+        process.join(timeout=5)
+        if process.is_alive():
+            process.terminate()
