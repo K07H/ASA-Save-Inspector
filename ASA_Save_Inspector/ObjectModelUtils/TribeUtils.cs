@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using ASA_Save_Inspector.Pages;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {
@@ -44,18 +44,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "TribeID", "ID" },
             { "TribeLog", "Logs" },
             { "TribeMembers", "Members" },
-        };
-
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "LogIndex",
-            "MembersPlayerDataID",
-            "MembersPlayerName",
-            "OwnerPlayerDataId",
-            //"TribeID",
-            "TribeLog",
-            "TribeMembers",
-            //"TribeName",
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);

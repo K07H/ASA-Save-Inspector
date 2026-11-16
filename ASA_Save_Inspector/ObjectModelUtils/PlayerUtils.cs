@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using ASA_Save_Inspector.Pages;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {
@@ -78,33 +78,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "MeleeDamage", "Melee dmg" },
             { "MovementSpeed", "Move speed" },
             { "CraftingSpeed", "Craft speed" },
-        };
-
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "BodyColors",
-            "DynamicMaterialBytes",
-            "ExperiencePoints",
-            "LastTimeDiedToEnemyTeam",
-            "LastTimeDiedToEnemyTeamReadable",
-            "Level",
-            "LoginTime",
-            "LoginTimeReadable",
-            "MapCoords",
-            "NumOfDeaths",
-            "PercentageOfFacialHairGrowth",
-            "PerMapExplorerNoteUnlocks",
-            "PlayerCharacterName",
-            "PlayerDataID",
-            //"PlayerName",
-            "PlayerState_EngramBlueprints",
-            "PlayerState_TotalEngramPoints",
-            "RawBoneModifiers",
-            "SavedNetworkAddress",
-            "SubMapName",
-            //"TribeID",
-            //"TribeName",
-            "UniqueID",
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);

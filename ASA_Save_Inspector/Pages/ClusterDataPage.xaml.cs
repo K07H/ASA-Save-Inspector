@@ -1,3 +1,7 @@
+using ASA_Save_Inspector.ObjectModel;
+using CommunityToolkit.WinUI.UI.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,12 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using ASA_Save_Inspector.ObjectModel;
-using CommunityToolkit.WinUI.UI.Controls;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Windows.Storage;
-using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 
 namespace ASA_Save_Inspector.Pages
@@ -36,49 +35,34 @@ namespace ASA_Save_Inspector.Pages
         {
             InitializeComponent();
             _page = this;
-            SettingsPage.LoadSettingsStatic(true);
-            var t = Initialize();
-            if (t != null)
-                t.Wait();
+            ShowSavedClusterDataFolderPath();
+        }
+
+        private void ShowSavedClusterDataFolderPath()
+        {
+            string? folderPath = SelectedClusterDataFolderPath;
+            bool exists = !string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath);
+            if (!string.IsNullOrWhiteSpace(folderPath) && !exists)
+                Logger.Instance.Log($"Saved cluster data folder not found: '{folderPath}'.", Logger.LogLevel.WARNING);
+            UpdateClusterDataFolderControls(exists ? folderPath : null);
+        }
+
+        private void UpdateClusterDataFolderControls(string? folderPath)
+        {
+            bool hasFolder = !string.IsNullOrWhiteSpace(folderPath);
+            tb_SelectedClusterDataFolder.Text = (hasFolder ? folderPath! : string.Empty);
+            tb_SelectedClusterDataFolder.Visibility = (hasFolder ? Visibility.Visible : Visibility.Collapsed);
+            btn_InspectClusterDataFolder.IsEnabled = hasFolder;
         }
 
         private void SetSelectedClusterDataFolderPath(string? folderPath)
         {
             if (!string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath))
-            {
                 SelectedClusterDataFolderPath = folderPath;
-                tb_SelectedClusterDataFolder.Text = SelectedClusterDataFolderPath;
-                tb_SelectedClusterDataFolder.Visibility = Visibility.Visible;
-                btn_InspectClusterDataFolder.IsEnabled = true;
-            }
             else
-            {
                 SelectedClusterDataFolderPath = string.Empty;
-                tb_SelectedClusterDataFolder.Text = SelectedClusterDataFolderPath;
-                tb_SelectedClusterDataFolder.Visibility = Visibility.Collapsed;
-                btn_InspectClusterDataFolder.IsEnabled = false;
-            }
+            UpdateClusterDataFolderControls(SelectedClusterDataFolderPath);
             SettingsPage.SaveSettings();
-        }
-
-        private async Task Initialize()
-        {
-            var list = StorageApplicationPermissions.FutureAccessList;
-            if (list != null && list.ContainsItem("ASIClusterDataFolderPath"))
-            {
-                try
-                {
-                    StorageFolder folder = await list.GetFolderAsync("ASIClusterDataFolderPath");
-                    if (folder != null && !string.IsNullOrWhiteSpace(folder.Path) && Directory.Exists(folder.Path))
-                    {
-                        SetSelectedClusterDataFolderPath(folder.Path);
-                        StorageApplicationPermissions.FutureAccessList.AddOrReplace("ASIClusterDataFolderPath", folder);
-                    }
-                }
-                catch { }
-            }
-            if (!string.IsNullOrWhiteSpace(SelectedClusterDataFolderPath) && Directory.Exists(SelectedClusterDataFolderPath))
-                SetSelectedClusterDataFolderPath(SelectedClusterDataFolderPath);
         }
 
         private async Task OpenClusterDataFolderSelector()
@@ -108,16 +92,12 @@ namespace ASA_Save_Inspector.Pages
                 Logger.Instance.Log($"{ASILang.Get("OpenFolderPickerException")} Exception=[{ex}]", Logger.LogLevel.ERROR);
             }
 
+            // The path is saved in settings.json by SetSelectedClusterDataFolderPath.
             if (folder != null && !string.IsNullOrWhiteSpace(folder.Path) && Directory.Exists(folder.Path))
-            {
                 SetSelectedClusterDataFolderPath(folder.Path);
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace("ASIClusterDataFolderPath", folder);
-            }
         }
 
-#pragma warning disable CS4014
-        private void btn_SelectClusterDataFolder_Click(object sender, RoutedEventArgs e) => OpenClusterDataFolderSelector();
-#pragma warning restore CS4014
+        private void btn_SelectClusterDataFolder_Click(object sender, RoutedEventArgs e) => OpenClusterDataFolderSelector().FireAndForget(nameof(OpenClusterDataFolderSelector));
 
         private static void ShowProcessError(object sender, DataReceivedEventArgs e)
         {
@@ -206,27 +186,27 @@ echo PYTHONPATH environment variable
 echo %PYTHONPATH%
 ""{1}"" ""{2}""
 ",
-    SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty,
-    SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
-    Utils.PythonTestScriptPath());
+    PythonManager.BatchPythonPathLine(),
+    PythonManager.BatchPythonExe(),
+    PythonManager.BatchEscape(Utils.PythonTestScriptPath()));
                 else
                     arkParseClusterDataRunnerContent = string.Format(
     @"
 {0}
 ",
-    SettingsPage.UsePythonVenv() ? $"set \"PYTHONPATH={Path.Combine(Utils.PythonVenvFolder(), "Lib", "site-packages")}\"" : string.Empty);
+    PythonManager.BatchPythonPathLine());
 
 
                 arkParseClusterDataRunnerContent += string.Format(
     @"
 ""{0}"" ""{1}"" ""{2}"" ""{3}""
 ",
-    SettingsPage.UsePythonVenv() ? Utils.PythonFilePathFromVenv() : SettingsPage._pythonExePath,
-    asiExportClusterDataScriptPath,
-    SelectedClusterDataFolderPath,
-    exportFolderPath);
+    PythonManager.BatchPythonExe(),
+    PythonManager.BatchEscape(asiExportClusterDataScriptPath),
+    PythonManager.BatchEscape(SelectedClusterDataFolderPath),
+    PythonManager.BatchEscape(exportFolderPath));
 
-                try { File.WriteAllText(arkParseClusterDataRunnerPath, arkParseClusterDataRunnerContent, Encoding.ASCII); }
+                try { PythonManager.WriteBatchFile(arkParseClusterDataRunnerPath, arkParseClusterDataRunnerContent); }
                 catch (Exception ex)
                 {
                     Logger.Instance.Log($"{ASILang.Get("FailedToWriteClusterDataExtractScript")} Exception=[{ex}]", Logger.LogLevel.ERROR);
@@ -250,12 +230,15 @@ echo %PYTHONPATH%
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.FileName = arkParseClusterDataRunnerPath;
                     process.StartInfo.WorkingDirectory = Utils.GetDataDir();
+                    process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+                    process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
                     process.OutputDataReceived += ShowProcessOutput;
                     process.ErrorDataReceived += ShowProcessError;
                     process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
-                    process.WaitForExit();
+                    // Asynchronous wait: this method runs on the UI thread, WaitForExit() froze the whole app until the script ended.
+                    await process.WaitForExitAsync();
                 }
                 catch (Exception ex)
                 {
@@ -315,15 +298,11 @@ echo %PYTHONPATH%
         {
             if (string.IsNullOrWhiteSpace(SelectedClusterDataFolderPath) || !Directory.Exists(SelectedClusterDataFolderPath))
             {
-#pragma warning disable CS4014
-                ShowErrorAsync("Error", ASILang.Get("ClusterDataFolderSelectionRequired"));
-#pragma warning restore CS4014
+                ShowErrorAsync("Error", ASILang.Get("ClusterDataFolderSelectionRequired")).FireAndForget(nameof(ShowErrorAsync));
                 return;
             }
             SetBusy(true);
-#pragma warning disable CS4014
-            InspectClusterData();
-#pragma warning restore CS4014
+            InspectClusterData().FireAndForget(nameof(InspectClusterData));
         }
 
         public async Task LoadFileAsync(string path)
@@ -337,7 +316,7 @@ echo %PYTHONPATH%
                 grd_Summary.Visibility = Visibility.Visible;
                 piv_ItemsDinos.Visibility = Visibility.Visible;
                 if (_selected == null)
-                    SummaryText.Text = $"{Path.GetFileName(path)}: ${ASILang.Get("NbClusterLoadedAndNoneToDisplay").Replace("#NB_CLUSTER_DATA_PROFILES#", clusters.Count.ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCulture)}";
+                    SummaryText.Text = $"{Path.GetFileName(path)}: {ASILang.Get("NbClusterLoadedAndNoneToDisplay").Replace("#NB_CLUSTER_DATA_PROFILES#", clusters != null ? clusters.Count.ToString(CultureInfo.InvariantCulture) : string.Empty, StringComparison.InvariantCulture)}";
             }
             catch (Exception ex)
             {
@@ -498,8 +477,8 @@ echo %PYTHONPATH%
             PropertyInfo? prop = typeof(T).GetProperty(state.Property);
             if (prop == null)
             {
-                ShowErrorStaticAsync("Error", ASILang.Get("UnknownSortProperty").Replace("#SORT_PROPERTY#", state.Property, StringComparison.InvariantCulture));
-                Logger.Instance.Log(ASILang.Get("UnknownSortProperty").Replace("#SORT_PROPERTY#", state.Property, StringComparison.InvariantCulture), Logger.LogLevel.ERROR);
+                ShowErrorStaticAsync("Error", ASILang.Get("UnknownSortProperty").Replace("#SORT_PROPERTY#", state.Property ?? string.Empty, StringComparison.InvariantCulture));
+                Logger.Instance.Log(ASILang.Get("UnknownSortProperty").Replace("#SORT_PROPERTY#", state.Property ?? string.Empty, StringComparison.InvariantCulture), Logger.LogLevel.ERROR);
                 return null;
             }
 

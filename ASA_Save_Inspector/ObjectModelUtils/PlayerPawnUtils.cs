@@ -1,8 +1,8 @@
-﻿using System;
+﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using ASA_Save_Inspector.Pages;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {
@@ -48,37 +48,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "PlayerName", "Name" },
             { "MapCoords", "Map coords" },
             { "SubMapName", "Sub map" },
-        };
-
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "ActorTransformX",
-            "ActorTransformY",
-            "ActorTransformZ",
-            "BodyColors",
-            "CurrentWeapon",
-            "DynamicMaterialBytes",
-            "Instigator",
-            "InventoryUUID",
-            "LastEnterStasisTime",
-            "LastEnterStasisTimeReadable",
-            "LastTimeUpdatedCharacterStatusComponent",
-            "LastTimeUpdatedCharacterStatusComponentReadable",
-            "LinkedPlayerDataID",
-            "Location",
-            "MapCoords",
-            "MyCharacterStatusComponent",
-            "OriginalCreationTime",
-            "OriginalCreationTimeReadable",
-            "OriginalHairColor",
-            "PlatformProfileID",
-            "PlatformProfileName",
-            "PlayerName",
-            "SavedLastTimeHadController",
-            "SavedLastTimeHadControllerReadable",
-            "SubMapName",
-            "UUID",
-            "UniqueNetID"
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);

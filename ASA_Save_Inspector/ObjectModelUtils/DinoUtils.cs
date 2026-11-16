@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ASA_Save_Inspector.Pages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json.Serialization;
-using ASA_Save_Inspector.Pages;
 
 namespace ASA_Save_Inspector.ObjectModelUtils
 {
@@ -134,135 +134,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "ValueCraftingSpeed", "Value Crafting" },
             { "MapCoords", "Map Coords" },
             { "SubMapName", "Sub Map" },
-        };
-
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "ActorTransformX",
-            "ActorTransformY",
-            "ActorTransformZ",
-            "AddedStatPoints",
-            "AlgaeSwimmingTimeOffset",
-            "BabyAge",
-            "BabyNextCuddleTime",
-            "BabyNextCuddleTimeReadble",
-            "BaseLevel",
-            "BaseStatPoints",
-            "BiteCorpseTime",
-            "BiteCorpseTimeReadable",
-            "bTimersAreInUTC",
-            "CharacterSavedDynamicBase",
-            "CharacterSavedDynamicBaseRelativeLocation",
-            "CharacterSavedDynamicBaseRelativeRotation",
-            "ColorSetIndices",
-            "ColorSetNames",
-            "CorpseDestructionTime",
-            "CorpseDestructionTimer",
-            "CorpseDestructionTimeReadable",
-            "CorpseDestructionTimerReadable",
-            "CryopodUUID",
-            "CurrentLevel",
-            "DinoAncestors",
-            "DinoAncestorsMale",
-            "DinoDownloadedAtTime",
-            "DinoDownloadedAtTimeReadable",
-            "DinoID1",
-            "DinoID2",
-            "FriendModeEndTime",
-            "FriendModeEndTimeReadable",
-            "GeneTraits",
-            "GeneTraitsString",
-            "Instigator",
-            "InventoryUUID",
-            "ItemArchetype",
-            "LastEggSpawnChanceTime",
-            "LastEggSpawnChanceTimeReadable",
-            "LastEnterStasisTime",
-            "LastEnterStasisTimeReadable",
-            "LastEyeHealthDepletedTime",
-            "LastEyeHealthDepletedTimeReadable",
-            "LastFeatherPluckTime",
-            "LastFeatherPluckTimeReadable",
-            "LastInAllyRangeSerialized",
-            "LastMilkProductionTime",
-            "LastMilkProductionTimeReadable",
-            "LastNoZombieFollowersTime",
-            "LastNoZombieFollowersTimeReadable",
-            "LastReincarnateTime",
-            "LastReincarnateTimeReadable",
-            "LastSkinnedTime",
-            "LastSkinnedTimeReadable",
-            "LastSpikeSpawnTime",
-            "LastSpikeSpawnTimeReadable",
-            "LastTameConsumedFoodTime",
-            "LastTameConsumedFoodTimeReadable",
-            "LastTamingProgressTime",
-            "LastTamingProgressTimeReadable",
-            "LastTimeFinishedTraining",
-            "LastTimeFinishedTrainingReadable",
-            "LastTimeHarvested",
-            "LastTimeHarvestedReadable",
-            "LastTimeSheared",
-            "LastTimeShearedReadable",
-            "LastTimeSpawnedOrRecruitedZombieFollowers",
-            "LastTimeSpawnedOrRecruitedZombieFollowersReadable",
-            "LastTimeSwimming_Algae",
-            "LastTimeSwimming_AlgaeReadable",
-            "LastTimeUpdatedCharacterStatusComponent",
-            "LastTimeUpdatedCharacterStatusComponentReadable",
-            "LastTimeUpdatedCorpseDestructionTime",
-            "LastTimeUpdatedCorpseDestructionTimeReadable",
-            "LastTimeUsedSkillsArray",
-            "LastTimeUsedSkillsArrayReadable",
-            "LastUnstasisStructureTime",
-            "LastUnstasisStructureTimeReadable",
-            "LastUpdate",
-            "LastUpdatedBabyAgeAtTime",
-            "LastUpdatedBabyAgeAtTimeReadable",
-            "LastUpdatedGestationAtTime",
-            "LastUpdatedGestationAtTimeReadable",
-            "LastUpdatedMatingAtTime",
-            "LastUpdatedMatingAtTimeReadable",
-            "LastUpkeepNetworkTime",
-            "LastUpkeepNetworkTimeReadable",
-            "LastWildNestSpawnTime",
-            "LastWildNestSpawnTimeReadable",
-            "Location",
-            "MapCoords",
-            "MutatedStatPoints",
-            "MyCharacterStatusComponent",
-            "NetworkCreationTime",
-            "NetworkCreationTimeReadable",
-            "NextAllowedMatingTime",
-            "NextAllowedMatingTimeReadable",
-            "NumTimesTrained",
-            "OriginalCreationTime",
-            "OriginalCreationTimeReadable",
-            "OriginalNPCVolumeName",
-            "RequiredTameAffinity",
-            "StatValues",
-            "SubMapName",
-            "TamedAtTime",
-            "TamedAtTimeReadable",
-            "TamedName",
-            "TamedTimeStamp",
-            "TamingLastFoodConsumptionTime",
-            "TamingLastFoodConsumptionTimeReadable",
-            "TimeOfLastFeeding",
-            "TimeOfLastFeedingReadable",
-            "TimeOfLastHarvest",
-            "TimeOfLastHarvestReadable",
-            "UntamedPoopTimeCache",
-            "UntamedPoopTimeCacheReadable",
-            "UUID",
-            "ValueDamage",
-            "ValueFood",
-            "ValueHealth",
-            "ValueOxygen",
-            "ValueStamina",
-            "ValueTorpidity",
-            "ValueWeight",
-            "WildRandomScale",
         };
 
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
@@ -871,11 +742,11 @@ namespace ASA_Save_Inspector.ObjectModel
                             else
                             {
                                 statsPoints[i] = 0;
-                                Logger.Instance.Log($"Incorrect amount of points \"{nameValue[1]}\" for stat {nameValue[0]} (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
+                                Logger.Instance.Log($"Incorrect amount of points '{nameValue[1]}' for stat '{nameValue[0]}' (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
                             }
                         }
                         else
-                            Logger.Instance.Log($"Incorrect stat string \"{splitted[i]}\" (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
+                            Logger.Instance.Log($"Incorrect stat string '{splitted[i]}' (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
                     }
                     return statsPoints;
                 }
@@ -909,11 +780,11 @@ namespace ASA_Save_Inspector.ObjectModel
                             else
                             {
                                 statsPoints[i] = 0.0d;
-                                Logger.Instance.Log($"Incorrect value \"{nameValue[1]}\" for stat {nameValue[0]} (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
+                                Logger.Instance.Log($"Incorrect value '{nameValue[1]}' for stat '{nameValue[0]}' (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
                             }
                         }
                         else
-                            Logger.Instance.Log($"Incorrect stat values string \"{splitted[i]}\" (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
+                            Logger.Instance.Log($"Incorrect stat values string '{splitted[i]}' (dino ID: {DinoID1} {DinoID2}).", Logger.LogLevel.WARNING);
                     }
                     return statsPoints;
                 }

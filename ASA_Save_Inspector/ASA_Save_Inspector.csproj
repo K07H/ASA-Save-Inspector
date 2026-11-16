@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>ASA_Save_Inspector</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -143,7 +143,6 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.4" />
-    <PackageReference Include="System.Text.Json" Version="10.0.14" />
     <PackageReference Include="WinUIEx" Version="2.9.3" />
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +216,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\LockScreenLogo.scale-100.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\MinimapIcon96.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\OtherIcon96.png">
@@ -528,7 +530,7 @@
   <!-- Publish Properties -->
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">False</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
@@ -542,9 +544,9 @@
     <ApplicationIcon>Assets\ASI.ico</ApplicationIcon>
     <PackageIcon>ASILogo.png</PackageIcon>
     <Copyright>Copyright (c) 2025-2026 LC-IT S. - All rights reserved</Copyright>
-    <AssemblyVersion>3.0.8.0</AssemblyVersion>
-    <FileVersion>3.0.8.0</FileVersion>
-    <Version>3.0.8</Version>
+    <Version>$(AsiVersion)</Version>
+    <AssemblyVersion>$(AsiVersion).0</AssemblyVersion>
+    <FileVersion>$(AsiVersion).0</FileVersion>
     <Title>ASA Save Inspector</Title>
     <Authors>OSubMarin</Authors>
     <Company>LC-IT S.</Company>

@@ -1,4 +1,6 @@
-﻿import sys
+﻿import math
+import os
+import sys
 import json
 
 from pathlib import Path
@@ -6,6 +8,27 @@ from typing import Optional
 
 from arkparse.object_model.cluster_data.ark_cluster_data import ClusterData
 from arkparse.utils.json_utils import DefaultJsonEncoder
+
+def to_json_compatible(obj, encoder: json.JSONEncoder, depth: int = 0):
+    """Converts obj into plain JSON types, replacing NaN / +-Infinity (invalid JSON) by the strings "NaN" / "Infinity" / "-Infinity"."""
+    if depth > 200:
+        return None  # Protection against reference cycles.
+    if obj is None or isinstance(obj, (str, bool, int)):
+        return obj
+    if isinstance(obj, float):
+        if math.isnan(obj):
+            return "NaN"
+        if math.isinf(obj):
+            return "Infinity" if obj > 0 else "-Infinity"
+        return obj
+    if isinstance(obj, dict):
+        return { k: to_json_compatible(v, encoder, depth + 1) for k, v in obj.items() }
+    if isinstance(obj, (list, tuple, set)):
+        return [ to_json_compatible(v, encoder, depth + 1) for v in obj ]
+    converted = encoder.default(obj)
+    if converted is obj:
+        return None
+    return to_json_compatible(converted, encoder, depth + 1)
 
 def get_files(path: Path) -> list[Path]:
     return [f for f in path.iterdir() if
@@ -56,7 +79,12 @@ if __name__ == '__main__':
         if all_cluster_data is not None:
             cluster_datas: list[ClusterData] = list(all_cluster_data.values())
             data_json = [data.to_json_obj() for data in cluster_datas]
-            with open(export_path / "cluster_data.json", "w", encoding="utf-8") as text_file:
-                json.dump(data_json, text_file, ensure_ascii=False, indent=4, cls=DefaultJsonEncoder)
+            # Atomic write: a crash can no longer leave a truncated cluster_data.json.
+            output_path: Path = export_path / "cluster_data.json"
+            tmp_path: Path = output_path.with_name(output_path.name + ".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as text_file:
+                json.dump(to_json_compatible(data_json, DefaultJsonEncoder()), text_file, ensure_ascii=False, indent=4, cls=DefaultJsonEncoder)
+            os.replace(tmp_path, output_path)
     except Exception as e:
-        print(f"Exception caught while parsing cluster data: {e}")
+        print(f"Exception caught while parsing cluster data: {e}", flush=True)
+        sys.exit(1) # Let ASI know that the export failed (it used to exit with code 0 in this case).

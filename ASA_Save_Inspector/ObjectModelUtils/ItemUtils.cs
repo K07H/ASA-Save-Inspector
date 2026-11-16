@@ -81,46 +81,6 @@ namespace ASA_Save_Inspector.ObjectModelUtils
             { "SubMapName", "Sub map" }
         };
 
-        public static readonly List<string> DoNotCheckPropertyValuesAmount = new List<string>()
-        {
-            "Armor",
-            "AssociatedDinoID1",
-            "AssociatedDinoID2",
-            "ContainerName",
-            "CreationTime",
-            "CreationTimeReadable",
-            "Durability",
-            "ItemArchetype",
-            "ItemID",
-            "ItemQuantity",
-            "ItemRating",
-            "LastAutoDurabilityDecreaseTime",
-            "LastAutoDurabilityDecreaseTimeReadable",
-            "LastEnterStasisTime",
-            "LastEnterStasisTimeReadable",
-            "LastSpoilingTime",
-            "LastSpoilingTimeReadable",
-            "LastTorchDurabilityLossTime",
-            "LastTorchDurabilityLossTimeReadable",
-            "LastUseTime",
-            "LastUseTimeReadable",
-            "Location",
-            "MapCoords",
-            "NextCraftCompletionTime",
-            "NextCraftCompletionTimeReadable",
-            "NextSpoilingTime",
-            "NextSpoilingTimeReadable",
-            "OriginalCreationTime",
-            "OriginalCreationTimeReadable",
-            "OriginalItemDropLocation",
-            "OwnerInventoryUUID",
-            "SavedDurability",
-            "SubMapName",
-            //"ShortName",
-            "UECoords",
-            "UUID",
-        };
-
         public static string? GetCleanNameFromPropertyName(string? propertyName) => (propertyName != null && CleanNames.ContainsKey(propertyName) ? CleanNames[propertyName] : propertyName);
         public static string? GetPropertyNameFromCleanName(string? cleanName) => Utils.GetPropertyNameFromCleanName(CleanNames, cleanName);
     }
