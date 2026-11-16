@@ -1,6 +1,6 @@
 ﻿param(
-    [ValidateSet("x86", "x64", "arm64")]
-    [string[]]$Platforms = @("x86", "x64", "arm64")
+    [ValidateSet("x64", "x86", "arm64")]
+    [string[]]$Platforms = @("x64", "x86", "arm64")
 )
 
 $ErrorActionPreference = "Stop"
